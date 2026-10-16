@@ -49,9 +49,9 @@ T20 World Cup game, with the 2024 final as a second match that proves nothing is
  │  ├ TV pane   │◄───────│                           ├─ SSE: per-session stream (events, moments, chat, clock)    │
  │  ├ companion │        │                           ├─ Session manager + one tick loop for all sessions          │
  │  └ control   │        │                           ├─ @sideline/engine (pure): timeline, reducer, detectors     │
- │    plane     │        │                           ├─ AI gateway ──────────────────────────────────────────────┼──► Anthropic / OpenAI API
- └──────────────┘        │                           │   (cache → provider → validate → fallback)                 │    (optional; replay mode
-                         │                           └─ node:sqlite: ai cache, AI traces, analytics tables        │     works without a key)
+ │    plane     │        │                           ├─ AI gateway ──────────────────────────────────────────────┼──► Anthropic or an OpenAI-compatible
+ └──────────────┘        │                           │   (cache → provider → validate → fallback)                 │    API (today: proxy); optional,
+                         │                           └─ node:sqlite: ai cache, AI traces, analytics tables        │    replay mode works without a key
                          │  data/ (raw Cricsheet, fixtures, rules, models, crowd corpus, AI replay cache)          │
                          └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -135,10 +135,14 @@ data/rules, data/models   ────┘        (T2)                    │
 | Chat velocity spike / death-over window | detector → **Room Read** (window key) | yes, once per window |
 | Contextual question, "stat-back my take", telemetry question | **Explainer / Stat-back / Inspector** | yes, rate-limited per IP |
 
-Model defaults (Anthropic): `claude-opus-5-5` with per-skill `effort` (low for teasers and
-classification, medium for synthesis). Configurable to `claude-haiku-5-5` for the fast lane, or
-to an OpenAI model, via env (see `.env.example`). Structured outputs everywhere; no free-form
-text reaches the UI without schema validation.
+Providers (D-033): both Anthropic and any OpenAI-compatible endpoint, chosen by `.env`
+(Anthropic if `ANTHROPIC_API_KEY` is set, else OpenAI-compatible if `OPENAI_API_KEY` is set,
+`SIDELINE_AI_PROVIDER` overrides). Anthropic default: `claude-opus-5-5` with per-skill `effort`
+(low for teasers and classification, medium for synthesis; `claude-haiku-5-5` for a cheaper fast
+lane). **Currently configured:** the OpenAI-compatible proxy endpoint
+(`https://api.proxy.pro/v1`, `gpt-6.1-sol`, Responses API), verified to return strict
+JSON-schema output in 4-8.5 s, with ~4.4k hidden input tokens per call. Structured outputs
+everywhere; no free-form text reaches the UI without schema validation.
 
 ## 6. Scale story ("% compute saved at 10M DAU")
 
@@ -176,8 +180,9 @@ the spoiler latency budget (`budgetMs` vs `usedMs`), and the scale projection. T
 
 ## 9. Frontend architecture (planned T6, T9; shell built T1)
 
-- Routes: `/` landing (hero, persona picker), `/match/:matchId` match room, `/how-it-works`.
-  Footer with the attribution line on every route (enforced by `e2e/smoke.spec.ts`).
+- Routes: `/` landing (hero, persona picker), `/match/:matchId` match room, `/architecture`
+  (shareable architecture + live build plan for the demo round, rendered from these docs at build
+  time; D-034). Footer with the attribution line on every route (enforced by `e2e/smoke.spec.ts`).
 - State: SSE stream → store; the client folds events with the same engine reducer at its own TV
   time, so the TV pane and companion never show anything the fan's stream has not shown.
 - Visual system (`docs/design/DESIGN_SYSTEM.md`): night-match palette, Anek Latin (Ek Type,

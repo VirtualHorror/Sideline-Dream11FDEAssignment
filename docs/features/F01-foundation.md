@@ -107,6 +107,9 @@ python3 -I -m py_compile scripts/oracle/cricsheet_oracle.py → compiles
 
 ## Follow-ups
 
-- Task 2 starts from `t01-verified`; the first Codex HANDOFF is created by Nabhanyu with
-  `/handoff:create` in this session.
-- Nabhanyu to decide the AI provider key before Task 5/7 (Anthropic recommended; OpenAI supported).
+- Task 2 starts from `main` (after `t01-verified` plus the post-Task-1 docs commit); the first
+  Codex handoff is `HANDOFF2.md`, written with `/handoff:create`.
+- Resolved after Task 1 (2026-10-16): Nabhanyu approved D-002/D-011/D-012/D-015 (D-032), chose
+  dual-provider AI via `.env` using the Codex key (a proxy OpenAI-compatible endpoint, probed and
+  documented in D-033; local `.env` created, mode 600, git-ignored), and asked for the shareable
+  `/architecture` page (D-034, Tasks 6 and 9).

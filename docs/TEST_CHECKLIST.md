@@ -68,6 +68,10 @@ this checklist's baselines updated, ROLLBACK row added.
 ### F. Security (from Task 5 on)
 - `curl -sI http://127.0.0.1:8787/` shows the CSP, `x-frame-options: DENY`, `nosniff`.
 - `grep -rE "sk-ant|sk-proj|sk-[A-Za-z0-9]{20}" apps/web/dist` finds nothing.
+- `git ls-files .env` prints nothing and `stat -c %a .env` prints `600` (the real key lives only there
+  and, after Task 7, in `/etc/sideline/sideline.env`).
+- The key value never appears in logs: grep server output for the first 8 characters of the key
+  (read from `.env` in a subshell, never echoed) → no matches.
 - Rate limit and budget behaviour exercised by tests; oversized input rejected with 400.
 - NL→SQL: write statements, `ATTACH`, `PRAGMA`, recursive CTEs and multi-statements are refused (Task 8).
 

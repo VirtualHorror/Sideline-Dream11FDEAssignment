@@ -26,6 +26,7 @@
 - **Alternatives:** Build F1/football simulators in parallel (halves the depth of everything).
 - **Consequences:** The "sampling fan from another sport" problem is still solved (lens), with a
   clear path to a second sport. Recorded in PLAN.md.
+- **Status:** approved by Nabhanyu on 2026-10-16 (see D-032).
 
 ### D-003 — Real ball-by-ball data from Cricsheet; two matches (2026-10-16, T1, Claude)
 - **Context:** A simulated match must feel real and must not be hand-written (that would be the
@@ -98,6 +99,7 @@
   seek, TV delay, lens), evicted after idle TTL.
 - **Consequences:** "Shared" moments are shared via the *cache*, not by broadcast: session B
   reaching the same ball as session A gets A's result as a cache hit. The control plane shows it.
+- **Status:** approved by Nabhanyu on 2026-10-16 (see D-032).
 
 ### D-012 — Fantasy rules are data; values are illustrative (2026-10-16, T1, Claude)
 - **Context:** Dream11's official points page returned HTTP 502 on 2026-10-16 and public sources
@@ -106,6 +108,7 @@
   cited 2023-2025 Dream11 T20 values), with a disclaimer; the engine reads it.
 - **Consequences:** Swapping in official values is a data change. Golden totals in DOMAIN.md are
   tied to this file; the oracle reads the same file.
+- **Status:** approved by Nabhanyu on 2026-10-16 (see D-032).
 
 ### D-013 — Credits authored, projections derived (2026-10-16, T1, Claude)
 - **Decision:** Player credits (7.5-10.5) are authored per match as illustrative data (Dream11 sets
@@ -123,6 +126,8 @@
   (replay) and degrade honestly (fallback).
 - **Notes for implementers:** Claude Opus 5.5 rejects forced `tool_choice` (any/tool) and
   `budget_tokens`; thinking is adaptive and cannot be disabled; control depth with `effort`.
+- **Update:** provider configuration refined by D-033 (both providers via `.env`, OpenAI-compatible
+  base URL, the current key is a proxy proxy key).
 
 ### D-015 — Moment keys and cohort keys for caching (2026-10-16, T1, Claude)
 - **Decision:** Cache AI results by moment key: `nudge:<match>:<eventId>`,
@@ -211,3 +216,40 @@
 ### D-031 — Biome instead of ESLint + Prettier (2026-10-16, T1, Claude)
 - **Decision:** Biome 2.5 (`preset: recommended`), CSS parser with Tailwind directives, wider line
   width for `data/` so fixtures stay one player per line.
+
+### D-032 — Owner approval of the three architectural calls (2026-10-16, after T1, Nabhanyu)
+- Approved: **D-002** cross-sport explanation styles instead of extra sport simulators (the UI calls
+  the `engineer` lens "Systems"); **D-012** fantasy points configurable in data; **D-011 + D-015**
+  per-reviewer replay isolation with per-moment AI caching.
+
+### D-033 — Both AI providers via .env; the current key is an OpenAI-compatible proxy (2026-10-16, after T1, Nabhanyu + Claude)
+- **Context:** Nabhanyu asked for OpenAI (`OPENAI_API_KEY`) and Anthropic (`ANTHROPIC_API_KEY`)
+  support through `.env`, defaulting to whichever key is present, and to use the key Codex uses.
+  Codex is configured (`~/.codex/config.toml`) with a custom provider, **proxy**
+  (`https://api.proxy.pro/v1`, Responses API, model `gpt-6.1-sol`), key in `proxy_API_KEY`.
+- **Decision:** config reads `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENAI_BASE_URL` (any
+  OpenAI-compatible endpoint), `SIDELINE_MODEL_FAST` / `SIDELINE_MODEL_SMART`, and an optional
+  `SIDELINE_AI_PROVIDER` override. Auto-detection: Anthropic if its key is set, else the
+  OpenAI-compatible provider, else none. The local `.env` (git-ignored, mode 600) was created from
+  `proxy_API_KEY` with `OPENAI_BASE_URL=https://api.proxy.pro/v1` and `gpt-6.1-sol` for both tiers.
+- **Probe findings (2026-10-16):** `/v1/models` lists `gpt-5.5, gpt-5.6-luna, gpt-5.6-sol,
+  gpt-5.6-terra, gpt-6-astra, gpt-6-luna, gpt-6-sol, gpt-6.1-sol`. Responses API with a strict
+  `json_schema` format works. Tiny calls take 4-8.5 s. Every request reports about 4,440 input tokens
+  even for a 30-token prompt (a hidden prompt is added upstream; 0 cached tokens). `gpt-6.1-sol` and
+  `gpt-6-luna` returned identical answers and both self-identify as "GPT-5", so model names probably
+  route to one backend.
+- **Consequences:** cost accounting uses *reported* usage, with configurable per-token prices for
+  models without a built-in price (shown as estimates); fast/smart tiers are not relied on with this
+  endpoint; teasers are only promised at 1-2x speed (latency budget); catch-up needs a visible
+  thinking state; prompts and fan questions go to a third party (no personal data is sent; revisit
+  for production). Adding an Anthropic key later switches the default (or set `SIDELINE_AI_PROVIDER`).
+  The spoiler linter must allow neutral counts: the probe's own spoiler-free teaser was
+  "Six balls, 16 to find, and a set batter facing the final over."
+
+### D-034 — A shareable in-app architecture and plan page, `/architecture` (2026-10-16, after T1, Nabhanyu)
+- **Decision:** a route for the demo round that presents the architecture and the live build plan.
+  It renders the repository's own docs (`docs/Architecture.md`, the `docs/PLAN.md` checklist,
+  `docs/Decisions.md`) at build time through Vite `?raw` imports and a markdown renderer with raw
+  HTML disabled, so the page can never drift from the docs. Basic route in Task 6 (ships with the
+  public link); designed pipeline diagram and live "when we don't call AI" table in Task 9.
+  Replaces the earlier `/how-it-works` idea.

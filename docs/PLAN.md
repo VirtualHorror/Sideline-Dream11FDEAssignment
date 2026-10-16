@@ -64,8 +64,9 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 
 ## Milestones
 
-- **Milestone A (submittable public link)**: end of Task 7. Phases 3-4, control plane, deployed.
-- **Milestone B (complete product)**: end of Task 9. All four phases, story mode, how-it-works.
+- **Milestone A (submittable public link)**: end of Task 7. Phases 3-4, control plane, the
+  shareable `/architecture` page, deployed.
+- **Milestone B (complete product)**: end of Task 9. All four phases, story mode, polished `/architecture`.
 - **Milestone C (submission)**: Task 10. Final audit, note (≤ 200 words), demo script.
 
 ## Checklist
@@ -77,10 +78,10 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 3 | Models: T20I archive pipeline, win probability, leverage, player priors | Codex | `task/03-models` | ⬜ |
 | 4 | Moments engine: clock, delay buffer, detectors, gate, quests, crowd, commentary | Codex | `task/04-moments-engine` | ⬜ |
 | 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Codex | `task/05-server-ai` | ⬜ |
-| 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane | Codex | `task/06-frontend-core` | ⬜ |
+| 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Codex | `task/06-frontend-core` | ⬜ |
 | 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Codex + Nabhanyu | `task/07-deploy` | ⬜ |
 | 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | Codex | `task/08-ai-skills-2` | ⬜ |
-| 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, polish | Codex | `task/09-frontend-complete` | ⬜ |
+| 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | Codex | `task/09-frontend-complete` | ⬜ |
 | 10 | Final audit, holdout match, security review, submission note, demo script | Claude | `main` | ⬜ |
 
 ---
@@ -320,7 +321,13 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
   `src/orchestrator/orchestrator.ts`; `src/telemetry/{collector,projection}.ts`;
   `src/http/routes/{matches,sessions,stream,control,ask,telemetry}.ts`; `src/http/middleware/{rateLimit,body}.ts`
 - Create `data/glossary.json` (≈40 cricket terms; plain-English definition + optional per-lens analogy), `scripts/ai-smoke.ts`
-- Modify `apps/server/src/config.ts` (AI, budget and rate-limit settings from `.env.example`), `src/http/app.ts`, `src/index.ts`, `apps/server/package.json` (add `@anthropic-ai/sdk`, `openai`; Decisions entry with versions ≥ 14 days old)
+- Modify `apps/server/src/config.ts`: add `OPENAI_BASE_URL` (optional URL), `SIDELINE_MODEL_FAST` /
+  `SIDELINE_MODEL_SMART` (Anthropic default `claude-opus-5-5`; **required** when the provider is
+  `openai`, since OpenAI-compatible endpoints name models differently), `SIDELINE_PRICE_IN_PER_MTOK` /
+  `SIDELINE_PRICE_OUT_PER_MTOK`, `SIDELINE_AI_DAILY_BUDGET_USD`, `SIDELINE_ASK_PER_MINUTE`,
+  `SIDELINE_SESSION_AI_CAP`; keep the existing provider detection (D-033). `publicConfigSummary`
+  gains `aiModelFast`, `aiModelSmart` and `aiEndpointHost` (host name only, never keys or paths).
+- Modify `src/http/app.ts`, `src/index.ts`, `apps/server/package.json` (add `@anthropic-ai/sdk`, `openai`; Decisions entry with versions ≥ 14 days old)
 - Test `apps/server/test/{bundle,sessions,stream,gateway,skills,orchestrator,routes,telemetry}.test.ts`
 
 **Interfaces**
@@ -353,19 +360,32 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
   the server-side refusal fallback (`betas: ["server-side-fallback-2026-07-01"]`, `fallbacks:
   "default"` on `client.beta.messages.*`) if the installed SDK types accept it; record what you did
   in Decisions. Use typed SDK errors (`Anthropic.RateLimitError`, …), never message matching.
-- OpenAI adapter (`openai`): model from `SIDELINE_OPENAI_MODEL` (required when the provider is
-  openai); JSON-schema structured output in strict mode; same validation.
+- OpenAI-compatible adapter (`openai` SDK): `new OpenAI({ apiKey: OPENAI_API_KEY, baseURL:
+  OPENAI_BASE_URL })` (SDK default URL when unset) and the **Responses API**:
+  `client.responses.create({ model, input: [{ role: "system", content: system }, { role: "user",
+  content: user }], text: { format: { type: "json_schema", name: <skill name>, schema, strict: true } },
+  max_output_tokens })`; read `output_text`; usage from `usage.input_tokens` / `usage.output_tokens`;
+  same zod validation. Do not send `reasoning` options by default. **Verified on 2026-10-16 against
+  the configured endpoint** (proxy, `https://api.proxy.pro/v1`, `gpt-6.1-sol`): strict
+  `json_schema` works; tiny calls take 4-8.5 s; each call reports ~4,440 input tokens because of a
+  hidden upstream prompt (D-033). The local `.env` already holds this configuration.
 - Replay provider: serves only cache rows loaded from `data/ai-replay/*.jsonl` (none exist until
   Task 7); misses → fallback. Scripted provider (tests only): `(skill, facts, user prompt) → output | Error`, records every request.
-- Pricing (USD per million tokens, in `pricing.ts`, overridable by env): `claude-opus-5-5` 4 / 20,
-  `claude-sonnet-5-5` 2 / 10, `claude-haiku-5-5` 0.10 / 0.50; OpenAI from env.
+- Pricing (USD per million tokens, in `pricing.ts`): `claude-opus-5-5` 4 / 20,
+  `claude-sonnet-5-5` 2 / 10, `claude-haiku-5-5` 0.10 / 0.50. Any other model uses
+  `SIDELINE_PRICE_IN_PER_MTOK` / `SIDELINE_PRICE_OUT_PER_MTOK` (defaults 5 / 20), and its cost is
+  flagged `estimated` in traces and shown as "est." in the UI. Costs always use *reported* usage.
 - Budget: global daily USD cap (`SIDELINE_AI_DAILY_BUDGET_USD`, default 3), per-session cap of AI
   calls (default 80), per-IP token bucket on `/ask` (default 12/min, burst 4). Over budget → aiMode
   `replay` and fallbacks.
 - Skills: **spoiler teaser** (`fast`, effort `low`, output `{ nudge, reveal }`; guard =
-  `spoilerLint`: reject teasers containing outcome words (six, four, boundary, out, wicket, bowled,
-  caught, stumped, lbw, run out, won, lost, maximum, century, fifty, dropped), digits of the new
-  score, or the batter's/bowler's outcome; `timeoutMs = min(8000, budgetMs − 1000)`); **catch-up**
+  `spoilerLint(nudge, facts)`, which rejects *outcome statements*, not ordinary words: "a/another/
+  massive/for six", "sixes", "SIX!", "four runs", "boundary", "is out", "gone", "wicket falls",
+  "bowled him/them", "caught", "stumped", "lbw", "run out", "won/wins/lost/loses", "maximum",
+  "century", "fifty", "dropped"; the score *after* the ball (e.g. `150/5`); and the batter's runs
+  after the ball. Neutral counts and the pre-ball situation are allowed ("Six balls, 16 to find…" is
+  a real spoiler-free model output from the probe). `timeoutMs = min(15000, budgetMs − 1000)`
+  because the configured endpoint answers in 4-8.5 s); **catch-up**
   (`smart`, effort `medium`, output `{ slides: {kind, headline, body, citedEventIds}[] }`; guard =
   every cited id inside the window, at least one `watch_next` slide; lens instructions per `Lens`);
   **explainer** (glossary hit → `deterministic` payload with no model call; otherwise `fast`,
@@ -386,15 +406,16 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
   rebuilt at boot from the bundles.
 
 **Steps** (failing test → implement → pass for each; use the scripted provider and an injected clock)
+- [ ] **5.0** `config.test.ts` (extend): `OPENAI_API_KEY` + `OPENAI_BASE_URL` + both model vars → provider `openai` with that base URL; provider `openai` without `SIDELINE_MODEL_FAST/SMART` → throws naming the variable; both keys present → `anthropic` unless `SIDELINE_AI_PROVIDER=openai`; `publicConfigSummary` exposes `aiEndpointHost` (e.g. `api.proxy.pro`) and never a key.
 - [ ] **5.1** `bundle.test.ts`: both bundles load and validate; events equal `buildTimeline` output.
 - [ ] **5.2** `sessions.test.ts`: create a session for `late-from-work` → initial stadium time is the join point (after 14 overs of the chase) and the snapshot has every event ≤ it; advancing the fake clock at 8x releases the next events in order; `jump` backwards then forwards gives a snapshot equal to a fresh fold (Review focus 1); idle sessions are evicted after TTL.
 - [ ] **5.3** `stream.test.ts`: SSE output parses as `StreamMessage`s in order (`hello`, `snapshot`, …), with `id:` = seq; no API key or secret appears anywhere in the stream.
 - [ ] **5.4** `gateway.test.ts`: cache hit makes no provider call; two concurrent runs for one key make one provider call; timeout, refusal, schema-invalid output, guard failure, missing provider and exhausted budget each return the fallback payload with provenance `fallback`, a matching trace `outcome`, and counters updated (Review focus 2).
-- [ ] **5.5** `skills.test.ts`: the catch-up prompt for `late-from-work` contains `90/4`, `70` and `36` (facts reach the model); a teaser output containing "six" fails `spoilerLint` and falls back; a catch-up slide citing an id outside the window fails the guard; "what is a free hit?" is answered from the glossary with zero provider calls; a prompt-injection question is wrapped in `<fan_question>` and the system prompt says to treat it as data.
+- [ ] **5.5** `skills.test.ts`: the catch-up prompt for `late-from-work` contains `90/4`, `70` and `36` (facts reach the model); `spoilerLint` table test: **allowed** "Six balls, 16 to find, and a set batter facing the final over.", "Who comes out on top?", "Everything rides on the next delivery."; **rejected** "Kohli hits a six", "SIX!", "He's out!", "That's bowled him", "Caught at long-on", "India win it", "A wicket falls"; a rejected teaser falls back with provenance `fallback`; a catch-up slide citing an id outside the window fails the guard; "what is a free hit?" is answered from the glossary with zero provider calls; a prompt-injection question is wrapped in `<fan_question>` and the system prompt says to treat it as data.
 - [ ] **5.6** `orchestrator.test.ts`: two sessions on 1298150 reach innings-2 `18.5`: the first triggers a live call, the second gets provenance `cache` and the scripted provider call count stays 1 (thesis 1); a slow scripted call at 32x speed results in `nudgeAt: null` and `usedMs > budgetMs` in the trace (Review focus 3).
 - [ ] **5.7** `routes.test.ts`: `/api/matches`; session create/control validation (bad speed → 400); `/ask` with 281 characters → 400; 13 asks in a minute from one IP → 429; unknown session → 404 JSON (Review focus 5).
 - [ ] **5.8** `telemetry.test.ts`: after a full scripted replay, counters equal the gate's counters plus the gateway's; `projection.formula` contains the substituted numbers; `savedPct > 99` at 10 000 000 viewers.
-- [ ] **5.9** `scripts/ai-smoke.ts` (`pnpm ai:smoke`): when a key is configured, one real teaser call returns a schema-valid output and prints model, latency and tokens; without a key it prints "skipped". Not part of `pnpm test`.
+- [ ] **5.9** `scripts/ai-smoke.ts` (`pnpm ai:smoke`, loads `.env`): when a key is configured, one real teaser call through the gateway returns a schema-valid output that passes `spoilerLint`, and prints provider, endpoint host, model, latency, tokens and estimated cost; without a key it prints "skipped". Not part of `pnpm test`. With today's `.env` this exercises the proxy endpoint (costs a few thousand tokens).
 - [ ] **5.10** `pnpm verify` green; docs (F05, Flow §7-8 → BUILT, Architecture, Decisions incl. SDK versions, `.env.example`, TEST_CHECKLIST, ROLLBACK).
 
 **Audit hooks:** run the server and watch a full session with `curl -N`; run `pnpm ai:smoke` with a key
@@ -414,8 +435,11 @@ control plane run against the real server.
   `src/stream/{store,useSessionStream,tvClock}.ts`; `src/lib/api.ts`;
   `src/broadcast/{TvPane,Scorebug,OverStrip,InningsDotMatrix,WinProbLine,Commentary,PlaybackControls,DelayControl,PhaseRail}.tsx`;
   `src/companion/{MomentFeed,ProvenanceChip,ChatFeed,Composer,LensSwitch}.tsx`, `src/companion/cards/{SpoilerCard,CatchUpReel,ExplainerCard}.tsx`;
-  `src/controlplane/{ControlPlaneDrawer,Counters,GateLog,TraceList,TraceDetail,Projection}.tsx`
-- Modify `src/App.tsx` (routing inside the shell), `src/styles/*`, `e2e/smoke.spec.ts` (routes `/`, `/match/1298150`)
+  `src/controlplane/{ControlPlaneDrawer,Counters,GateLog,TraceList,TraceDetail,Projection}.tsx`;
+  `src/pages/Architecture.tsx`, `src/lib/markdown.ts` (D-034)
+- Modify `src/App.tsx` (routing inside the shell; header/footer link "How Sideline is built" → `/architecture`), `src/styles/*`,
+  `apps/web/vite.config.ts` (`server.fs.allow` the repo root so `../../docs/*.md?raw` imports work in dev),
+  `e2e/smoke.spec.ts` (routes `/`, `/match/1298150`, `/architecture`)
 - Test `apps/web/test/*.test.tsx`, `e2e/match-room.spec.ts`
 
 **Interfaces**
@@ -431,6 +455,12 @@ control plane run against the real server.
 is *revealed on the TV clock*. Every moment card shows a `ProvenanceChip`. The chat labels the crowd
 "Simulated crowd". Phone layout: companion first, compact scorebug pinned top, tabs Companion / TV /
 Control plane. Persona choice on the landing page passes `personaId` to the session.
+**`/architecture` (D-034, shareable for the demo round):** renders `docs/Architecture.md`, the
+`docs/PLAN.md` checklist table (task status) and `docs/Decisions.md` (each entry collapsible), imported
+at build time with Vite `?raw`, through a markdown renderer with raw HTML disabled (add the renderer as
+a dependency with a Decisions entry, version ≥ 14 days old). Styled with the design system, readable
+at 390 px (code blocks scroll horizontally inside their own box, never the page). No duplicated
+prose: if the page needs a sentence the docs lack, add it to the docs.
 
 **Steps** (failing test → implement → pass)
 - [ ] **6.1** Store and TV clock: a test feeds `hello`, `snapshot`, `events`, `moment`, `clock` messages and asserts the TV state at a given `tvT` equals `foldEvents` of events with `t ≤ tvT`; a new `snapshot` replaces state (Review focus 1).
@@ -439,6 +469,7 @@ Control plane. Persona choice on the landing page passes `personaId` to the sess
 - [ ] **6.4** Broadcast pieces: `InningsDotMatrix` renders 120 legal-ball cells per innings plus extras markers, with the six/four/wicket classes on the right cells for 1298150 innings 2 over 18; `Scorebug` uses tabular numerals.
 - [ ] **6.5** Control plane: renders counters, gate decisions with reasons, traces with provenance and an expandable JSON payload, and the projection formula.
 - [ ] **6.6** E2E `e2e/match-room.spec.ts`: from `/` pick a persona → match room loads with no console errors; jump to "after 18 overs of the chase" at 16x with a 25 s delay → a spoiler card appears veiled, then reveals; control plane shows non-zero deterministic events; desktop and 390 px; screenshots in both themes.
+- [ ] **6.6b** `/architecture`: a unit test renders the page and finds the first `##` heading of `docs/Architecture.md` and the PLAN checklist row for Task 2 (both read from the real files, so the test fails if the page stops reflecting the docs); markdown containing `<script>` renders as text, not an element; the smoke E2E covers `/architecture` on desktop and 390 px.
 - [ ] **6.7** `pnpm verify` + `pnpm test:e2e` green; docs (F06, Flow, Architecture, DESIGN_SYSTEM component statuses, TEST_CHECKLIST, ROLLBACK).
 
 **Audit hooks:** visual review of screenshots against the references; keyboard-only pass; reduced
@@ -460,15 +491,18 @@ motion; Lighthouse spot check; confirm no outcome text exists in the DOM while a
   `/etc/caddy/Caddyfile` for `<public-ip-with-dashes>.sslip.io` (IP from the EC2 metadata service,
   IMDSv2), creates the `sideline` systemd unit running `node apps/server/src/index.ts` as user
   `nabhanyu` with `PATH` including `~/.local/bin`, `NODE_ENV=production`, `HOST=127.0.0.1`,
-  `PORT=8787`, `EnvironmentFile=/etc/sideline/sideline.env` (mode 600). Idempotent; prints what it
-  did.
+  `PORT=8787`, `EnvironmentFile=/etc/sideline/sideline.env` (root-owned, mode 600). The env file is
+  generated from the repo's git-ignored `.env` (AI keys, `OPENAI_BASE_URL`, model and budget
+  settings), with `HOST`/`PORT`/`NODE_ENV` forced to the production values; it never echoes values.
+  Idempotent; prints what it did (variable names only).
 - `update.sh [ref]`: `git checkout <ref>`, `pnpm install --frozen-lockfile`, `pnpm build`,
   `sudo systemctl restart sideline`, health check with retries.
 - `pnpm ai:record`: runs every persona of both matches through its story path at 32x against the
   live provider and writes the resulting cache rows (live provenance only) to `data/ai-replay/`.
   Prints call counts and cost. Requires a key and explicit `--yes` (it spends money).
 - Nabhanyu's manual steps (listed in `deploy/README.md`): AWS security group inbound 80/443; an
-  Elastic IP so the URL survives restarts; put the API key in `/etc/sideline/sideline.env`.
+  Elastic IP so the URL survives restarts; run `sudo deploy/install.sh` once. Key rotation means
+  updating `~/.bashrc` (Codex), `.env` and re-running `install.sh`.
 
 **Steps**
 - [ ] **7.1** Shellcheck-clean scripts (`bash -n`; `shellcheck` if available); `install.sh --dry-run` prints the plan without changes.
@@ -524,8 +558,9 @@ model's proposals safe to show.
 explains the engineering.
 
 **Files:** `apps/web/src/companion/cards/{SquadDiffLedger,BailoutQuestCard,BanterCard,RoomReadPods,TakeCard}.tsx`,
-`src/controlplane/InspectorQuery.tsx`, `src/story/{director,StoryOverlay}.tsx`, `src/pages/HowItWorks.tsx`,
-`src/share/cardImage.ts`, routes in `e2e/smoke.spec.ts` (`/how-it-works`), `e2e/story.spec.ts`.
+`src/controlplane/InspectorQuery.tsx`, `src/story/{director,StoryOverlay}.tsx`,
+`src/pages/Architecture.tsx` (polish; created in Task 6) + `src/architecture/{PipelineDiagram,AiUsageTable,PlanTimeline}.tsx`,
+`src/share/cardImage.ts`, `e2e/story.spec.ts`.
 
 **Decided:**
 - Story mode ("Watch the story", landing CTA): pre-match → toss + XIs (lineup patch) → innings-1
@@ -533,8 +568,11 @@ explains the engineering.
   (teasers, reveals, room read) → result. Each stop pauses with a one-line callout and a "Continue"
   button; the fan can leave the tour at any point. Story beats come from the persona's join point and
   detector triggers (data), never from hardcoded labels.
-- How it works: an inline SVG diagram of the pipeline, the "when we don't call AI" table rendered
-  from live telemetry, the design theses, data credits and licences.
+- `/architecture` polish (D-034): above the rendered docs, add an inline SVG pipeline diagram
+  (data → engine → gate → AI gateway → moments → fan's TV clock; works in both themes), the
+  "when we don't call AI" table filled from live global telemetry (`GET /api/telemetry?scope=global`),
+  the three design theses, a build-plan timeline from the PLAN checklist (status per task), and data
+  credits and licences. Linked from the landing page as well as the header/footer.
 - Banter card: rendered to a PNG via canvas; "Share card" uses the Web Share API when available,
   otherwise "Download card".
 
@@ -542,7 +580,7 @@ explains the engineering.
 - [ ] **9.1** Card components render their payloads and provenance; quest predictions update to won/lost as events arrive (resolver).
 - [ ] **9.2** Inspector UI shows the generated SQL, rows and errors; rejected SQL shows the reason.
 - [ ] **9.3** Story director: a test drives the director with a fake session and asserts the stop sequence derives from triggers; leaving the tour restores manual control.
-- [ ] **9.4** E2E: full story mode on desktop and 390 px; `/how-it-works` in smoke routes; no console errors; reduced-motion run.
+- [ ] **9.4** E2E: full story mode on desktop and 390 px; `/architecture` shows the diagram, the live AI-usage table (non-zero after a story run) and the plan timeline; no console errors; reduced-motion run.
 - [ ] **9.5** Polish: keyboard pass, focus order, `aria-live` for new moments (polite), contrast check, landing Lighthouse ≥ 90 for performance and accessibility (record the numbers).
 - [ ] **9.6** `pnpm verify` + `pnpm test:e2e` green; docs (F09 etc.).
 

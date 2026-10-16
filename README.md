@@ -31,8 +31,13 @@ pnpm dev             # web on http://127.0.0.1:5173 (proxies /api to the server 
 pnpm build && pnpm start   # production: server on :8787 serving apps/web/dist
 ```
 
-Optional AI configuration: copy `.env.example` to `.env` and add an Anthropic or OpenAI key.
-Without a key Sideline runs on deterministic logic plus recorded AI output (from Task 7).
+Optional AI configuration: copy `.env.example` to `.env` and add an Anthropic key or an
+OpenAI-compatible key (+ `OPENAI_BASE_URL` and model names for non-OpenAI endpoints). The provider
+defaults to whichever key is present. Without a key Sideline runs on deterministic logic plus
+recorded AI output (from Task 7).
+
+For the demo round, `/architecture` (from Task 6) presents this architecture and the live build
+plan inside the app, rendered from the same docs in this repository.
 
 ## Repository
 
