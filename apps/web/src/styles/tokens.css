@@ -1,0 +1,71 @@
+/*
+ * Sideline design tokens. Rationale and usage rules: docs/design/DESIGN_SYSTEM.md.
+ *
+ * Two themes, selected by <html data-theme>, which public/theme-init.js sets before first
+ * paint and ThemeControl keeps in sync afterwards:
+ *   light = "day match": cool sky-white, ink-dark text
+ *   dark  = "floodlit night": #080B14 sampled from the Aurora reference recording
+ *
+ * Floodlight spectrum hexes are sampled from that same recording (VISUAL_REFERENCES.md).
+ * Team colours are not tokens: they come from data/matches/<id>/context.json at runtime
+ * and are set inline as --team-a / --team-b on the match room.
+ */
+:root {
+  color-scheme: light;
+
+  --bg: #f3f5fa;
+  --surface-1: #ffffff;
+  --surface-2: #e9edf5;
+  --surface-3: #dfe5f0;
+
+  --ink: #0b1222;
+  --ink-muted: #4a5675;
+  --ink-faint: #5f6a88;
+  --line: rgb(20 34 70 / 0.12);
+  --line-strong: rgb(20 34 70 / 0.22);
+  --focus: #2e6bff;
+
+  --fl-blue: #5171e8;
+  --fl-cyan: #69b9ec;
+  --fl-violet: #7771bc;
+  --fl-pink: #d165aa;
+  /* Scales every glow effect: floodlights read softer in daylight. */
+  --glow-strength: 0.55;
+
+  --six: #b7791f;
+  --four: #1d7fb8;
+  --wicket: #d7263d;
+  --dot: #8a93ad;
+
+  --r-panel: 20px;
+  --r-card: 14px;
+  --r-control: 10px;
+  --r-bug: 6px;
+  --r-pill: 999px;
+
+  --font-ui: "Anek Latin Variable", "Anek Latin", ui-sans-serif, system-ui, sans-serif;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #080b14;
+  --surface-1: #0e1424;
+  --surface-2: #141c30;
+  --surface-3: #1b2540;
+
+  --ink: #f4f2fc;
+  --ink-muted: #a2abc6;
+  --ink-faint: #737d9b;
+  --line: rgb(162 171 198 / 0.14);
+  --line-strong: rgb(162 171 198 / 0.26);
+  --focus: #8fb0ff;
+
+  --glow-strength: 1;
+
+  --six: #ffc94a;
+  --four: #69b9ec;
+  --wicket: #ff5468;
+  --dot: #4c5571;
+}

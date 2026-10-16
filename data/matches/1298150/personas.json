@@ -1,0 +1,43 @@
+{
+  "matchId": "1298150",
+  "personas": [
+    {
+      "id": "babar-believer",
+      "label": "Captain Babar",
+      "blurb": "Made Babar Azam captain an hour before the toss and picked Fakhar Zaman and Rishabh Pant. Watches on an OTT app that runs about 25 seconds behind the ground.",
+      "affinity": "PAK",
+      "lens": "casual",
+      "delayMs": 25000,
+      "joinAt": { "kind": "pre_match" },
+      "squad": {
+        "playerIds": ["8a75e999", "2f26ac1a", "1777c020", "9c9af282", "24bb1c2f", "9de62878", "ba607b88", "dbe50b21", "244048f6", "2e81a32d", "919a3be2"],
+        "captainId": "8a75e999",
+        "viceCaptainId": "2f26ac1a"
+      }
+    },
+    {
+      "id": "late-from-work",
+      "label": "Late from work",
+      "blurb": "Virat Kohli captain, Rohit Sharma vice-captain. Stuck in a meeting, opens the app after 14 overs of the chase on a cable feed about 15 seconds behind.",
+      "affinity": "IND",
+      "lens": "casual",
+      "delayMs": 15000,
+      "joinAt": { "kind": "over", "innings": 2, "afterOvers": 14 },
+      "squad": {
+        "playerIds": ["ba607b88", "740742ef", "b17e2f24", "271f83cd", "c03f1114", "dbe50b21", "244048f6", "29e253dd", "9de62878", "45a7e761", "24bb1c2f"],
+        "captainId": "ba607b88",
+        "viceCaptainId": "740742ef"
+      }
+    },
+    {
+      "id": "f1-convert",
+      "label": "F1 fan, first cricket match",
+      "blurb": "Follows Formula 1 closely and has never watched a full cricket match. Joins after 16 overs of the chase on a stream about 40 seconds behind, with no fantasy team.",
+      "affinity": "neutral",
+      "lens": "f1",
+      "delayMs": 40000,
+      "joinAt": { "kind": "over", "innings": 2, "afterOvers": 16 },
+      "squad": null
+    }
+  ]
+}

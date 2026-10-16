@@ -1,0 +1,23 @@
+{
+  "name": "@sideline/engine",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pure, isomorphic domain core for Sideline: contracts, cricket timeline, state, fantasy, detectors, entropy gate. No I/O.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json && tsc -p tsconfig.test.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "~24.19.0",
+    "fast-check": "^4.10.2",
+    "typescript": "7.0.2",
+    "vitest": "5.0.3"
+  }
+}

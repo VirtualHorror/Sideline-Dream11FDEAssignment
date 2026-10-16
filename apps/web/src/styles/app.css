@@ -1,0 +1,179 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+/* Tailwind `dark:` follows the app's own theme switch, not only the OS setting. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/* Expose tokens as Tailwind utilities (bg-surface-1, text-ink-muted, ...). `inline` keeps the
+   var() references so utilities switch with the theme. */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-six: var(--six);
+  --color-four: var(--four);
+  --color-wicket: var(--wicket);
+  --font-sans: var(--font-ui);
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--fl-blue) 35%, transparent);
+  }
+
+  /* Reduced motion must beat every component's own animation, hence !important.
+     JS-driven effects (WebGL, Motion) also check the media query themselves. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      /* biome-ignore lint/complexity/noImportantStyles: global reduced-motion override */
+      animation-duration: 0.01ms !important;
+      /* biome-ignore lint/complexity/noImportantStyles: global reduced-motion override */
+      animation-iteration-count: 1 !important;
+      /* biome-ignore lint/complexity/noImportantStyles: global reduced-motion override */
+      transition-duration: 0.01ms !important;
+      /* biome-ignore lint/complexity/noImportantStyles: global reduced-motion override */
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  .shell {
+    min-height: 100dvh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .shell__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.875rem clamp(1rem, 4vw, 2.5rem);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .wordmark {
+    font-stretch: 125%;
+    font-weight: 760;
+    font-size: 1.3125rem;
+    letter-spacing: -0.01em;
+  }
+
+  .shell__main {
+    padding: clamp(2.5rem, 9vw, 7rem) clamp(1rem, 4vw, 2.5rem);
+  }
+
+  .intro {
+    max-width: 46rem;
+  }
+
+  .intro__title {
+    margin: 0 0 1.25rem;
+    font-stretch: 112%;
+    font-weight: 720;
+    font-size: clamp(2.25rem, 6.5vw, 4.5rem);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+  }
+
+  .intro__lede {
+    margin: 0;
+    max-width: 38rem;
+    font-size: 1.125rem;
+    line-height: 1.6;
+    color: var(--ink-muted);
+  }
+
+  .theme-control {
+    display: inline-flex;
+    gap: 2px;
+    margin: 0;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: var(--r-pill);
+    background: var(--surface-1);
+  }
+
+  .theme-control__option {
+    position: relative;
+  }
+
+  .theme-control__option input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .theme-control__option span {
+    display: block;
+    padding: 0.35rem 0.8rem;
+    border-radius: var(--r-pill);
+    font-size: 0.875rem;
+    font-weight: 520;
+    color: var(--ink-muted);
+  }
+
+  .theme-control__option input:checked + span {
+    background: var(--surface-3);
+    color: var(--ink);
+  }
+
+  .theme-control__option input:focus-visible + span {
+    outline: 2px solid var(--focus);
+    outline-offset: 1px;
+  }
+
+  .site-footer {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.5rem clamp(1rem, 4vw, 2.5rem) 2rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--ink-muted);
+  }
+
+  .site-footer__attribution {
+    margin: 0;
+    color: var(--ink);
+    font-weight: 520;
+  }
+
+  .site-footer__credits {
+    margin: 0;
+  }
+
+  .site-footer a {
+    color: inherit;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "id": "dream11-style-t20-v1",
+  "label": "Dream11-style T20 points (illustrative)",
+  "disclaimer": "Values follow the Dream11 T20 points table as commonly cited for 2023-2025. Dream11's official page could not be fetched on 2026-10-16 (HTTP 502), so treat these as illustrative and swap in official values here; no code change is needed.",
+  "team": {
+    "size": 11,
+    "credits": 100,
+    "maxFromOneTeam": 7,
+    "roles": { "WK": [1, 4], "BAT": [3, 6], "AR": [1, 4], "BOWL": [3, 6] },
+    "captainMultiplier": 2,
+    "viceCaptainMultiplier": 1.5
+  },
+  "points": {
+    "playingXI": 4,
+    "batting": {
+      "run": 1,
+      "boundaryBonus": 4,
+      "sixBonus": 6,
+      "milestones": [{ "runs": 25, "bonus": 4 }, { "runs": 50, "bonus": 8 }, { "runs": 75, "bonus": 12 }, { "runs": 100, "bonus": 16 }],
+      "milestoneMode": "highest",
+      "duck": -2,
+      "duckRoles": ["WK", "BAT", "AR"]
+    },
+    "bowling": {
+      "dotBall": 1,
+      "wicket": 30,
+      "lbwBowledBonus": 8,
+      "hauls": [{ "wickets": 3, "bonus": 4 }, { "wickets": 4, "bonus": 8 }, { "wickets": 5, "bonus": 12 }],
+      "haulMode": "highest",
+      "maiden": 12
+    },
+    "fielding": {
+      "catch": 8,
+      "threeCatchBonus": 4,
+      "stumping": 12,
+      "runOutDirect": 12,
+      "runOutIndirect": 6
+    },
+    "economy": {
+      "minBalls": 12,
+      "slabs": [
+        { "min": null, "max": 4.99, "points": 6 },
+        { "min": 5, "max": 5.99, "points": 4 },
+        { "min": 6, "max": 7, "points": 2 },
+        { "min": 10, "max": 11, "points": -2 },
+        { "min": 11.01, "max": 12, "points": -4 },
+        { "min": 12.01, "max": null, "points": -6 }
+      ]
+    },
+    "strikeRate": {
+      "minBalls": 10,
+      "exemptRoles": ["BOWL"],
+      "slabs": [
+        { "min": 170.01, "max": null, "points": 6 },
+        { "min": 150.01, "max": 170, "points": 4 },
+        { "min": 130, "max": 150, "points": 2 },
+        { "min": 60, "max": 70, "points": -2 },
+        { "min": 50, "max": 59.99, "points": -4 },
+        { "min": null, "max": 49.99, "points": -6 }
+      ]
+    }
+  }
+}

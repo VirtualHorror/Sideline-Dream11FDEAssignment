@@ -1,0 +1,37 @@
+{
+  "matchId": "1298150",
+  "creditsNote": "Credits are illustrative, authored for this prototype in Dream11's 7.5-10.5 style. They are not official Dream11 credits. Squads: the announced 15-player squads for the ICC Men's T20 World Cup 2022 (Pakistan's after Fakhar Zaman replaced Usman Qadir on 14 Oct 2022). Ids are Cricsheet registry identifiers.",
+  "players": [
+    { "id": "8a75e999", "cricsheetName": "Babar Azam", "displayName": "Babar Azam", "shortName": "Babar", "team": "PAK", "role": "BAT", "credits": 10 },
+    { "id": "2f26ac1a", "cricsheetName": "Mohammad Rizwan", "displayName": "Mohammad Rizwan", "shortName": "Rizwan", "team": "PAK", "role": "WK", "credits": 10 },
+    { "id": "6843a783", "cricsheetName": "Shan Masood", "displayName": "Shan Masood", "shortName": "Shan Masood", "team": "PAK", "role": "BAT", "credits": 8 },
+    { "id": "29e253dd", "cricsheetName": "Iftikhar Ahmed", "displayName": "Iftikhar Ahmed", "shortName": "Iftikhar", "team": "PAK", "role": "BAT", "credits": 8 },
+    { "id": "9de62878", "cricsheetName": "Shadab Khan", "displayName": "Shadab Khan", "shortName": "Shadab", "team": "PAK", "role": "AR", "credits": 9 },
+    { "id": "c13e34f4", "cricsheetName": "Haider Ali", "displayName": "Haider Ali", "shortName": "Haider", "team": "PAK", "role": "BAT", "credits": 7.5 },
+    { "id": "3086f7a4", "cricsheetName": "Mohammad Nawaz", "displayName": "Mohammad Nawaz", "shortName": "Nawaz", "team": "PAK", "role": "AR", "credits": 8 },
+    { "id": "0a4736eb", "cricsheetName": "Asif Ali", "displayName": "Asif Ali", "shortName": "Asif", "team": "PAK", "role": "BAT", "credits": 7.5 },
+    { "id": "45a7e761", "cricsheetName": "Shaheen Shah Afridi", "displayName": "Shaheen Shah Afridi", "shortName": "Shaheen", "team": "PAK", "role": "BOWL", "credits": 9 },
+    { "id": "24bb1c2f", "cricsheetName": "Haris Rauf", "displayName": "Haris Rauf", "shortName": "Rauf", "team": "PAK", "role": "BOWL", "credits": 8.5 },
+    { "id": "9c9af282", "cricsheetName": "Naseem Shah", "displayName": "Naseem Shah", "shortName": "Naseem", "team": "PAK", "role": "BOWL", "credits": 8 },
+    { "id": "1777c020", "cricsheetName": "Fakhar Zaman", "displayName": "Fakhar Zaman", "shortName": "Fakhar", "team": "PAK", "role": "BAT", "credits": 8.5 },
+    { "id": "fce581b5", "cricsheetName": "Khushdil Shah", "displayName": "Khushdil Shah", "shortName": "Khushdil", "team": "PAK", "role": "AR", "credits": 7.5 },
+    { "id": "9e9af5f2", "cricsheetName": "Mohammad Wasim", "displayName": "Mohammad Wasim Jr", "shortName": "Wasim Jr", "team": "PAK", "role": "BOWL", "credits": 7.5 },
+    { "id": "8596fe80", "cricsheetName": "Mohammad Hasnain", "displayName": "Mohammad Hasnain", "shortName": "Hasnain", "team": "PAK", "role": "BOWL", "credits": 7.5 },
+
+    { "id": "740742ef", "cricsheetName": "RG Sharma", "displayName": "Rohit Sharma", "shortName": "Rohit", "team": "IND", "role": "BAT", "credits": 10 },
+    { "id": "b17e2f24", "cricsheetName": "KL Rahul", "displayName": "KL Rahul", "shortName": "Rahul", "team": "IND", "role": "BAT", "credits": 9.5 },
+    { "id": "ba607b88", "cricsheetName": "V Kohli", "displayName": "Virat Kohli", "shortName": "Kohli", "team": "IND", "role": "BAT", "credits": 10 },
+    { "id": "271f83cd", "cricsheetName": "SA Yadav", "displayName": "Suryakumar Yadav", "shortName": "Suryakumar", "team": "IND", "role": "BAT", "credits": 9.5 },
+    { "id": "2e171977", "cricsheetName": "AR Patel", "displayName": "Axar Patel", "shortName": "Axar", "team": "IND", "role": "AR", "credits": 8.5 },
+    { "id": "dbe50b21", "cricsheetName": "HH Pandya", "displayName": "Hardik Pandya", "shortName": "Hardik", "team": "IND", "role": "AR", "credits": 9.5 },
+    { "id": "c03f1114", "cricsheetName": "KD Karthik", "displayName": "Dinesh Karthik", "shortName": "Karthik", "team": "IND", "role": "WK", "credits": 8 },
+    { "id": "495d42a5", "cricsheetName": "R Ashwin", "displayName": "Ravichandran Ashwin", "shortName": "Ashwin", "team": "IND", "role": "AR", "credits": 8.5 },
+    { "id": "8cf9814c", "cricsheetName": "Mohammed Shami", "displayName": "Mohammed Shami", "shortName": "Shami", "team": "IND", "role": "BOWL", "credits": 8.5 },
+    { "id": "2e81a32d", "cricsheetName": "B Kumar", "displayName": "Bhuvneshwar Kumar", "shortName": "Bhuvneshwar", "team": "IND", "role": "BOWL", "credits": 8.5 },
+    { "id": "244048f6", "cricsheetName": "Arshdeep Singh", "displayName": "Arshdeep Singh", "shortName": "Arshdeep", "team": "IND", "role": "BOWL", "credits": 8.5 },
+    { "id": "919a3be2", "cricsheetName": "RR Pant", "displayName": "Rishabh Pant", "shortName": "Pant", "team": "IND", "role": "WK", "credits": 9 },
+    { "id": "73ad96ed", "cricsheetName": "DJ Hooda", "displayName": "Deepak Hooda", "shortName": "Hooda", "team": "IND", "role": "AR", "credits": 8 },
+    { "id": "57ee1fde", "cricsheetName": "YS Chahal", "displayName": "Yuzvendra Chahal", "shortName": "Chahal", "team": "IND", "role": "BOWL", "credits": 8.5 },
+    { "id": "f986ca1a", "cricsheetName": "HV Patel", "displayName": "Harshal Patel", "shortName": "Harshal", "team": "IND", "role": "BOWL", "credits": 8 }
+  ]
+}

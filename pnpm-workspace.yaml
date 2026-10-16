@@ -1,0 +1,12 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Supply-chain guard (see docs/Decisions.md D-007): never resolve a package
+# version published less than 14 days ago (value is in minutes).
+minimumReleaseAge: 20160
+
+# pnpm 10 blocks dependency lifecycle scripts by default. Only packages listed
+# here may run install scripts. Keep this list empty unless a build fails
+# without it, and record why in docs/Decisions.md.
+onlyBuiltDependencies: []

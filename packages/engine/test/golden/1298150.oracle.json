@@ -1,0 +1,736 @@
+{
+ "innings": [
+  {
+   "innings": 1,
+   "team": "Pakistan",
+   "totals": {
+    "runs": 159,
+    "wickets": 8,
+    "legal_balls": 120,
+    "deliveries": 126,
+    "extras": {
+     "wides": 6,
+     "noballs": 0,
+     "byes": 2,
+     "legbyes": 4,
+     "penalty": 0
+    }
+   },
+   "batters": {
+    "2f26ac1a": {
+     "name": "Mohammad Rizwan",
+     "runs": 4,
+     "balls": 12,
+     "fours": 1,
+     "sixes": 0,
+     "dots": 11,
+     "out": "caught",
+     "strike_rate": 33.33
+    },
+    "8a75e999": {
+     "name": "Babar Azam",
+     "runs": 0,
+     "balls": 1,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 1,
+     "out": "lbw",
+     "strike_rate": 0.0
+    },
+    "6843a783": {
+     "name": "Shan Masood",
+     "runs": 52,
+     "balls": 42,
+     "fours": 5,
+     "sixes": 0,
+     "dots": 14,
+     "out": null,
+     "strike_rate": 123.81
+    },
+    "29e253dd": {
+     "name": "Iftikhar Ahmed",
+     "runs": 51,
+     "balls": 34,
+     "fours": 2,
+     "sixes": 4,
+     "dots": 16,
+     "out": "lbw",
+     "strike_rate": 150.0
+    },
+    "9de62878": {
+     "name": "Shadab Khan",
+     "runs": 5,
+     "balls": 6,
+     "fours": 1,
+     "sixes": 0,
+     "dots": 4,
+     "out": "caught",
+     "strike_rate": 83.33
+    },
+    "c13e34f4": {
+     "name": "Haider Ali",
+     "runs": 2,
+     "balls": 4,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 3,
+     "out": "caught",
+     "strike_rate": 50.0
+    },
+    "3086f7a4": {
+     "name": "Mohammad Nawaz",
+     "runs": 9,
+     "balls": 6,
+     "fours": 2,
+     "sixes": 0,
+     "dots": 3,
+     "out": "caught",
+     "strike_rate": 150.0
+    },
+    "0a4736eb": {
+     "name": "Asif Ali",
+     "runs": 2,
+     "balls": 3,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 1,
+     "out": "caught",
+     "strike_rate": 66.67
+    },
+    "45a7e761": {
+     "name": "Shaheen Shah Afridi",
+     "runs": 16,
+     "balls": 8,
+     "fours": 1,
+     "sixes": 1,
+     "dots": 2,
+     "out": "caught and bowled",
+     "strike_rate": 200.0
+    },
+    "24bb1c2f": {
+     "name": "Haris Rauf",
+     "runs": 6,
+     "balls": 4,
+     "fours": 0,
+     "sixes": 1,
+     "dots": 3,
+     "out": null,
+     "strike_rate": 150.0
+    }
+   },
+   "bowlers": {
+    "2e81a32d": {
+     "name": "B Kumar",
+     "legal_balls": 24,
+     "conceded": 22,
+     "wickets": 1,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 17,
+     "wides": 3,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 5.5
+    },
+    "244048f6": {
+     "name": "Arshdeep Singh",
+     "legal_balls": 24,
+     "conceded": 32,
+     "wickets": 3,
+     "lbw_bowled": 1,
+     "maidens": 0,
+     "dots": 10,
+     "wides": 1,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 8.0
+    },
+    "8cf9814c": {
+     "name": "Mohammed Shami",
+     "legal_balls": 24,
+     "conceded": 25,
+     "wickets": 1,
+     "lbw_bowled": 1,
+     "maidens": 0,
+     "dots": 14,
+     "wides": 1,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 6.25
+    },
+    "dbe50b21": {
+     "name": "HH Pandya",
+     "legal_balls": 24,
+     "conceded": 30,
+     "wickets": 3,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 10,
+     "wides": 0,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 7.5
+    },
+    "495d42a5": {
+     "name": "R Ashwin",
+     "legal_balls": 18,
+     "conceded": 23,
+     "wickets": 0,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 5,
+     "wides": 1,
+     "noballs": 0,
+     "overs": "3.0",
+     "economy": 7.67
+    },
+    "2e171977": {
+     "name": "AR Patel",
+     "legal_balls": 6,
+     "conceded": 21,
+     "wickets": 0,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 2,
+     "wides": 0,
+     "noballs": 0,
+     "overs": "1.0",
+     "economy": 21.0
+    }
+   },
+   "fall_of_wickets": [
+    {
+     "wicket": 1,
+     "runs": 1,
+     "label": "1.1",
+     "player": "Babar Azam",
+     "kind": "lbw",
+     "bowler": "Arshdeep Singh"
+    },
+    {
+     "wicket": 2,
+     "runs": 15,
+     "label": "3.6",
+     "player": "Mohammad Rizwan",
+     "kind": "caught",
+     "bowler": "Arshdeep Singh"
+    },
+    {
+     "wicket": 3,
+     "runs": 91,
+     "label": "12.2",
+     "player": "Iftikhar Ahmed",
+     "kind": "lbw",
+     "bowler": "Mohammed Shami"
+    },
+    {
+     "wicket": 4,
+     "runs": 96,
+     "label": "13.2",
+     "player": "Shadab Khan",
+     "kind": "caught",
+     "bowler": "HH Pandya"
+    },
+    {
+     "wicket": 5,
+     "runs": 98,
+     "label": "13.6",
+     "player": "Haider Ali",
+     "kind": "caught",
+     "bowler": "HH Pandya"
+    },
+    {
+     "wicket": 6,
+     "runs": 115,
+     "label": "15.5",
+     "player": "Mohammad Nawaz",
+     "kind": "caught",
+     "bowler": "HH Pandya"
+    },
+    {
+     "wicket": 7,
+     "runs": 120,
+     "label": "16.4",
+     "player": "Asif Ali",
+     "kind": "caught",
+     "bowler": "Arshdeep Singh"
+    },
+    {
+     "wicket": 8,
+     "runs": 151,
+     "label": "19.2",
+     "player": "Shaheen Shah Afridi",
+     "kind": "caught and bowled",
+     "bowler": "B Kumar"
+    }
+   ],
+   "fielding": {
+    "2e81a32d": {
+     "catches": 2,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    },
+    "271f83cd": {
+     "catches": 2,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    },
+    "c03f1114": {
+     "catches": 2,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    }
+   }
+  },
+  {
+   "innings": 2,
+   "team": "India",
+   "totals": {
+    "runs": 160,
+    "wickets": 6,
+    "legal_balls": 120,
+    "deliveries": 125,
+    "extras": {
+     "wides": 6,
+     "noballs": 1,
+     "byes": 3,
+     "legbyes": 1,
+     "penalty": 0
+    }
+   },
+   "batters": {
+    "b17e2f24": {
+     "name": "KL Rahul",
+     "runs": 4,
+     "balls": 8,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 5,
+     "out": "bowled",
+     "strike_rate": 50.0
+    },
+    "740742ef": {
+     "name": "RG Sharma",
+     "runs": 4,
+     "balls": 7,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 4,
+     "out": "caught",
+     "strike_rate": 57.14
+    },
+    "ba607b88": {
+     "name": "V Kohli",
+     "runs": 82,
+     "balls": 53,
+     "fours": 6,
+     "sixes": 4,
+     "dots": 16,
+     "out": null,
+     "strike_rate": 154.72
+    },
+    "271f83cd": {
+     "name": "SA Yadav",
+     "runs": 15,
+     "balls": 10,
+     "fours": 2,
+     "sixes": 0,
+     "dots": 5,
+     "out": "caught",
+     "strike_rate": 150.0
+    },
+    "2e171977": {
+     "name": "AR Patel",
+     "runs": 2,
+     "balls": 3,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 2,
+     "out": "run out",
+     "strike_rate": 66.67
+    },
+    "dbe50b21": {
+     "name": "HH Pandya",
+     "runs": 40,
+     "balls": 37,
+     "fours": 1,
+     "sixes": 2,
+     "dots": 13,
+     "out": "caught",
+     "strike_rate": 108.11
+    },
+    "c03f1114": {
+     "name": "KD Karthik",
+     "runs": 1,
+     "balls": 2,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 1,
+     "out": "stumped",
+     "strike_rate": 50.0
+    },
+    "495d42a5": {
+     "name": "R Ashwin",
+     "runs": 1,
+     "balls": 1,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 0,
+     "out": null,
+     "strike_rate": 100.0
+    }
+   },
+   "bowlers": {
+    "45a7e761": {
+     "name": "Shaheen Shah Afridi",
+     "legal_balls": 24,
+     "conceded": 34,
+     "wickets": 0,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 7,
+     "wides": 1,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 8.5
+    },
+    "9c9af282": {
+     "name": "Naseem Shah",
+     "legal_balls": 24,
+     "conceded": 23,
+     "wickets": 1,
+     "lbw_bowled": 1,
+     "maidens": 0,
+     "dots": 10,
+     "wides": 0,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 5.75
+    },
+    "24bb1c2f": {
+     "name": "Haris Rauf",
+     "legal_balls": 24,
+     "conceded": 36,
+     "wickets": 2,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 11,
+     "wides": 3,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 9.0
+    },
+    "9de62878": {
+     "name": "Shadab Khan",
+     "legal_balls": 24,
+     "conceded": 21,
+     "wickets": 0,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 10,
+     "wides": 0,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 5.25
+    },
+    "3086f7a4": {
+     "name": "Mohammad Nawaz",
+     "legal_balls": 24,
+     "conceded": 42,
+     "wickets": 2,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 8,
+     "wides": 2,
+     "noballs": 1,
+     "overs": "4.0",
+     "economy": 10.5
+    }
+   },
+   "fall_of_wickets": [
+    {
+     "wicket": 1,
+     "runs": 7,
+     "label": "1.5",
+     "player": "KL Rahul",
+     "kind": "bowled",
+     "bowler": "Naseem Shah"
+    },
+    {
+     "wicket": 2,
+     "runs": 10,
+     "label": "3.2",
+     "player": "RG Sharma",
+     "kind": "caught",
+     "bowler": "Haris Rauf"
+    },
+    {
+     "wicket": 3,
+     "runs": 26,
+     "label": "5.3",
+     "player": "SA Yadav",
+     "kind": "caught",
+     "bowler": "Haris Rauf"
+    },
+    {
+     "wicket": 4,
+     "runs": 31,
+     "label": "6.1",
+     "player": "AR Patel",
+     "kind": "run out",
+     "bowler": "Shadab Khan"
+    },
+    {
+     "wicket": 5,
+     "runs": 144,
+     "label": "19.1",
+     "player": "HH Pandya",
+     "kind": "caught",
+     "bowler": "Mohammad Nawaz"
+    },
+    {
+     "wicket": 6,
+     "runs": 158,
+     "label": "19.5",
+     "player": "KD Karthik",
+     "kind": "stumped",
+     "bowler": "Mohammad Nawaz"
+    }
+   ],
+   "fielding": {
+    "29e253dd": {
+     "catches": 1,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    },
+    "2f26ac1a": {
+     "catches": 1,
+     "stumpings": 1,
+     "ro_direct": 0,
+     "ro_indirect": 1
+    },
+    "8a75e999": {
+     "catches": 1,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 1
+    }
+   }
+  }
+ ],
+ "fantasy": {
+  "6843a783": {
+   "total": 84,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 52,
+    "boundaryBonus": 20,
+    "milestone": 8
+   }
+  },
+  "24bb1c2f": {
+   "total": 87,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 6,
+    "sixBonus": 6,
+    "dotBall": 11,
+    "wicket": 60
+   }
+  },
+  "3086f7a4": {
+   "total": 87,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 9,
+    "boundaryBonus": 8,
+    "dotBall": 8,
+    "wicket": 60,
+    "economy": -2
+   }
+  },
+  "c13e34f4": {
+   "total": 6,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 2
+   }
+  },
+  "244048f6": {
+   "total": 116,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 10,
+    "wicket": 90,
+    "lbwBowledBonus": 8,
+    "haul": 4
+   }
+  },
+  "dbe50b21": {
+   "total": 168,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 10,
+    "wicket": 90,
+    "haul": 4,
+    "runs": 40,
+    "boundaryBonus": 4,
+    "sixBonus": 12,
+    "milestone": 4
+   }
+  },
+  "9de62878": {
+   "total": 27,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 5,
+    "boundaryBonus": 4,
+    "dotBall": 10,
+    "economy": 4
+   }
+  },
+  "45a7e761": {
+   "total": 37,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 16,
+    "boundaryBonus": 4,
+    "sixBonus": 6,
+    "dotBall": 7
+   }
+  },
+  "0a4736eb": {
+   "total": 6,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 2
+   }
+  },
+  "c03f1114": {
+   "total": 21,
+   "breakdown": {
+    "playingXI": 4,
+    "catch": 16,
+    "runs": 1
+   }
+  },
+  "495d42a5": {
+   "total": 10,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 5,
+    "runs": 1
+   }
+  },
+  "b17e2f24": {
+   "total": 8,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 4
+   }
+  },
+  "29e253dd": {
+   "total": 105,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 51,
+    "boundaryBonus": 8,
+    "sixBonus": 24,
+    "milestone": 8,
+    "strikeRate": 2,
+    "catch": 8
+   }
+  },
+  "8cf9814c": {
+   "total": 58,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 14,
+    "wicket": 30,
+    "lbwBowledBonus": 8,
+    "economy": 2
+   }
+  },
+  "8a75e999": {
+   "total": 16,
+   "breakdown": {
+    "playingXI": 4,
+    "duck": -2,
+    "catch": 8,
+    "runOutIndirect": 6
+   }
+  },
+  "740742ef": {
+   "total": 8,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 4
+   }
+  },
+  "ba607b88": {
+   "total": 150,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 82,
+    "boundaryBonus": 24,
+    "sixBonus": 24,
+    "milestone": 12,
+    "strikeRate": 4
+   }
+  },
+  "9c9af282": {
+   "total": 56,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 10,
+    "wicket": 30,
+    "lbwBowledBonus": 8,
+    "economy": 4
+   }
+  },
+  "271f83cd": {
+   "total": 45,
+   "breakdown": {
+    "playingXI": 4,
+    "catch": 16,
+    "runs": 15,
+    "boundaryBonus": 8,
+    "strikeRate": 2
+   }
+  },
+  "2e81a32d": {
+   "total": 71,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 17,
+    "wicket": 30,
+    "economy": 4,
+    "catch": 16
+   }
+  },
+  "2f26ac1a": {
+   "total": 32,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 4,
+    "boundaryBonus": 4,
+    "strikeRate": -6,
+    "catch": 8,
+    "stumping": 12,
+    "runOutIndirect": 6
+   }
+  },
+  "2e171977": {
+   "total": 8,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 2,
+    "runs": 2
+   }
+  }
+ }
+}

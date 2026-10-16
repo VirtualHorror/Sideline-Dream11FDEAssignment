@@ -1,0 +1,26 @@
+{
+  "matchId": "1415755",
+  "title": "India vs South Africa",
+  "competition": "ICC Men's T20 World Cup 2024",
+  "stage": "Final",
+  "teams": [
+    { "code": "IND", "name": "India", "cricsheetName": "India", "color": "#2E6BFF", "colorAlt": "#FF9933" },
+    { "code": "SA", "name": "South Africa", "cricsheetName": "South Africa", "color": "#0E8A4F", "colorAlt": "#FFB612" }
+  ],
+  "notes": [
+    {
+      "id": "unbeaten-finalists",
+      "category": "context",
+      "title": "Two unbeaten finalists",
+      "text": "India and South Africa both reached the final without losing a game. It is South Africa's first men's World Cup final in either format.",
+      "sources": []
+    },
+    {
+      "id": "venue",
+      "category": "pitch",
+      "title": "Kensington Oval",
+      "text": "The final is played at Kensington Oval in Bridgetown, Barbados.",
+      "sources": []
+    }
+  ]
+}

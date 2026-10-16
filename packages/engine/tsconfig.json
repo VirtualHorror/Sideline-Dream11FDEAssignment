@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    // The engine is isomorphic (runs in Node and the browser): no Node or DOM
+    // types are visible to src/. Using `process`, `Buffer`, `fs` or `window`
+    // in src/ is a type error by design. Tests get Node types via tsconfig.test.json.
+    "types": []
+  },
+  "include": ["src"]
+}

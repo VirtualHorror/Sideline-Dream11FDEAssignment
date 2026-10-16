@@ -1,0 +1,777 @@
+{
+ "innings": [
+  {
+   "innings": 1,
+   "team": "India",
+   "totals": {
+    "runs": 176,
+    "wickets": 7,
+    "legal_balls": 120,
+    "deliveries": 127,
+    "extras": {
+     "wides": 6,
+     "noballs": 1,
+     "byes": 0,
+     "legbyes": 0,
+     "penalty": 0
+    }
+   },
+   "batters": {
+    "740742ef": {
+     "name": "RG Sharma",
+     "runs": 9,
+     "balls": 5,
+     "fours": 2,
+     "sixes": 0,
+     "dots": 2,
+     "out": "caught",
+     "strike_rate": 180.0
+    },
+    "ba607b88": {
+     "name": "V Kohli",
+     "runs": 76,
+     "balls": 59,
+     "fours": 6,
+     "sixes": 2,
+     "dots": 17,
+     "out": "caught",
+     "strike_rate": 128.81
+    },
+    "919a3be2": {
+     "name": "RR Pant",
+     "runs": 0,
+     "balls": 2,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 2,
+     "out": "caught",
+     "strike_rate": 0.0
+    },
+    "271f83cd": {
+     "name": "SA Yadav",
+     "runs": 3,
+     "balls": 4,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 2,
+     "out": "caught",
+     "strike_rate": 75.0
+    },
+    "2e171977": {
+     "name": "AR Patel",
+     "runs": 47,
+     "balls": 31,
+     "fours": 1,
+     "sixes": 4,
+     "dots": 8,
+     "out": "run out",
+     "strike_rate": 151.61
+    },
+    "a4e37e47": {
+     "name": "S Dube",
+     "runs": 27,
+     "balls": 16,
+     "fours": 3,
+     "sixes": 1,
+     "dots": 3,
+     "out": "caught",
+     "strike_rate": 168.75
+    },
+    "dbe50b21": {
+     "name": "HH Pandya",
+     "runs": 5,
+     "balls": 2,
+     "fours": 1,
+     "sixes": 0,
+     "dots": 0,
+     "out": null,
+     "strike_rate": 250.0
+    },
+    "fe93fd9d": {
+     "name": "RA Jadeja",
+     "runs": 2,
+     "balls": 2,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 1,
+     "out": "caught",
+     "strike_rate": 100.0
+    }
+   },
+   "bowlers": {
+    "81c36ee9": {
+     "name": "M Jansen",
+     "legal_balls": 24,
+     "conceded": 49,
+     "wickets": 1,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 4,
+     "wides": 1,
+     "noballs": 1,
+     "overs": "4.0",
+     "economy": 12.25
+    },
+    "0b60eb09": {
+     "name": "KA Maharaj",
+     "legal_balls": 18,
+     "conceded": 23,
+     "wickets": 2,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 10,
+     "wides": 0,
+     "noballs": 0,
+     "overs": "3.0",
+     "economy": 7.67
+    },
+    "e62dd25d": {
+     "name": "K Rabada",
+     "legal_balls": 24,
+     "conceded": 36,
+     "wickets": 1,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 8,
+     "wides": 2,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 9.0
+    },
+    "6a26221c": {
+     "name": "AK Markram",
+     "legal_balls": 12,
+     "conceded": 16,
+     "wickets": 0,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 1,
+     "wides": 0,
+     "noballs": 0,
+     "overs": "2.0",
+     "economy": 8.0
+    },
+    "acdc62f5": {
+     "name": "A Nortje",
+     "legal_balls": 24,
+     "conceded": 26,
+     "wickets": 2,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 7,
+     "wides": 2,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 6.5
+    },
+    "a03bba42": {
+     "name": "T Shamsi",
+     "legal_balls": 18,
+     "conceded": 26,
+     "wickets": 0,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 4,
+     "wides": 1,
+     "noballs": 0,
+     "overs": "3.0",
+     "economy": 8.67
+    }
+   },
+   "fall_of_wickets": [
+    {
+     "wicket": 1,
+     "runs": 23,
+     "label": "1.4",
+     "player": "RG Sharma",
+     "kind": "caught",
+     "bowler": "KA Maharaj"
+    },
+    {
+     "wicket": 2,
+     "runs": 23,
+     "label": "1.6",
+     "player": "RR Pant",
+     "kind": "caught",
+     "bowler": "KA Maharaj"
+    },
+    {
+     "wicket": 3,
+     "runs": 34,
+     "label": "4.3",
+     "player": "SA Yadav",
+     "kind": "caught",
+     "bowler": "K Rabada"
+    },
+    {
+     "wicket": 4,
+     "runs": 106,
+     "label": "13.3",
+     "player": "AR Patel",
+     "kind": "run out",
+     "bowler": "K Rabada"
+    },
+    {
+     "wicket": 5,
+     "runs": 163,
+     "label": "18.5",
+     "player": "V Kohli",
+     "kind": "caught",
+     "bowler": "M Jansen"
+    },
+    {
+     "wicket": 6,
+     "runs": 174,
+     "label": "19.4",
+     "player": "S Dube",
+     "kind": "caught",
+     "bowler": "A Nortje"
+    },
+    {
+     "wicket": 7,
+     "runs": 176,
+     "label": "19.6",
+     "player": "RA Jadeja",
+     "kind": "caught",
+     "bowler": "A Nortje"
+    }
+   ],
+   "fielding": {
+    "235c2bb6": {
+     "catches": 2,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    },
+    "372455c4": {
+     "catches": 1,
+     "stumpings": 0,
+     "ro_direct": 1,
+     "ro_indirect": 0
+    },
+    "e62dd25d": {
+     "catches": 1,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    },
+    "d67d5f00": {
+     "catches": 1,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    },
+    "0b60eb09": {
+     "catches": 1,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    }
+   }
+  },
+  {
+   "innings": 2,
+   "team": "South Africa",
+   "totals": {
+    "runs": 169,
+    "wickets": 8,
+    "legal_balls": 120,
+    "deliveries": 124,
+    "extras": {
+     "wides": 3,
+     "noballs": 1,
+     "byes": 1,
+     "legbyes": 4,
+     "penalty": 0
+    }
+   },
+   "batters": {
+    "b8cc58c9": {
+     "name": "RR Hendricks",
+     "runs": 4,
+     "balls": 5,
+     "fours": 1,
+     "sixes": 0,
+     "dots": 4,
+     "out": "bowled",
+     "strike_rate": 80.0
+    },
+    "372455c4": {
+     "name": "Q de Kock",
+     "runs": 39,
+     "balls": 31,
+     "fours": 4,
+     "sixes": 1,
+     "dots": 11,
+     "out": "caught",
+     "strike_rate": 125.81
+    },
+    "6a26221c": {
+     "name": "AK Markram",
+     "runs": 4,
+     "balls": 5,
+     "fours": 1,
+     "sixes": 0,
+     "dots": 4,
+     "out": "caught",
+     "strike_rate": 80.0
+    },
+    "85b3fab2": {
+     "name": "T Stubbs",
+     "runs": 31,
+     "balls": 21,
+     "fours": 3,
+     "sixes": 1,
+     "dots": 6,
+     "out": "bowled",
+     "strike_rate": 147.62
+    },
+    "235c2bb6": {
+     "name": "H Klaasen",
+     "runs": 52,
+     "balls": 27,
+     "fours": 2,
+     "sixes": 5,
+     "dots": 9,
+     "out": "caught",
+     "strike_rate": 192.59
+    },
+    "d67d5f00": {
+     "name": "DA Miller",
+     "runs": 21,
+     "balls": 17,
+     "fours": 1,
+     "sixes": 1,
+     "dots": 6,
+     "out": "caught",
+     "strike_rate": 123.53
+    },
+    "81c36ee9": {
+     "name": "M Jansen",
+     "runs": 2,
+     "balls": 4,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 2,
+     "out": "bowled",
+     "strike_rate": 50.0
+    },
+    "0b60eb09": {
+     "name": "KA Maharaj",
+     "runs": 2,
+     "balls": 7,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 5,
+     "out": null,
+     "strike_rate": 28.57
+    },
+    "e62dd25d": {
+     "name": "K Rabada",
+     "runs": 4,
+     "balls": 3,
+     "fours": 1,
+     "sixes": 0,
+     "dots": 2,
+     "out": "caught",
+     "strike_rate": 133.33
+    },
+    "acdc62f5": {
+     "name": "A Nortje",
+     "runs": 1,
+     "balls": 1,
+     "fours": 0,
+     "sixes": 0,
+     "dots": 0,
+     "out": null,
+     "strike_rate": 100.0
+    }
+   },
+   "bowlers": {
+    "244048f6": {
+     "name": "Arshdeep Singh",
+     "legal_balls": 24,
+     "conceded": 20,
+     "wickets": 2,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 12,
+     "wides": 0,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 5.0
+    },
+    "462411b3": {
+     "name": "JJ Bumrah",
+     "legal_balls": 24,
+     "conceded": 18,
+     "wickets": 2,
+     "lbw_bowled": 2,
+     "maidens": 0,
+     "dots": 14,
+     "wides": 0,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 4.5
+    },
+    "2e171977": {
+     "name": "AR Patel",
+     "legal_balls": 24,
+     "conceded": 49,
+     "wickets": 1,
+     "lbw_bowled": 1,
+     "maidens": 0,
+     "dots": 8,
+     "wides": 2,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 12.25
+    },
+    "8d2c70ad": {
+     "name": "Kuldeep Yadav",
+     "legal_balls": 24,
+     "conceded": 45,
+     "wickets": 0,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 6,
+     "wides": 0,
+     "noballs": 0,
+     "overs": "4.0",
+     "economy": 11.25
+    },
+    "dbe50b21": {
+     "name": "HH Pandya",
+     "legal_balls": 18,
+     "conceded": 20,
+     "wickets": 3,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 9,
+     "wides": 1,
+     "noballs": 1,
+     "overs": "3.0",
+     "economy": 6.67
+    },
+    "fe93fd9d": {
+     "name": "RA Jadeja",
+     "legal_balls": 6,
+     "conceded": 12,
+     "wickets": 0,
+     "lbw_bowled": 0,
+     "maidens": 0,
+     "dots": 0,
+     "wides": 0,
+     "noballs": 0,
+     "overs": "1.0",
+     "economy": 12.0
+    }
+   },
+   "fall_of_wickets": [
+    {
+     "wicket": 1,
+     "runs": 7,
+     "label": "1.3",
+     "player": "RR Hendricks",
+     "kind": "bowled",
+     "bowler": "JJ Bumrah"
+    },
+    {
+     "wicket": 2,
+     "runs": 12,
+     "label": "2.3",
+     "player": "AK Markram",
+     "kind": "caught",
+     "bowler": "Arshdeep Singh"
+    },
+    {
+     "wicket": 3,
+     "runs": 70,
+     "label": "8.5",
+     "player": "T Stubbs",
+     "kind": "bowled",
+     "bowler": "AR Patel"
+    },
+    {
+     "wicket": 4,
+     "runs": 106,
+     "label": "12.3",
+     "player": "Q de Kock",
+     "kind": "caught",
+     "bowler": "Arshdeep Singh"
+    },
+    {
+     "wicket": 5,
+     "runs": 151,
+     "label": "16.1",
+     "player": "H Klaasen",
+     "kind": "caught",
+     "bowler": "HH Pandya"
+    },
+    {
+     "wicket": 6,
+     "runs": 156,
+     "label": "17.4",
+     "player": "M Jansen",
+     "kind": "bowled",
+     "bowler": "JJ Bumrah"
+    },
+    {
+     "wicket": 7,
+     "runs": 161,
+     "label": "19.1",
+     "player": "DA Miller",
+     "kind": "caught",
+     "bowler": "HH Pandya"
+    },
+    {
+     "wicket": 8,
+     "runs": 168,
+     "label": "19.5",
+     "player": "K Rabada",
+     "kind": "caught",
+     "bowler": "HH Pandya"
+    }
+   ],
+   "fielding": {
+    "919a3be2": {
+     "catches": 2,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    },
+    "8d2c70ad": {
+     "catches": 1,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    },
+    "271f83cd": {
+     "catches": 2,
+     "stumpings": 0,
+     "ro_direct": 0,
+     "ro_indirect": 0
+    }
+   }
+  }
+ ],
+ "fantasy": {
+  "6a26221c": {
+   "total": 13,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 1,
+    "runs": 4,
+    "boundaryBonus": 4
+   }
+  },
+  "919a3be2": {
+   "total": 18,
+   "breakdown": {
+    "playingXI": 4,
+    "duck": -2,
+    "catch": 16
+   }
+  },
+  "8d2c70ad": {
+   "total": 14,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 6,
+    "economy": -4,
+    "catch": 8
+   }
+  },
+  "e62dd25d": {
+   "total": 58,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 8,
+    "wicket": 30,
+    "catch": 8,
+    "runs": 4,
+    "boundaryBonus": 4
+   }
+  },
+  "0b60eb09": {
+   "total": 84,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 10,
+    "wicket": 60,
+    "catch": 8,
+    "runs": 2
+   }
+  },
+  "fe93fd9d": {
+   "total": 6,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 2
+   }
+  },
+  "740742ef": {
+   "total": 21,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 9,
+    "boundaryBonus": 8
+   }
+  },
+  "235c2bb6": {
+   "total": 124,
+   "breakdown": {
+    "playingXI": 4,
+    "catch": 16,
+    "runs": 52,
+    "boundaryBonus": 8,
+    "sixBonus": 30,
+    "milestone": 8,
+    "strikeRate": 6
+   }
+  },
+  "372455c4": {
+   "total": 89,
+   "breakdown": {
+    "playingXI": 4,
+    "catch": 8,
+    "runOutDirect": 12,
+    "runs": 39,
+    "boundaryBonus": 16,
+    "sixBonus": 6,
+    "milestone": 4
+   }
+  },
+  "85b3fab2": {
+   "total": 59,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 31,
+    "boundaryBonus": 12,
+    "sixBonus": 6,
+    "milestone": 4,
+    "strikeRate": 2
+   }
+  },
+  "a4e37e47": {
+   "total": 57,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 27,
+    "boundaryBonus": 12,
+    "sixBonus": 6,
+    "milestone": 4,
+    "strikeRate": 4
+   }
+  },
+  "462411b3": {
+   "total": 100,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 14,
+    "wicket": 60,
+    "lbwBowledBonus": 16,
+    "economy": 6
+   }
+  },
+  "acdc62f5": {
+   "total": 74,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 7,
+    "wicket": 60,
+    "economy": 2,
+    "runs": 1
+   }
+  },
+  "244048f6": {
+   "total": 80,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 12,
+    "wicket": 60,
+    "economy": 4
+   }
+  },
+  "2e171977": {
+   "total": 127,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 47,
+    "boundaryBonus": 4,
+    "sixBonus": 24,
+    "milestone": 4,
+    "strikeRate": 4,
+    "dotBall": 8,
+    "wicket": 30,
+    "lbwBowledBonus": 8,
+    "economy": -6
+   }
+  },
+  "d67d5f00": {
+   "total": 43,
+   "breakdown": {
+    "playingXI": 4,
+    "catch": 8,
+    "runs": 21,
+    "boundaryBonus": 4,
+    "sixBonus": 6
+   }
+  },
+  "81c36ee9": {
+   "total": 34,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 4,
+    "wicket": 30,
+    "economy": -6,
+    "runs": 2
+   }
+  },
+  "271f83cd": {
+   "total": 23,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 3,
+    "catch": 16
+   }
+  },
+  "a03bba42": {
+   "total": 8,
+   "breakdown": {
+    "playingXI": 4,
+    "dotBall": 4
+   }
+  },
+  "ba607b88": {
+   "total": 128,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 76,
+    "boundaryBonus": 24,
+    "sixBonus": 12,
+    "milestone": 12
+   }
+  },
+  "dbe50b21": {
+   "total": 118,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 5,
+    "boundaryBonus": 4,
+    "dotBall": 9,
+    "wicket": 90,
+    "haul": 4,
+    "economy": 2
+   }
+  },
+  "b8cc58c9": {
+   "total": 12,
+   "breakdown": {
+    "playingXI": 4,
+    "runs": 4,
+    "boundaryBonus": 4
+   }
+  }
+ }
+}

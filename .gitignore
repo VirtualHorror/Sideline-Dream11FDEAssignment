@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+apps/web/dist/
+*.tsbuildinfo
+
+# runtime state (SQLite databases, logs, generated caches)
+data/runtime/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+logs/
+*.log
+
+# secrets: never commit real keys. .env.example is the committed template.
+.env
+.env.*
+!.env.example
+
+# test artifacts
+coverage/
+playwright-report/
+test-results/
+
+# editor / OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# python bytecode (oracle)
+__pycache__/
+*.pyc

@@ -1,0 +1,50 @@
+{
+  "matchId": "1298150",
+  "title": "Pakistan vs India",
+  "competition": "ICC Men's T20 World Cup 2022",
+  "stage": "Super 12, Group 2",
+  "teams": [
+    { "code": "PAK", "name": "Pakistan", "cricsheetName": "Pakistan", "color": "#1FA35C", "colorAlt": "#0B5E34" },
+    { "code": "IND", "name": "India", "cricsheetName": "India", "color": "#2E6BFF", "colorAlt": "#FF9933" }
+  ],
+  "notes": [
+    {
+      "id": "weather",
+      "category": "weather",
+      "title": "Rain threat in Melbourne",
+      "text": "The Bureau of Meteorology forecast a 70% chance of showers on match day, most likely in the late afternoon and evening. Both teams' final warm-up games in Brisbane earlier in the week were washed out.",
+      "sources": ["https://morungexpress.com/t20-world-cup-all-eyes-on-weather-as-india-pakistan-gear-up-for-sunday-showdown-in-melbourne"]
+    },
+    {
+      "id": "shan-masood",
+      "category": "injury",
+      "title": "Shan Masood cleared after a blow to the head",
+      "text": "Pakistan's Shan Masood was struck on the head by a ball in the nets at the MCG on 21 October. A CT scan showed only superficial bruising and he was cleared to play.",
+      "sources": ["https://arabnews.pk/node/2185261"]
+    },
+    {
+      "id": "fakhar-zaman",
+      "category": "injury",
+      "title": "Fakhar Zaman's knee",
+      "text": "Fakhar Zaman was added to Pakistan's 15 on 14 October while still recovering from a knee injury picked up at the Asia Cup, and was reported unavailable for this game.",
+      "sources": [
+        "https://www.thecricketer.com/Topics/mens-t20-world-cup-2022/fakhar_zaman_replaces_usman_qadir_pakistan_squad.html",
+        "https://morungexpress.com/t20-world-cup-all-eyes-on-weather-as-india-pakistan-gear-up-for-sunday-showdown-in-melbourne"
+      ]
+    },
+    {
+      "id": "india-injuries",
+      "category": "team_news",
+      "title": "India without Bumrah and Jadeja",
+      "text": "India are without Jasprit Bumrah and Ravindra Jadeja through injury; Axar Patel fills the left-arm spin all-rounder role.",
+      "sources": ["https://morungexpress.com/t20-world-cup-all-eyes-on-weather-as-india-pakistan-gear-up-for-sunday-showdown-in-melbourne"]
+    },
+    {
+      "id": "venue",
+      "category": "pitch",
+      "title": "The MCG",
+      "text": "The Melbourne Cricket Ground is one of the largest cricket grounds in the world, with long square boundaries.",
+      "sources": []
+    }
+  ]
+}

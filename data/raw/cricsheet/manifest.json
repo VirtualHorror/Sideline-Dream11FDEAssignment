@@ -1,0 +1,23 @@
+{
+  "source": "https://cricsheet.org/downloads/icc_mens_t20_world_cup_male_json.zip",
+  "license": "Open Data Commons Attribution License (ODC-By) 1.0",
+  "licenseUrl": "http://opendatacommons.org/licenses/by/1.0/",
+  "attribution": "Ball-by-ball data from Cricsheet (https://cricsheet.org), used under the Open Data Commons Attribution License 1.0.",
+  "retrievedAt": "2026-10-16",
+  "matches": [
+    {
+      "id": "1298150",
+      "file": "1298150.json",
+      "sha256": "50d17ad4fce1f73cf9f2824c331a588356e3f5c22e067baf876059e2fd513789",
+      "role": "primary",
+      "description": "Pakistan v India, ICC Men's T20 World Cup 2022 (Super 12), Melbourne Cricket Ground, 2022-10-23"
+    },
+    {
+      "id": "1415755",
+      "file": "1415755.json",
+      "sha256": "0bc78686bf2a6e32a708a829e95d0318d10adda6b7ac88a176de7e8efa41ee35",
+      "role": "secondary",
+      "description": "India v South Africa, ICC Men's T20 World Cup 2024 Final, Kensington Oval, Bridgetown, 2024-06-29"
+    }
+  ]
+}

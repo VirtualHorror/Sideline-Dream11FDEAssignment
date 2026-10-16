@@ -1,0 +1,43 @@
+{
+  "matchId": "1415755",
+  "personas": [
+    {
+      "id": "captain-rohit",
+      "label": "Captain Rohit",
+      "blurb": "Rohit Sharma captain, Rishabh Pant vice-captain, and Yashasvi Jaiswal in the side. Watches on an OTT app about 25 seconds behind the ground.",
+      "affinity": "IND",
+      "lens": "casual",
+      "delayMs": 25000,
+      "joinAt": { "kind": "pre_match" },
+      "squad": {
+        "playerIds": ["740742ef", "919a3be2", "ba607b88", "6c19c6e5", "85b3fab2", "372455c4", "dbe50b21", "81c36ee9", "462411b3", "244048f6", "a03bba42"],
+        "captainId": "740742ef",
+        "viceCaptainId": "919a3be2"
+      }
+    },
+    {
+      "id": "proteas-late",
+      "label": "Proteas fan, joining late",
+      "blurb": "Heinrich Klaasen captain, David Miller vice-captain. Gets home after 15 overs of the chase and wants the tactical picture, on a feed about 15 seconds behind.",
+      "affinity": "SA",
+      "lens": "analyst",
+      "delayMs": 15000,
+      "joinAt": { "kind": "over", "innings": 2, "afterOvers": 15 },
+      "squad": {
+        "playerIds": ["235c2bb6", "d67d5f00", "372455c4", "6a26221c", "85b3fab2", "81c36ee9", "dbe50b21", "2e171977", "e62dd25d", "462411b3", "8d2c70ad"],
+        "captainId": "235c2bb6",
+        "viceCaptainId": "d67d5f00"
+      }
+    },
+    {
+      "id": "football-fan",
+      "label": "Football fan, curious",
+      "blurb": "Watches the Premier League every weekend and has never followed cricket. Joins after 17 overs of the chase on a stream about 30 seconds behind, with no fantasy team.",
+      "affinity": "neutral",
+      "lens": "football",
+      "delayMs": 30000,
+      "joinAt": { "kind": "over", "innings": 2, "afterOvers": 17 },
+      "squad": null
+    }
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "matchId": "1415755",
+  "creditsNote": "Credits are illustrative, authored for this prototype in Dream11's 7.5-10.5 style. They are not official Dream11 credits. Squads: the announced 15-player squads for the ICC Men's T20 World Cup 2024. Ids are Cricsheet registry identifiers.",
+  "players": [
+    { "id": "740742ef", "cricsheetName": "RG Sharma", "displayName": "Rohit Sharma", "shortName": "Rohit", "team": "IND", "role": "BAT", "credits": 10 },
+    { "id": "ba607b88", "cricsheetName": "V Kohli", "displayName": "Virat Kohli", "shortName": "Kohli", "team": "IND", "role": "BAT", "credits": 10 },
+    { "id": "919a3be2", "cricsheetName": "RR Pant", "displayName": "Rishabh Pant", "shortName": "Pant", "team": "IND", "role": "WK", "credits": 9 },
+    { "id": "271f83cd", "cricsheetName": "SA Yadav", "displayName": "Suryakumar Yadav", "shortName": "Suryakumar", "team": "IND", "role": "BAT", "credits": 9.5 },
+    { "id": "2e171977", "cricsheetName": "AR Patel", "displayName": "Axar Patel", "shortName": "Axar", "team": "IND", "role": "AR", "credits": 8.5 },
+    { "id": "a4e37e47", "cricsheetName": "S Dube", "displayName": "Shivam Dube", "shortName": "Dube", "team": "IND", "role": "AR", "credits": 8.5 },
+    { "id": "dbe50b21", "cricsheetName": "HH Pandya", "displayName": "Hardik Pandya", "shortName": "Hardik", "team": "IND", "role": "AR", "credits": 9.5 },
+    { "id": "fe93fd9d", "cricsheetName": "RA Jadeja", "displayName": "Ravindra Jadeja", "shortName": "Jadeja", "team": "IND", "role": "AR", "credits": 9 },
+    { "id": "8d2c70ad", "cricsheetName": "Kuldeep Yadav", "displayName": "Kuldeep Yadav", "shortName": "Kuldeep", "team": "IND", "role": "BOWL", "credits": 8.5 },
+    { "id": "244048f6", "cricsheetName": "Arshdeep Singh", "displayName": "Arshdeep Singh", "shortName": "Arshdeep", "team": "IND", "role": "BOWL", "credits": 8.5 },
+    { "id": "462411b3", "cricsheetName": "JJ Bumrah", "displayName": "Jasprit Bumrah", "shortName": "Bumrah", "team": "IND", "role": "BOWL", "credits": 9.5 },
+    { "id": "6c19c6e5", "cricsheetName": "YBK Jaiswal", "displayName": "Yashasvi Jaiswal", "shortName": "Jaiswal", "team": "IND", "role": "BAT", "credits": 9 },
+    { "id": "a4cc73aa", "cricsheetName": "SV Samson", "displayName": "Sanju Samson", "shortName": "Samson", "team": "IND", "role": "WK", "credits": 8.5 },
+    { "id": "57ee1fde", "cricsheetName": "YS Chahal", "displayName": "Yuzvendra Chahal", "shortName": "Chahal", "team": "IND", "role": "BOWL", "credits": 8.5 },
+    { "id": "2f49c897", "cricsheetName": "Mohammed Siraj", "displayName": "Mohammed Siraj", "shortName": "Siraj", "team": "IND", "role": "BOWL", "credits": 8.5 },
+
+    { "id": "372455c4", "cricsheetName": "Q de Kock", "displayName": "Quinton de Kock", "shortName": "de Kock", "team": "SA", "role": "WK", "credits": 9.5 },
+    { "id": "b8cc58c9", "cricsheetName": "RR Hendricks", "displayName": "Reeza Hendricks", "shortName": "Hendricks", "team": "SA", "role": "BAT", "credits": 8.5 },
+    { "id": "6a26221c", "cricsheetName": "AK Markram", "displayName": "Aiden Markram", "shortName": "Markram", "team": "SA", "role": "BAT", "credits": 9 },
+    { "id": "85b3fab2", "cricsheetName": "T Stubbs", "displayName": "Tristan Stubbs", "shortName": "Stubbs", "team": "SA", "role": "BAT", "credits": 8.5 },
+    { "id": "235c2bb6", "cricsheetName": "H Klaasen", "displayName": "Heinrich Klaasen", "shortName": "Klaasen", "team": "SA", "role": "WK", "credits": 9.5 },
+    { "id": "d67d5f00", "cricsheetName": "DA Miller", "displayName": "David Miller", "shortName": "Miller", "team": "SA", "role": "BAT", "credits": 9 },
+    { "id": "81c36ee9", "cricsheetName": "M Jansen", "displayName": "Marco Jansen", "shortName": "Jansen", "team": "SA", "role": "AR", "credits": 8.5 },
+    { "id": "0b60eb09", "cricsheetName": "KA Maharaj", "displayName": "Keshav Maharaj", "shortName": "Maharaj", "team": "SA", "role": "BOWL", "credits": 8 },
+    { "id": "e62dd25d", "cricsheetName": "K Rabada", "displayName": "Kagiso Rabada", "shortName": "Rabada", "team": "SA", "role": "BOWL", "credits": 9 },
+    { "id": "acdc62f5", "cricsheetName": "A Nortje", "displayName": "Anrich Nortje", "shortName": "Nortje", "team": "SA", "role": "BOWL", "credits": 8.5 },
+    { "id": "a03bba42", "cricsheetName": "T Shamsi", "displayName": "Tabraiz Shamsi", "shortName": "Shamsi", "team": "SA", "role": "BOWL", "credits": 8 },
+    { "id": "6b9eb501", "cricsheetName": "OEG Baartman", "displayName": "Ottneil Baartman", "shortName": "Baartman", "team": "SA", "role": "BOWL", "credits": 7.5 },
+    { "id": "3204c99f", "cricsheetName": "G Coetzee", "displayName": "Gerald Coetzee", "shortName": "Coetzee", "team": "SA", "role": "BOWL", "credits": 8 },
+    { "id": "9a2fc964", "cricsheetName": "BC Fortuin", "displayName": "Bjorn Fortuin", "shortName": "Fortuin", "team": "SA", "role": "BOWL", "credits": 7.5 },
+    { "id": "e66732f8", "cricsheetName": "RD Rickelton", "displayName": "Ryan Rickelton", "shortName": "Rickelton", "team": "SA", "role": "WK", "credits": 8 }
+  ]
+}
