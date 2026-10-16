@@ -23,4 +23,5 @@ export * from "./cricket/timeline.ts";
 export * from "./cricket/timing.ts";
 export * from "./fantasy/scoring.ts";
 export * from "./fantasy/squad.ts";
+export * from "./models/logistic.ts";
 export * from "./util/hash.ts";
