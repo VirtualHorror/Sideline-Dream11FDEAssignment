@@ -10,6 +10,10 @@ import {
   PersonasFileSchema,
   type PlayersFile,
   PlayersFileSchema,
+  type PriorsFile,
+  PriorsFileSchema,
+  type WinProbModel,
+  WinProbModelSchema,
 } from "../../src/index.ts";
 
 export const MATCH_IDS = ["1298150", "1415755"] as const;
@@ -146,4 +150,14 @@ export function loadMatch(id: FixtureMatchId): MatchFixture {
     rules: FantasyRulesSchema.parse(readJson("data", "rules", "t20-fantasy.json")),
     golden: readJson("packages", "engine", "test", "golden", `${id}.oracle.json`) as GoldenFixture,
   };
+}
+
+/** The committed model written by scripts/build-models.ts (Task 3). */
+export function loadWinProbModel(): WinProbModel {
+  return WinProbModelSchema.parse(readJson("data", "models", "winprob-v1.json"));
+}
+
+/** Committed pre-match projections for a demo match, written by scripts/build-models.ts (Task 3). */
+export function loadPriors(id: FixtureMatchId): PriorsFile {
+  return PriorsFileSchema.parse(readJson("data", "models", `priors-${id}.json`));
 }
