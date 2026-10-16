@@ -5,9 +5,8 @@
 - **Severity:** major for Task 3 acceptance (step 3.4 cannot pass as written); minor for the
   product (the climax still gets five big balls, and the winning moment is flagged one delivery
   earlier, on the 19.6 wide)
-- **Status:** open. PLAN 3.4 and HANDOFF4 forbid tuning weights, features or the percentile to
-  pass, so the decision is the architect's and the owner's. The failing test stays as written
-  (Constraint 4).
+- **Status:** resolved by amending the plan (D-043, Nabhanyu's decision, 2026-10-16). Nothing was
+  tuned: PLAN 3.4 and HANDOFF4 forbid changing weights, features or the percentile to pass.
 
 ## Symptom
 With PLAN Task 3's features, fit rules and default weights, the build sets `nudgeThreshold` to
@@ -67,8 +66,12 @@ above the threshold.
    changes it, which is why it is listed last.
 
 ## Fix
-None yet: waiting for the decision.
+Option 1, chosen by Nabhanyu (D-043): PLAN 3.4 now lists 18.6, 19.1, the 19.4 no-ball, 19.5 and
+the 19.6 wide; steps 4.5 and 5.6, which inherited the old list, were updated with it. The model,
+weights and threshold are unchanged. Follow-ups (in D-043): the super-over tie bias in the
+training data, and a decisive-ball trigger to consider in Task 4.
 
 ## Verification
-`leverage.test.ts` › "flags the 1298150 climax" fails today on 18.5 and the final 19.6, with the
-values above.
+Before the decision, `leverage.test.ts` › "flags the 1298150 climax" failed on 18.5 and the final
+19.6 with the values above (commit `dbb0722`). After it, the amended test passes:
+`pnpm vitest run --project engine leverage` → 16 passed.

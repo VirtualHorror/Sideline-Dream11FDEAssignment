@@ -24,7 +24,7 @@ export const PriorsFileSchema = z.object({
   players: z.record(
     PlayerIdSchema,
     z.object({
-      /** The player's role in our fixtures (D-039), which picks the role mean. */
+      /** The player's role in our fixtures (D-042), which picks the role mean. */
       role: RoleSchema,
       /** Most recent first. */
       appearances: z.array(

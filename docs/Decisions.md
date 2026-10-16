@@ -307,3 +307,90 @@
   substitute-only appearances, and it diverges from Dream11.
 - **Not covered:** concussion substitutes (full replacements who can bat and bowl). Dream11 scores
   them; Sideline does not model them yet.
+
+### D-039 — Archive pipeline: every match accounted for, generated files reproducible (2026-10-16, T3, Claude)
+- **Context:** Task 3 trains on Cricsheet's men's T20I archive, which Cricsheet republishes as
+  matches are added, and the engine rejects about 5% of the files that pass the PLAN filters
+  (BUG-002). The audit must be able to rebuild the committed files and get the same bytes.
+- **Decision:** `scripts/lib/archive.ts` plus `node scripts/build-models.ts [--zip <path>]`.
+  Matches are visited in numeric id order. Demo matches (read from the manifest) are set aside
+  first, then the PLAN filters run in a fixed order and the first failing one is the reason. The
+  rest go through synthesized fixtures, `buildTimeline` and `foldEvents`, and any error becomes a
+  named BUG-002 reason (or `<stage>: <message>`, never a silent skip). The script throws unless
+  used + filtered + demo + rejected equals the file count. `excludedMatchIds` lists the demo and
+  engine-rejected ids. Filter exclusions are counted per reason in the generated
+  `data/models/README.md`. All four outputs (`winprob-v1.json`, `priors-<id>.json`, `README.md`) are
+  generated and byte-reproducible: fixed key order, weights and threshold at full precision
+  (metrics rounded to 6 decimals, priors to 2), and `retrievedAt` kept when the zip's sha256 equals
+  the committed one (otherwise today's UTC date for a download, the zip's mtime date for `--zip`).
+  `data/models` is excluded from Biome, which would reflow the arrays `JSON.stringify` writes.
+- **Alternatives:** formatting the files after writing them (breaks the byte-identical rebuild);
+  listing the 370 filtered ids (derivable from the zip and the rules); stamping the clock's date
+  (a rebuild would never be identical).
+- **Consequences:** a new archive changes counts, weights and threshold in one reviewable diff.
+  On the 2026-10-16 archive a download run and three `--zip` runs gave identical files.
+
+### D-040 — Win-probability model as built (2026-10-16, T3, Claude; refines D-024)
+- **Decision:** PLAN Task 3's two logistic models with its features exactly, rows and labels as
+  specified (a tie labels both sides 0), test split `fnv1a32(matchId) % 5 === 0` (stable across
+  archive versions because it hashes the id). Newton/IRLS from zero weights with a ridge penalty
+  `(l2/2)·Σw²` on every weight, intercept included, at `l2 = 1e-4·n` (that shifts the mean
+  residual by about 5e-4), Cholesky solve, and a thrown error on non-convergence. Test metrics:
+  Brier, log loss (p clipped to [1e-15, 1 − 1e-15]) and ten equal-width calibration bins (empty
+  bins omitted). `winProbability`: null before the first innings; the first-innings model during
+  innings 1 and through the break (its training rows include the innings' last ball); in the chase
+  the terminal rules first (target reached 1, all out or out of balls 0, level 0.5), then the model.
+- **Result (2026-10-16 archive):** 3,093 matches, 2,486 train / 607 test; chase Brier 0.1215 (log
+  loss 0.3712), within 0.05 of the observed rate in every calibration bin; first-innings Brier
+  0.2099 (0.6061), but overconfident at the extremes (its 0.8-1.0 bins are about 0.10 too high), a
+  documented limit and a follow-up.
+- **Alternatives:** gradient descent (slower, tolerance-dependent); an unpenalised intercept
+  (needs a "feature 0 is the bias" convention for no measurable gain); a random split (not stable
+  across rebuilds).
+
+### D-041 — The leverage threshold comes from the test split (2026-10-16, T3, Claude)
+- **Decision:** leverage exactly as PLAN Task 3 defines it, with two clarifications: the `wicket`
+  term counts a team wicket (retired hurt is not one, DOMAIN §2), and `leverage()` throws when the
+  two states have different batting sides. `nudgeThreshold` is the nearest-rank 95th percentile (an
+  observed value) of the leverage of every legal delivery in the test split, stored at full
+  precision so that rounding can never flip a borderline ball: 0.18437 over 134,049 deliveries, of
+  which 5.00% are at or above it. The weights are the PLAN defaults, written by the build script.
+- **Alternatives:** an interpolated percentile (differs by less than 1e-4 here); a threshold over
+  every match (it would be set on training data).
+- **Consequences:** close finishes have about twice the archive's rate of big balls (8.76% of
+  1298150's deliveries, 9.56% of 1415755's). The climax list is D-043.
+
+### D-042 — Player priors as built; each entry carries the player's role (2026-10-16, T3, Claude)
+- **Context:** `projectedPoints(playerId, priors)` must apply `roleMean[role]`, and the PLAN's entry
+  shape (`appearances`, `projected`) had no role, which would have made the zero-appearance test
+  tautological.
+- **Decision:** each `players` entry is `{ role, appearances, projected }` (additive; the role is our
+  fixture's). An appearance is any archive match, not only one that passes the training filters,
+  with the player in an announced XI and accepted by the engine, strictly before the demo date, most
+  recent first. It is scored by `fantasyPoints` with the player's own role and everyone else `BAT`.
+  `roleMean` is pooled over the squad's appearances per role (2 decimals), falling back to the
+  squad's overall mean for a role nobody has played (none today). `projected =
+  round2(Σ/(n + k) + k/(n + k)·roleMean)`: the PLAN formula, written so that n = 0 gives exactly
+  the role mean. The build stores it, and an unknown player throws.
+- **Result:** 1298150: 29 of 30 players have 10 appearances (Naseem Shah 8); 1415755: 27 of 30
+  (Baartman 6, Coetzee 6, Rickelton 3), as the pre-Task-3 survey found. Neither demo match is an
+  appearance in the other's priors.
+
+### D-043 — PLAN 3.4's climax list amended to the balls the model can see (2026-10-16, after T3 implementation, Nabhanyu)
+- **Context:** BUG-003. With the specified features, weights and percentile, 1298150's 18.5 six
+  (0.093) and winning single (0.019) stay below the 0.18437 threshold. Every other step 3.4 check
+  passes. The implementer may not tune (PLAN 3.4), so the options went to Nabhanyu.
+- **Decision:** amend the list: drop 18.5 and the final 19.6, and add the 19.6 wide (0.2611), which
+  the model flags. The model, features, weights and threshold are unchanged. Downstream PLAN steps
+  follow: 4.5 now expects the five listed balls, and 5.6 uses 18.6 instead of 18.5.
+- **Why:** the model is calibrated and the threshold principled; the list was an expectation. These
+  two balls are where a per-ball win-probability measure disagrees with hindsight: 18.5 matters
+  because of the six after it, and the winning single follows a wide after which the data put the
+  win at 99%.
+- **Alternatives:** report only and leave Task 3 unmerged; a decisive-ball rule (fixes only the
+  final ball); training on super-over ties (removes the 1-off-1 bias but changes the filters);
+  re-weighting (per-ball tuning).
+- **Follow-ups:** (1) the filters drop ties that went to a super over, so in training a chase
+  needing one off the last ball nearly always wins (26 of 27): revisit when the engine supports
+  super overs. (2) Task 4: the match-deciding delivery is the biggest spoiler of all, so the nudge
+  detector may want a decisive-ball trigger; that is a Task 4 design decision.

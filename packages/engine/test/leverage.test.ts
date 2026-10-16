@@ -181,15 +181,17 @@ describe("leverage threshold on the demo matches (committed model)", () => {
     expect(big / values.length).toBeLessThanOrEqual(0.2);
   });
 
-  it("flags the 1298150 climax: both Rauf sixes and every final-over twist", () => {
+  // PLAN 3.4 as amended by D-043 (owner decision after BUG-003): the specified model scores the
+  // first Rauf six (18.5) at 0.093 and the winning single at 0.019, because the 19.6 wide before it
+  // already took P(India) to 0.99. The list names the balls a win-probability leverage can see.
+  it("flags the 1298150 climax: the second Rauf six and every final-over twist", () => {
     const model = loadWinProbModel();
     for (const pick of [
-      chaseBall("18.5"),
       chaseBall("18.6"),
       chaseBall("19.1"),
       chaseBall("19.4", "noballs"),
       chaseBall("19.5"),
-      chaseBall("19.6"),
+      chaseBall("19.6", "wides"),
     ]) {
       const result = leverageOf("1298150", pick, model);
       expect(result.value).toBeGreaterThanOrEqual(model.leverage.nudgeThreshold);
