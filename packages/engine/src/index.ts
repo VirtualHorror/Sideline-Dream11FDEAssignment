@@ -28,6 +28,7 @@ export * from "./cricket/timeline.ts";
 export * from "./cricket/timing.ts";
 export * from "./detectors/collapse.ts";
 export * from "./detectors/lineup.ts";
+export * from "./detectors/nudge.ts";
 export type * from "./detectors/types.ts";
 export * from "./fantasy/scoring.ts";
 export * from "./fantasy/squad.ts";

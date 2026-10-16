@@ -13,6 +13,8 @@ import type { BatterFigures, BowlerFigures, PlayerRef, Situation } from "./types
 
 /** A T20 innings: 20 overs of six legal balls. */
 export const BALLS_PER_INNINGS = 120;
+/** Ten wickets end an innings (all out). */
+export const WICKETS_PER_INNINGS = 10;
 
 export function playerIndex(players: readonly Player[]): ReadonlyMap<string, Player> {
   return new Map(players.map((player) => [player.id, player]));

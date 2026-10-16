@@ -8,12 +8,13 @@ import {
   lineupDetector,
   type MatchEvent,
   type MomentTrigger,
+  nudgeDetector,
   type Persona,
   type PlayingXIEvent,
   validateSquad,
   type Wicket,
 } from "../src/index.ts";
-import { loadMatch, loadPriors } from "./helpers/data.ts";
+import { loadMatch, loadPriors, loadWinProbModel } from "./helpers/data.ts";
 import { contextFor, firings, personaOf, replay, timelineOf } from "./helpers/replay.ts";
 
 /** Narrows a trigger to one kind, failing the test if it is another. */
@@ -436,6 +437,157 @@ describe("collapse detector (phase 2: early collapse)", () => {
     // else of note: Shadab (no armband) and the rest are "not_armband".
     expect(reasons(personaOf("1298150", "babar-believer"))).toEqual(
       new Set(["not_delivery", "no_wicket", "not_armband", "armband_out_cheaply", "quest_active"]),
+    );
+  });
+});
+
+/** The delivery `pick` selects, with the extras-repeat rule of the leverage tests. */
+const chaseBall =
+  (label: string, extra?: "noballs" | "wides") =>
+  (event: MatchEvent): event is DeliveryEvent =>
+    event.kind === "delivery" &&
+    event.innings === 2 &&
+    event.label === label &&
+    (extra ? event.extras[extra] > 0 : event.isLegal);
+
+describe("nudge detector (phase 4: hold the spoiler)", () => {
+  const nudges = (id: "1298150" | "1415755") => {
+    const persona = personaOf(id, id === "1298150" ? "babar-believer" : "captain-rohit");
+    return firings(replay(id, persona, [nudgeDetector]), "nudge");
+  };
+
+  it.each(["1298150", "1415755"] as const)(
+    "fires on 5 to 50 deliveries of %s, keyed by event",
+    (id) => {
+      const fired = nudges(id);
+      expect(fired.length).toBeGreaterThanOrEqual(5);
+      expect(fired.length).toBeLessThanOrEqual(50);
+      for (const { event, verdict } of fired) {
+        const trigger = triggerOf(verdict, "spoiler_nudge");
+        expect(trigger.key).toBe(`nudge:${id}:${event.id}`);
+        expect(trigger.scope).toBe("shared");
+      }
+    },
+  );
+
+  it("includes the five 1298150 climax balls of PLAN 3.4 (as amended by D-043)", () => {
+    const events = timelineOf("1298150");
+    const fired = new Set(nudges("1298150").map((f) => f.event.id));
+    for (const pick of [
+      chaseBall("18.6"),
+      chaseBall("19.1"),
+      chaseBall("19.4", "noballs"),
+      chaseBall("19.5"),
+      chaseBall("19.6", "wides"),
+    ]) {
+      const event = events.filter(pick).at(-1);
+      expect(fired.has(event?.id ?? "missing")).toBe(true);
+    }
+  });
+
+  // The big balls (22 and 24) are the independent Python re-derivation's count; the ball that
+  // ended each match adds one (D-046, Nabhanyu's request): 1298150's winning single scores 0.019
+  // and 1415755's last ball 0.0003, far below the threshold, yet each ends the match.
+  it.each([
+    ["1298150", 23, "1298150:0263", "19.6 Nawaz to Ashwin, 1 run"],
+    ["1415755", 25, "1415755:0260", "19.6 Hardik to Nortje, 1 run"],
+  ] as const)(
+    "%s: %i teasers, the last on the ball that ends the match",
+    (id, count, lastId, text) => {
+      const fired = nudges(id);
+      expect(fired).toHaveLength(count);
+      const model = loadWinProbModel();
+      const big = fired.filter(
+        (f) =>
+          triggerOf(f.verdict, "spoiler_nudge").facts.leverage.value >=
+          model.leverage.nudgeThreshold,
+      );
+      expect(big).toHaveLength(count - 1);
+      const last = fired.at(-1);
+      expect(last?.event.id).toBe(lastId);
+      expect(last?.verdict.reason).toBe("match_decided");
+      const facts = triggerOf(last?.verdict ?? { outcome: "none" }, "spoiler_nudge").facts;
+      expect(facts.why).toBe("match_decided");
+      expect(facts.leverage.value).toBeLessThan(model.leverage.nudgeThreshold);
+      expect(facts.outcome).toMatchObject({ description: text, matchOver: true });
+    },
+  );
+
+  it("does not treat the end of the first innings as deciding anything", () => {
+    const events = timelineOf("1298150");
+    const lastOfFirst = events
+      .filter((e): e is DeliveryEvent => e.kind === "delivery" && e.innings === 1)
+      .at(-1);
+    if (!lastOfFirst) throw new Error("no first innings");
+    const steps = replay("1298150", personaOf("1298150", "babar-believer"), [nudgeDetector]);
+    const step = steps.find((s) => s.input.event.id === lastOfFirst.id);
+    expect(step?.verdicts[0]?.verdict).toEqual({
+      outcome: "deterministic",
+      reason: "below_threshold",
+    });
+  });
+
+  it("an all-out chase is decided by its tenth wicket, not by a later ball", () => {
+    // 1415755's chase is 161/6 before the last over; Miller (19.1) and Rabada (19.5) fall in it.
+    // Two injected wickets (19.3, 19.4) make Rabada's the tenth, with a ball still to come.
+    const events = timelineOf("1415755");
+    const at = (label: string) => events.filter(chaseBall(label)).at(-1) as DeliveryEvent;
+    const out = (event: DeliveryEvent): Wicket => ({
+      kind: "bowled",
+      playerOut: event.batter,
+      fielders: [],
+      creditedToBowler: true,
+    });
+    const eighth = at("19.3");
+    const ninth = at("19.4");
+    const injected = withWicket(withWicket(events, eighth.seq, out(eighth)), ninth.seq, out(ninth));
+    const persona = personaOf("1415755", "captain-rohit");
+    const steps = replay("1415755", persona, [nudgeDetector], { events: injected });
+    const decided = steps.filter((s) => s.verdicts[0]?.verdict.reason === "match_decided");
+    expect(decided.map((s) => s.input.event.id)).toEqual([at("19.5").id]);
+    expect(
+      steps.find((s) => s.input.event.id === at("19.5").id)?.input.after.innings[1]?.wickets,
+    ).toBe(10);
+  });
+
+  it("gives the teaser only what was known before the ball, and the outcome apart (18.6 six)", () => {
+    const events = timelineOf("1298150");
+    const ball = events.filter(chaseBall("18.6")).at(-1);
+    const fired = nudges("1298150").find((f) => f.event.id === ball?.id);
+    const facts = triggerOf(fired?.verdict ?? { outcome: "none" }, "spoiler_nudge").facts;
+    expect(facts.why).toBe("big_ball");
+    // DOMAIN §4: 144/4 and 16 off 6 after the second six, so 138/4 needing 22 off 7 before it.
+    expect(facts.before.situation).toMatchObject({
+      score: "138/4",
+      runsRequired: 22,
+      ballsRemaining: 7,
+    });
+    // Kohli has 74 off 50 by legal ball 114 (PLAN 4.8), so 68 off 49 before it.
+    expect(facts.before.striker).toMatchObject({ shortName: "Kohli", runs: 68, balls: 49 });
+    expect(facts.before.bowler.shortName).toBe("Rauf");
+    expect(facts.before.freeHit).toBe(false);
+    expect(facts.outcome).toMatchObject({
+      description: "18.6 Rauf to Kohli, six",
+      tags: ["six"],
+      runs: 6,
+      dismissed: [],
+      matchOver: false,
+    });
+    expect(facts.outcome.situation).toMatchObject({
+      score: "144/4",
+      runsRequired: 16,
+      ballsRemaining: 6,
+    });
+    expect(facts.leverage.value).toBeCloseTo(0.41, 2);
+    expect(facts.leverage.threshold).toBe(loadWinProbModel().leverage.nudgeThreshold);
+    expect(facts.leverage.wpAfter).toBeGreaterThan(facts.leverage.wpBefore);
+  });
+
+  it("is deterministic below the threshold and on anything that is not a delivery", () => {
+    const steps = replay("1298150", personaOf("1298150", "babar-believer"), [nudgeDetector]);
+    const reasons = new Set(steps.map((s) => s.verdicts[0]?.verdict.reason));
+    expect(reasons).toEqual(
+      new Set(["not_delivery", "below_threshold", "big_ball", "match_decided"]),
     );
   });
 });
