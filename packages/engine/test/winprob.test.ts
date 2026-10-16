@@ -2,12 +2,15 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import {
   buildTimeline,
+  chaseFeatures,
   createMatchState,
+  firstInningsFeatures,
   foldEvents,
   type InningsState,
   type MatchEvent,
   MatchEventSchema,
   type MatchState,
+  WinProbModelSchema,
   winProbability,
 } from "../src/index.ts";
 import { loadMatch, loadWinProbModel, MATCH_IDS } from "./helpers/data.ts";
@@ -132,6 +135,43 @@ function pChase(runsNeeded: number, ballsLeft: number, wicketsLeft: number): num
   if (!result) throw new Error("expected a chase probability");
   return result.pBattingTeamWins;
 }
+
+function expectVector(actual: number[], expected: number[]) {
+  expect(actual).toHaveLength(expected.length);
+  actual.forEach((value, index) => {
+    expect(value).toBeCloseTo(expected[index] ?? Number.NaN, 14);
+  });
+}
+
+describe("feature vectors (PLAN Task 3 formulas, worked by hand)", () => {
+  it("builds the chase features, capping the required rate at six runs a ball", () => {
+    // 70 off 36 with 6 wickets in hand: rpb = (70 / 36) / 6, log term = ln 71 / ln 250
+    expectVector(
+      chaseFeatures(70, 36, 6),
+      [1, 0.32407407407407407, 0.6, 0.3, 0.19444444444444445, 0.7720202932617524],
+    );
+    // 50 off 5 is 10 a ball, capped at 6, so rpb = 1
+    expectVector(
+      chaseFeatures(50, 5, 3),
+      [1, 1, 0.3, 0.041666666666666664, 0.3, 0.7120987889282422],
+    );
+  });
+
+  it("builds the first-innings features", () => {
+    expectVector(firstInningsFeatures(80, 3, 60), [1, 0.5, 0.3, 0.5, 0.25, 0.15]);
+    expectVector(firstInningsFeatures(120, 4, 90), [1, 0.75, 0.4, 0.75, 0.5625, 0.3]);
+  });
+
+  it("rejects a model file whose features are not the code's, in the code's order", () => {
+    expect(WinProbModelSchema.safeParse(model).success).toBe(true);
+    const reordered = structuredClone(model);
+    reordered.chase.features = [...model.chase.features].reverse();
+    expect(WinProbModelSchema.safeParse(reordered).success).toBe(false);
+    const renamed = structuredClone(model);
+    renamed.firstInnings.features = ["bias", "runs", "wl", "bb", "r*bb", "wl*bb"];
+    expect(WinProbModelSchema.safeParse(renamed).success).toBe(false);
+  });
+});
 
 describe("committed win-probability model (data/models/winprob-v1.json)", () => {
   it("records its training data and excludes both demo matches", () => {

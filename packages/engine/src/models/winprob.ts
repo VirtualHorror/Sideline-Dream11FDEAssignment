@@ -54,12 +54,24 @@ export function firstInningsFeatures(
   return [1, r, wl, bb, r * bb, wl * bb];
 }
 
-const LogisticModelSchema = z
-  .object({ features: z.array(z.string()).min(1), weights: z.array(z.number()).min(1) })
-  .refine((model) => model.features.length === model.weights.length, {
-    message: "a model needs one weight per feature",
-    path: ["weights"],
-  });
+/**
+ * One logistic model in the file. Its feature names must be exactly the ones the code computes, in
+ * the same order: a model trained on other features would otherwise give wrong probabilities
+ * without any error.
+ */
+const logisticModelSchema = (names: readonly string[]) =>
+  z
+    .object({ features: z.array(z.string()), weights: z.array(z.number()) })
+    .refine(
+      (model) =>
+        model.features.length === names.length &&
+        model.features.every((feature, index) => feature === names[index]),
+      { message: `features must be exactly ${names.join(", ")}`, path: ["features"] },
+    )
+    .refine((model) => model.weights.length === names.length, {
+      message: "a model needs one weight per feature",
+      path: ["weights"],
+    });
 
 const MetricsSchema = z.object({
   brierTest: z.number().nonnegative(),
@@ -87,8 +99,8 @@ export const WinProbModelSchema = z.object({
     /** Demo matches and archive matches the engine rejects (BUG-002); reasons are in data/models/README.md. */
     excludedMatchIds: z.array(MatchIdSchema),
   }),
-  chase: LogisticModelSchema,
-  firstInnings: LogisticModelSchema,
+  chase: logisticModelSchema(CHASE_FEATURE_NAMES),
+  firstInnings: logisticModelSchema(FIRST_INNINGS_FEATURE_NAMES),
   metrics: z.object({ chase: MetricsSchema, firstInnings: MetricsSchema }),
   leverage: z.object({
     weights: z.object({
