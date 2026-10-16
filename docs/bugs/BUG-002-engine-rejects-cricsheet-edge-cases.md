@@ -22,6 +22,23 @@ Rejected ids: 1415703 1415706 1415711 951319 · 682921 682923 682927 682929 6829
 682941 682943 682947 682949 682951 682955 · 1298154 1415744 682911 682925 · 1273722 1273740 1298140
 1298153 1298179 1415710 1512737 1512748 · 1298163 · 1298152.
 
+**In Task 3's archive** (`t20s_male_json.zip`, 3,627 matches, 14.5 MB, sha256
+`95305bc2dae8dcce7b8da7755f3992521874b14598ea5828129f37834e8b860a`, retrieved 2026-10-16): 3,255
+matches pass Task 3's filters. Running the real engine on them with PLAN-style synthesized fixtures
+(all `BAT`, credits 8, `notes: []`) accepts **3,093** and rejects **162**:
+
+| Reason | Matches | Where it throws |
+| --- | --- | --- |
+| bowler changed mid-over | 98 | `reducer.ts`: "over N contains more than one bowler" |
+| an over with more than six legal balls | 31 | `DeliveryEventSchema` (`ballInOver` ≤ 6) |
+| a team lists more than 11 players | 12 | `PlayingXIEventSchema` (exactly 11) |
+| a fielder entry without a `name` | 12 | `CricsheetMatchSchema` (`fielders[].name` required) |
+| wicket kind `retired not out` | 5 | `WicketKindSchema` (not in the enum) |
+| a team lists fewer than 11 players | 4 | `PlayersFileSchema` (≥ 22 players) for the synthesized fixture |
+
+`retired not out` matters again when the engine supports it: the oracle's `NOT_BOWLER_WICKETS` lacks it, so
+the oracle would wrongly credit the bowler and count a team wicket.
+
 ## Expected
 The demo matches never hit these. For archive use the engine must either support the case or the
 caller must exclude the match with a recorded reason, never silently.
@@ -39,8 +56,9 @@ caller must exclude the match with a recorded reason, never silently.
   player appearance for priors.
 - Later (backlog; Decisions entry and tests first): derive the target as first-innings runs + 1 when
   absent; convert `overs.balls` notation to balls; give each bowler of a split over its own
-  `OverSummary` (a maiden only for one bowler's complete six-ball over, as the oracle counts it).
-  12-player lists and seven-ball overs stay rejected.
+  `OverSummary` (a maiden only for one bowler's complete six-ball over, as the oracle counts it);
+  accept nameless fielders (no fielding credit) and `retired not out` (not a team or bowler wicket;
+  fix the oracle's list in the same change). 12-player lists and seven-ball overs stay rejected.
 
 ## Verification
 `run_sweep.sh` prints the rejections by reason; the table above is the `t02-verified` baseline.

@@ -208,6 +208,7 @@ threshold for "big balls", and pre-match player projections, all reproducible by
 - Create `packages/engine/src/models/{logistic,winprob,leverage,priors}.ts`
 - Create `scripts/build-models.ts`, `scripts/lib/archive.ts` (download, extract to a fresh temp dir, iterate JSON files, synthesize minimal fixtures for archive matches)
 - Create (generated, committed) `data/models/winprob-v1.json`, `data/models/priors-1298150.json`, `data/models/priors-1415755.json`, and `data/models/README.md` (source URL, retrieval date, zip sha256, file counts, exclusions, regenerate command)
+- Modify `biome.json`: add `"!data/models"` to `files.includes`. The files are generated and must rebuild byte-for-byte, and Biome would reflow the arrays `JSON.stringify` writes, so they are treated like `data/raw` and the golden files.
 - Test `packages/engine/test/{logistic,winprob,leverage,priors}.test.ts`
 
 **Interfaces**
@@ -229,14 +230,21 @@ threshold for "big balls", and pre-match player projections, all reproducible by
   - `projectedPoints(playerId: string, priors: PriorsFile): number`,
     `projectSquad(squad: FantasySquad, priors: PriorsFile, rules: FantasyRules): { total: number; perPlayer: { playerId: string; projected: number; multiplier: number }[] }`
 
-**Build script rules (decided):** source `https://cricsheet.org/downloads/t20s_male_json.zip`; keep
-men's T20Is with 20-over innings, two innings, a winner or tie, no `outcome.method`, no super-over
-innings, chase `target.overs == 20`; exclude `1298150` and `1415755`. `buildTimeline` rejects
-some valid files by design (`docs/bugs/BUG-002`; in the World Cup archive, 9 of the rejected
-matches pass the filters above: 8 mid-over bowler changes and one 12-player list). Catch the
-error, exclude the match, add it to `excludedMatchIds`, and report counts per reason in
-`data/models/README.md`. Never skip a match silently. A rejected match is not a player appearance
-for priors: the next most recent appearance takes its place. Test split: matches with
+**Build script rules (decided):** source `https://cricsheet.org/downloads/t20s_male_json.zip`.
+`node scripts/build-models.ts [--zip <path>]`: without `--zip` it downloads into a fresh temp
+dir. Either way it records the zip's sha256 in `trainedOn.sha256` and the README, and the same
+zip must rebuild byte-identical files (Cricsheet republishes the archive as matches are added).
+Keep men's T20Is with 20-over innings, two innings, a winner or tie, no `outcome.method`, no
+super-over innings, chase `target.overs == 20`. Exclude the shipped demo matches (read them from
+`data/raw/cricsheet/manifest.json`: `1298150`, `1415755`). `buildTimeline` rejects some valid
+files by design (`docs/bugs/BUG-002`). In the 2026-10-16 archive, 3,255 matches pass the filters;
+the engine accepts 3,093 and rejects 162 (mid-over bowler change 98, seven-ball over 31, XI over
+11 players 12, nameless fielder 12, `retired not out` 5, XI under 11 players 4). Catch the error,
+exclude the match, add it to `excludedMatchIds`, and report counts per reason in
+`data/models/README.md`. Never skip a match silently. A priors *appearance* is a match where the
+player is in the announced XI (`info.players`; substitute fielding does not count, D-038) and the
+engine accepts the match; when a match is rejected, the next most recent appearance takes its
+place. Test split: matches with
 `fnv1a32(matchId) % 5 === 0`. Chase rows: the state before the first ball and after every legal
 ball of innings 2 (skip terminal states), label = chasing team won. First-innings rows: after every
 legal ball of innings 1, label = batting-first team won. Fit with `l2 = 1e-4 · n`, `maxIter 50`,
@@ -278,7 +286,7 @@ role across all squad players of that match. Output files are deterministic (sta
   - demo sanity: 1298150 India after innings-2 `13.6` < 0.35; after `18.6` > after `18.4` + 0.05; 1415755 South Africa after innings-2 `14.6` > 0.65; final state 1 for the winner.
 - [ ] **3.3** Implement `scripts/lib/archive.ts`, `scripts/build-models.ts`, `winprob.ts`; run `node scripts/build-models.ts`; commit the model files; tests pass.
 - [ ] **3.4** Failing `leverage.test.ts` (both matches): the share of deliveries with `value ≥ nudgeThreshold` is between 2% and 20%; 1298150 innings-2 deliveries `18.5`, `18.6`, `19.1`, the `19.4` no-ball, `19.5` and the final `19.6` are all ≥ threshold; 1415755 innings-2 `16.1` and `19.1` ≥ threshold. **Do not tune weights per ball.** If a listed ball misses with the specified features and weights, stop and report it in the feature file. Implement → pass.
-- [ ] **3.5** Failing `priors.test.ts`: both priors files parse; `asOf` equals the match date; every appearance date < `asOf`; every projected value in [0, 200]; a player with no appearances projects exactly `roleMean[role]`; `projectSquad` equals the hand sum `Σ projected·multiplier` for `babar-believer`. Implement → pass.
+- [ ] **3.5** Failing `priors.test.ts`: both priors files parse; `asOf` equals the match date; every appearance date < `asOf`; every projected value in [0, 200]; a player with no appearances projects exactly `roleMean[role]` (every real squad player has some, so test it with a synthetic `PriorsFile` entry); `projectSquad` equals the hand sum `Σ projected·multiplier` for `babar-believer`. Implement → pass.
 - [ ] **3.6** `pnpm verify` green; docs (F03, Flow, Architecture status incl. model metrics, Decisions for features/split/threshold, TEST_CHECKLIST, ROLLBACK, `data/models/README.md`).
 
 **Audit hooks:** re-run `node scripts/build-models.ts` and confirm byte-identical outputs; inspect

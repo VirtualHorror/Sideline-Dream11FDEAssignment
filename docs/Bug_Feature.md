@@ -16,7 +16,7 @@ audit updates this page.
 | Id | Summary | Severity | Status |
 | --- | --- | --- | --- |
 | [BUG-001](bugs/BUG-001-oracle-scores-substitute-fielders.md) | The oracle gave fantasy points to substitute fielders outside the playing XI. DOMAIN §3 says they score nothing, and the engine follows DOMAIN. | minor | fixed in the oracle (D-038) |
-| [BUG-002](bugs/BUG-002-engine-rejects-cricsheet-edge-cases.md) | `buildTimeline` rejects 31 of 230 archive matches: no two innings, a missing or fractional target, a mid-over bowler change, a 12-player list, a seven-ball over | minor for the product, major for Task 3 if unhandled | open: Task 3 excludes and counts; engine support is backlog |
+| [BUG-002](bugs/BUG-002-engine-rejects-cricsheet-edge-cases.md) | `buildTimeline` rejects some valid Cricsheet files: 31 of 230 in the World Cup archive, and 162 of the 3,255 T20Is that pass Task 3's filters (mid-over bowler change, seven-ball over, XI not 11, nameless fielder, `retired not out`) | minor for the product, major for Task 3 if unhandled | open: Task 3 excludes and counts; engine support is backlog |
 
 Fixed while Task 2 was being implemented (logged in F02, no bug file):
 - The result text used Cricsheet's team name instead of the authored display name. A regression test now covers it.
