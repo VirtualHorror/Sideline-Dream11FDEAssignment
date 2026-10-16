@@ -76,7 +76,7 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 1 | Foundation: toolchain, monorepo, contracts, real data, guards, docs, shell | Claude | `main` | ✅ done, tagged `t01-verified` |
 | 2 | Cricket core: timeline, reducer, fantasy scoring, engine report | Codex | `task/02-cricket-core` | ✅ done, tagged `t02-verified` |
 | 3 | Models: T20I archive pipeline, win probability, leverage, player priors | Claude (Codex unavailable) | `task/03-models` | ✅ done, tagged `t03-verified` |
-| 4 | Moments engine: clock, delay buffer, detectors, gate, quests, crowd, commentary | Claude (Codex unavailable) | `task/04-moments-engine` | ⬜ |
+| 4 | Moments engine: clock, delay buffer, detectors, gate, quests, crowd, commentary | Claude (Codex unavailable) | `task/04-moments-engine` | ✅ done, tagged `t04-verified` |
 | 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Codex | `task/05-server-ai` | ⬜ |
 | 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Codex | `task/06-frontend-core` | ⬜ |
 | 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Codex + Nabhanyu | `task/07-deploy` | ⬜ |
@@ -367,6 +367,16 @@ commentary lines, and the synthetic crowd.
 - [x] **4.10** `pnpm verify` green; docs (F04, Flow §9 → BUILT for the logic, Architecture, Decisions, TEST_CHECKLIST, ROLLBACK).
 
 **Audit hooks:** run detectors on the holdout match; confirm triggers land on its cheap captain dismissals and biggest swings; check corpus for real names and for anything offensive.
+
+**Audit result (2026-10-16, Claude): accepted, `t04-verified`.** Implemented by Claude because Codex
+was unavailable, so this is a self-audit, after an independent spot-check of `t03-verified` in a
+fresh session (F04 log). 337 tests; `mutate.py` 18/18; 47 of 48 hand mutants of the new code killed
+(the survivor cannot occur in T20 data); engine and oracle identical on both matches; on two holdout
+World Cup matches (951373, 951353) every one of the eight biggest win-probability swings got a
+teaser, the match-deciding ball was flagged, bailouts followed only cheap early dismissals, and the
+gate kept 0.855 and 0.845 of events deterministic (0.876 on the 2022 replay). Owner decisions:
+step 4.0 (D-044) and the match-deciding ball (D-046). Beyond the PLAN's files: `cricket/join.ts`
+(join points) and `detectors/facts.ts`. Open for Task 5: the crowd's seed (D-047). Follow-ups: F04.
 
 ---
 
