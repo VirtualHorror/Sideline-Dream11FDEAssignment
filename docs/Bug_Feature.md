@@ -11,6 +11,7 @@ audit updates this page.
 | F01 | Foundation: toolchain, monorepo, contracts, real data, guards, oracle, docs, shell | audited, `t01-verified` | [F01](features/F01-foundation.md) |
 | F02 | Cricket core: Cricsheet timeline, reducer, fantasy scoring, engine report CLI | audited and merged, `t02-verified` | [F02](features/F02-cricket-core.md) |
 | F03 | Models: T20I archive pipeline, win probability, leverage threshold, player priors | audited and merged, `t03-verified` | [F03](features/F03-models.md) |
+| F04 | Moments engine: clocks, delay buffer, commentary lines, phase detectors (lineup, collapse, nudge with the match-deciding ball, room), catch-up facts, entropy gate, quest resolver, synthetic crowd; Task 3 carry-overs (step 4.0) | audited and merged, `t04-verified` | [F04](features/F04-moments-engine.md) |
 
 ## Bugs
 
@@ -27,3 +28,9 @@ Fixed while Task 2 was being implemented (logged in F02, no bug file):
 
 Fixed while Task 3 was being implemented (logged in F03, no bug file):
 - A winner without a margin read "X won by the match"; it now reads "X won" (F02 follow-up 7, test first).
+
+Fixed in Task 4 step 4.0 (logged in F04, no bug file):
+- `projectedPoints` took an inherited name (`toString`, `constructor`) for a priors entry and failed
+  with a TypeError instead of "no priors for player" (test first).
+- Two Task 3 behaviours were untested (a diagonal-only Hessian and leverage counting retired hurt as a
+  wicket would both have passed); tests now pin them.
