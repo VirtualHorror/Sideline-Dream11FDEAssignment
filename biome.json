@@ -11,6 +11,7 @@
       "!**/node_modules",
       "!**/dist",
       "!data/raw",
+      "!data/models",
       "!data/runtime",
       "!docs/design/reference",
       "!packages/engine/test/golden",

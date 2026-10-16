@@ -62,6 +62,9 @@ function currentOver(innings: InningsState, event: DeliveryEvent): OverSummary {
     };
     innings.overs.push(over);
   }
+  // An over has exactly one bowler in this contract (`OverSummary.bowlerId`), which is what makes
+  // maidens exact. A bowler replaced mid-over (injury) throws instead of being merged into one
+  // summary; the Task 3 archive pipeline excludes such matches with a recorded reason (BUG-002).
   if (over.bowlerId !== event.bowler)
     throw new Error(`over ${event.over} contains more than one bowler`);
   return over;
@@ -92,6 +95,10 @@ function updateLive(state: MatchState, innings: InningsState, event: DeliveryEve
   const ballsRemaining = target ? Math.max(0, target.balls - innings.legalBalls) : 0;
   const runsRequired = target ? Math.max(0, target.runs - innings.runs) : null;
   const hitWicket = event.wickets.length > 0;
+  // Strike rotation (DOMAIN §1, verified on 470 demo deliveries): the batters cross when the runs
+  // actually run are odd. The one-run wide or no-ball penalty is not run, so a wide adds only its
+  // extra runs, and a boundary (4 or 6) is even. They swap again after the sixth legal ball. After
+  // a wicket the new striker is unknown until the next delivery names the batter, so both are null.
   const runsRun =
     event.runs.batter +
     event.extras.byes +

@@ -1,0 +1,1684 @@
+{
+  "matchId": "1298150",
+  "asOf": "2022-10-23",
+  "source": "https://cricsheet.org/downloads/t20s_male_json.zip (sha256 95305bc2dae8dcce7b8da7755f3992521874b14598ea5828129f37834e8b860a)",
+  "k": 3,
+  "roleMean": {
+    "WK": 49.43,
+    "BAT": 45.41,
+    "AR": 60.71,
+    "BOWL": 53.48
+  },
+  "players": {
+    "8a75e999": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 39
+        },
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 105
+        },
+        {
+          "matchId": "1322337",
+          "date": "2022-10-11",
+          "points": 37
+        },
+        {
+          "matchId": "1322335",
+          "date": "2022-10-08",
+          "points": 141
+        },
+        {
+          "matchId": "1322334",
+          "date": "2022-10-07",
+          "points": 42
+        },
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 12
+        },
+        {
+          "matchId": "1327233",
+          "date": "2022-09-30",
+          "points": 151
+        },
+        {
+          "matchId": "1327232",
+          "date": "2022-09-28",
+          "points": 17
+        },
+        {
+          "matchId": "1327231",
+          "date": "2022-09-25",
+          "points": 56
+        },
+        {
+          "matchId": "1327230",
+          "date": "2022-09-23",
+          "points": 16
+        }
+      ],
+      "projected": 57.86
+    },
+    "2f26ac1a": {
+      "role": "WK",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 78
+        },
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 117
+        },
+        {
+          "matchId": "1322337",
+          "date": "2022-10-11",
+          "points": 44
+        },
+        {
+          "matchId": "1322335",
+          "date": "2022-10-08",
+          "points": 2
+        },
+        {
+          "matchId": "1322334",
+          "date": "2022-10-07",
+          "points": 138
+        },
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 17
+        },
+        {
+          "matchId": "1327232",
+          "date": "2022-09-28",
+          "points": 103
+        },
+        {
+          "matchId": "1327231",
+          "date": "2022-09-25",
+          "points": 148
+        },
+        {
+          "matchId": "1327230",
+          "date": "2022-09-23",
+          "points": 12
+        },
+        {
+          "matchId": "1327229",
+          "date": "2022-09-22",
+          "points": 154
+        }
+      ],
+      "projected": 73.95
+    },
+    "6843a783": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 47
+        },
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 4
+        },
+        {
+          "matchId": "1322337",
+          "date": "2022-10-11",
+          "points": 26
+        },
+        {
+          "matchId": "1322335",
+          "date": "2022-10-08",
+          "points": 2
+        },
+        {
+          "matchId": "1322334",
+          "date": "2022-10-07",
+          "points": 63
+        },
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 92
+        },
+        {
+          "matchId": "1327233",
+          "date": "2022-09-30",
+          "points": 2
+        },
+        {
+          "matchId": "1327232",
+          "date": "2022-09-28",
+          "points": 23
+        },
+        {
+          "matchId": "1327231",
+          "date": "2022-09-25",
+          "points": 41
+        },
+        {
+          "matchId": "1327230",
+          "date": "2022-09-23",
+          "points": 117
+        }
+      ],
+      "projected": 42.56
+    },
+    "29e253dd": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 49
+        },
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 4
+        },
+        {
+          "matchId": "1322337",
+          "date": "2022-10-11",
+          "points": 48
+        },
+        {
+          "matchId": "1322335",
+          "date": "2022-10-08",
+          "points": 6
+        },
+        {
+          "matchId": "1322334",
+          "date": "2022-10-07",
+          "points": 33
+        },
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 39
+        },
+        {
+          "matchId": "1327233",
+          "date": "2022-09-30",
+          "points": 61
+        },
+        {
+          "matchId": "1327232",
+          "date": "2022-09-28",
+          "points": 83
+        },
+        {
+          "matchId": "1327231",
+          "date": "2022-09-25",
+          "points": 13
+        },
+        {
+          "matchId": "1327230",
+          "date": "2022-09-23",
+          "points": 14
+        }
+      ],
+      "projected": 37.4
+    },
+    "9de62878": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 38
+        },
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 26
+        },
+        {
+          "matchId": "1322337",
+          "date": "2022-10-11",
+          "points": 58
+        },
+        {
+          "matchId": "1322335",
+          "date": "2022-10-08",
+          "points": 80
+        },
+        {
+          "matchId": "1322334",
+          "date": "2022-10-07",
+          "points": 42
+        },
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 14
+        },
+        {
+          "matchId": "1327233",
+          "date": "2022-09-30",
+          "points": 81
+        },
+        {
+          "matchId": "1327232",
+          "date": "2022-09-28",
+          "points": 74
+        },
+        {
+          "matchId": "1327281",
+          "date": "2022-09-11",
+          "points": 64
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 71
+        }
+      ],
+      "projected": 56.16
+    },
+    "c13e34f4": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 69
+        },
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 2
+        },
+        {
+          "matchId": "1322337",
+          "date": "2022-10-11",
+          "points": 12
+        },
+        {
+          "matchId": "1322335",
+          "date": "2022-10-08",
+          "points": 32
+        },
+        {
+          "matchId": "1322334",
+          "date": "2022-10-07",
+          "points": 22
+        },
+        {
+          "matchId": "1327233",
+          "date": "2022-09-30",
+          "points": 32
+        },
+        {
+          "matchId": "1327232",
+          "date": "2022-09-28",
+          "points": 8
+        },
+        {
+          "matchId": "1327230",
+          "date": "2022-09-23",
+          "points": 15
+        },
+        {
+          "matchId": "1327229",
+          "date": "2022-09-22",
+          "points": 4
+        },
+        {
+          "matchId": "1327228",
+          "date": "2022-09-20",
+          "points": 23
+        }
+      ],
+      "projected": 27.33
+    },
+    "3086f7a4": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 121
+        },
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 120
+        },
+        {
+          "matchId": "1322337",
+          "date": "2022-10-11",
+          "points": 10
+        },
+        {
+          "matchId": "1322335",
+          "date": "2022-10-08",
+          "points": 100
+        },
+        {
+          "matchId": "1322334",
+          "date": "2022-10-07",
+          "points": 97
+        },
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 18
+        },
+        {
+          "matchId": "1327233",
+          "date": "2022-09-30",
+          "points": 25
+        },
+        {
+          "matchId": "1327232",
+          "date": "2022-09-28",
+          "points": 44
+        },
+        {
+          "matchId": "1327231",
+          "date": "2022-09-25",
+          "points": 125
+        },
+        {
+          "matchId": "1327230",
+          "date": "2022-09-23",
+          "points": 50
+        }
+      ],
+      "projected": 68.63
+    },
+    "0a4736eb": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 5
+        },
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 6
+        },
+        {
+          "matchId": "1322337",
+          "date": "2022-10-11",
+          "points": 45
+        },
+        {
+          "matchId": "1322335",
+          "date": "2022-10-08",
+          "points": 12
+        },
+        {
+          "matchId": "1322334",
+          "date": "2022-10-07",
+          "points": 16
+        },
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 15
+        },
+        {
+          "matchId": "1327233",
+          "date": "2022-09-30",
+          "points": 17
+        },
+        {
+          "matchId": "1327232",
+          "date": "2022-09-28",
+          "points": 13
+        },
+        {
+          "matchId": "1327231",
+          "date": "2022-09-25",
+          "points": 29
+        },
+        {
+          "matchId": "1327281",
+          "date": "2022-09-11",
+          "points": 2
+        }
+      ],
+      "projected": 22.79
+    },
+    "45a7e761": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1288316",
+          "date": "2022-04-05",
+          "points": 88
+        },
+        {
+          "matchId": "1287774",
+          "date": "2021-12-14",
+          "points": 126
+        },
+        {
+          "matchId": "1287773",
+          "date": "2021-12-13",
+          "points": 50
+        },
+        {
+          "matchId": "1273755",
+          "date": "2021-11-11",
+          "points": 54
+        },
+        {
+          "matchId": "1273752",
+          "date": "2021-11-07",
+          "points": 58
+        },
+        {
+          "matchId": "1273742",
+          "date": "2021-11-02",
+          "points": 15
+        },
+        {
+          "matchId": "1273730",
+          "date": "2021-10-26",
+          "points": 63
+        },
+        {
+          "matchId": "1273727",
+          "date": "2021-10-24",
+          "points": 127
+        },
+        {
+          "matchId": "1263165",
+          "date": "2021-07-31",
+          "points": 42
+        },
+        {
+          "matchId": "1239542",
+          "date": "2021-07-20",
+          "points": 6
+        }
+      ],
+      "projected": 60.73
+    },
+    "24bb1c2f": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 88
+        },
+        {
+          "matchId": "1322335",
+          "date": "2022-10-08",
+          "points": 127
+        },
+        {
+          "matchId": "1322334",
+          "date": "2022-10-07",
+          "points": 50
+        },
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 14
+        },
+        {
+          "matchId": "1327232",
+          "date": "2022-09-28",
+          "points": 88
+        },
+        {
+          "matchId": "1327231",
+          "date": "2022-09-25",
+          "points": 123
+        },
+        {
+          "matchId": "1327230",
+          "date": "2022-09-23",
+          "points": 19
+        },
+        {
+          "matchId": "1327229",
+          "date": "2022-09-22",
+          "points": 90
+        },
+        {
+          "matchId": "1327228",
+          "date": "2022-09-20",
+          "points": 46
+        },
+        {
+          "matchId": "1327281",
+          "date": "2022-09-11",
+          "points": 140
+        }
+      ],
+      "projected": 72.73
+    },
+    "9c9af282": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 74
+        },
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 78
+        },
+        {
+          "matchId": "1322337",
+          "date": "2022-10-11",
+          "points": 16
+        },
+        {
+          "matchId": "1327228",
+          "date": "2022-09-20",
+          "points": 11
+        },
+        {
+          "matchId": "1327281",
+          "date": "2022-09-11",
+          "points": 57
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 36
+        },
+        {
+          "matchId": "1327274",
+          "date": "2022-09-02",
+          "points": 89
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 94
+        }
+      ],
+      "projected": 55.95
+    },
+    "1777c020": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1327281",
+          "date": "2022-09-11",
+          "points": 2
+        },
+        {
+          "matchId": "1327280",
+          "date": "2022-09-09",
+          "points": 21
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 27
+        },
+        {
+          "matchId": "1327274",
+          "date": "2022-09-02",
+          "points": 89
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 22
+        },
+        {
+          "matchId": "1288316",
+          "date": "2022-04-05",
+          "points": 2
+        },
+        {
+          "matchId": "1287775",
+          "date": "2021-12-16",
+          "points": 24
+        },
+        {
+          "matchId": "1287774",
+          "date": "2021-12-14",
+          "points": 26
+        },
+        {
+          "matchId": "1287773",
+          "date": "2021-12-13",
+          "points": 18
+        },
+        {
+          "matchId": "1277974",
+          "date": "2021-11-19",
+          "points": 66
+        }
+      ],
+      "projected": 33.33
+    },
+    "fce581b5": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 45
+        },
+        {
+          "matchId": "1327231",
+          "date": "2022-09-25",
+          "points": 6
+        },
+        {
+          "matchId": "1327230",
+          "date": "2022-09-23",
+          "points": 55
+        },
+        {
+          "matchId": "1327229",
+          "date": "2022-09-22",
+          "points": 4
+        },
+        {
+          "matchId": "1327228",
+          "date": "2022-09-20",
+          "points": 9
+        },
+        {
+          "matchId": "1327281",
+          "date": "2022-09-11",
+          "points": 6
+        },
+        {
+          "matchId": "1327280",
+          "date": "2022-09-09",
+          "points": 8
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 30
+        },
+        {
+          "matchId": "1327274",
+          "date": "2022-09-02",
+          "points": 87
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 6
+        }
+      ],
+      "projected": 33.7
+    },
+    "9e9af5f2": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1322340",
+          "date": "2022-10-14",
+          "points": 14
+        },
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 83
+        },
+        {
+          "matchId": "1322337",
+          "date": "2022-10-11",
+          "points": 9
+        },
+        {
+          "matchId": "1322335",
+          "date": "2022-10-08",
+          "points": 102
+        },
+        {
+          "matchId": "1322334",
+          "date": "2022-10-07",
+          "points": 138
+        },
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 10
+        },
+        {
+          "matchId": "1327233",
+          "date": "2022-09-30",
+          "points": 5
+        },
+        {
+          "matchId": "1327232",
+          "date": "2022-09-28",
+          "points": 63
+        },
+        {
+          "matchId": "1327231",
+          "date": "2022-09-25",
+          "points": 48
+        },
+        {
+          "matchId": "1288316",
+          "date": "2022-04-05",
+          "points": 91
+        }
+      ],
+      "projected": 55.65
+    },
+    "8596fe80": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1322339",
+          "date": "2022-10-13",
+          "points": 13
+        },
+        {
+          "matchId": "1327234",
+          "date": "2022-10-02",
+          "points": 58
+        },
+        {
+          "matchId": "1327231",
+          "date": "2022-09-25",
+          "points": 89
+        },
+        {
+          "matchId": "1327230",
+          "date": "2022-09-23",
+          "points": 52
+        },
+        {
+          "matchId": "1327229",
+          "date": "2022-09-22",
+          "points": 5
+        },
+        {
+          "matchId": "1327281",
+          "date": "2022-09-11",
+          "points": 24
+        },
+        {
+          "matchId": "1327280",
+          "date": "2022-09-09",
+          "points": 75
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 42
+        },
+        {
+          "matchId": "1287775",
+          "date": "2021-12-16",
+          "points": 2
+        },
+        {
+          "matchId": "1239542",
+          "date": "2021-07-20",
+          "points": 4
+        }
+      ],
+      "projected": 40.34
+    },
+    "740742ef": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1327508",
+          "date": "2022-10-04",
+          "points": 10
+        },
+        {
+          "matchId": "1327507",
+          "date": "2022-10-02",
+          "points": 85
+        },
+        {
+          "matchId": "1327506",
+          "date": "2022-09-28",
+          "points": 2
+        },
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 51
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 100
+        },
+        {
+          "matchId": "1327503",
+          "date": "2022-09-20",
+          "points": 25
+        },
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 142
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 74
+        },
+        {
+          "matchId": "1327272",
+          "date": "2022-08-31",
+          "points": 43
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 20
+        }
+      ],
+      "projected": 52.94
+    },
+    "b17e2f24": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1327507",
+          "date": "2022-10-02",
+          "points": 119
+        },
+        {
+          "matchId": "1327506",
+          "date": "2022-09-28",
+          "points": 95
+        },
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 13
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 20
+        },
+        {
+          "matchId": "1327503",
+          "date": "2022-09-20",
+          "points": 105
+        },
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 22
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 54
+        },
+        {
+          "matchId": "1327272",
+          "date": "2022-08-31",
+          "points": 56
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 2
+        },
+        {
+          "matchId": "1278672",
+          "date": "2021-11-19",
+          "points": 123
+        }
+      ],
+      "projected": 57.33
+    },
+    "ba607b88": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1327507",
+          "date": "2022-10-02",
+          "points": 105
+        },
+        {
+          "matchId": "1327506",
+          "date": "2022-09-28",
+          "points": 7
+        },
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 113
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 29
+        },
+        {
+          "matchId": "1327503",
+          "date": "2022-09-20",
+          "points": 14
+        },
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 2
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 104
+        },
+        {
+          "matchId": "1327272",
+          "date": "2022-08-31",
+          "points": 96
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 61
+        },
+        {
+          "matchId": "1276906",
+          "date": "2022-07-10",
+          "points": 25
+        }
+      ],
+      "projected": 53.25
+    },
+    "271f83cd": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1327508",
+          "date": "2022-10-04",
+          "points": 18
+        },
+        {
+          "matchId": "1327507",
+          "date": "2022-10-02",
+          "points": 129
+        },
+        {
+          "matchId": "1327506",
+          "date": "2022-09-28",
+          "points": 112
+        },
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 137
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 2
+        },
+        {
+          "matchId": "1327503",
+          "date": "2022-09-20",
+          "points": 92
+        },
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 60
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 35
+        },
+        {
+          "matchId": "1327272",
+          "date": "2022-08-31",
+          "points": 146
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 34
+        }
+      ],
+      "projected": 69.33
+    },
+    "2e171977": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1327508",
+          "date": "2022-10-04",
+          "points": 18
+        },
+        {
+          "matchId": "1327507",
+          "date": "2022-10-02",
+          "points": 41
+        },
+        {
+          "matchId": "1327506",
+          "date": "2022-09-28",
+          "points": 55
+        },
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 130
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 96
+        },
+        {
+          "matchId": "1327503",
+          "date": "2022-09-20",
+          "points": 142
+        },
+        {
+          "matchId": "1317907",
+          "date": "2022-08-07",
+          "points": 158
+        },
+        {
+          "matchId": "1317906",
+          "date": "2022-08-06",
+          "points": 107
+        },
+        {
+          "matchId": "1276904",
+          "date": "2022-07-07",
+          "points": 33
+        },
+        {
+          "matchId": "1303308",
+          "date": "2022-06-28",
+          "points": 7
+        }
+      ],
+      "projected": 74.55
+    },
+    "dbe50b21": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 69
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 19
+        },
+        {
+          "matchId": "1327503",
+          "date": "2022-09-20",
+          "points": 155
+        },
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 35
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 36
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 175
+        },
+        {
+          "matchId": "1317907",
+          "date": "2022-08-07",
+          "points": 73
+        },
+        {
+          "matchId": "1317905",
+          "date": "2022-08-02",
+          "points": 65
+        },
+        {
+          "matchId": "1317904",
+          "date": "2022-08-01",
+          "points": 100
+        },
+        {
+          "matchId": "1317903",
+          "date": "2022-07-29",
+          "points": 12
+        }
+      ],
+      "projected": 70.86
+    },
+    "c03f1114": {
+      "role": "WK",
+      "appearances": [
+        {
+          "matchId": "1327508",
+          "date": "2022-10-04",
+          "points": 100
+        },
+        {
+          "matchId": "1327507",
+          "date": "2022-10-02",
+          "points": 45
+        },
+        {
+          "matchId": "1327506",
+          "date": "2022-09-28",
+          "points": 4
+        },
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 17
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 24
+        },
+        {
+          "matchId": "1327503",
+          "date": "2022-09-20",
+          "points": 26
+        },
+        {
+          "matchId": "1327272",
+          "date": "2022-08-31",
+          "points": 4
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 33
+        },
+        {
+          "matchId": "1317907",
+          "date": "2022-08-07",
+          "points": 36
+        },
+        {
+          "matchId": "1317906",
+          "date": "2022-08-06",
+          "points": 10
+        }
+      ],
+      "projected": 34.41
+    },
+    "495d42a5": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1327508",
+          "date": "2022-10-04",
+          "points": 21
+        },
+        {
+          "matchId": "1327507",
+          "date": "2022-10-02",
+          "points": 11
+        },
+        {
+          "matchId": "1327506",
+          "date": "2022-09-28",
+          "points": 38
+        },
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 61
+        },
+        {
+          "matchId": "1317905",
+          "date": "2022-08-02",
+          "points": 18
+        },
+        {
+          "matchId": "1317904",
+          "date": "2022-08-01",
+          "points": 67
+        },
+        {
+          "matchId": "1317903",
+          "date": "2022-07-29",
+          "points": 102
+        },
+        {
+          "matchId": "1278672",
+          "date": "2021-11-19",
+          "points": 50
+        },
+        {
+          "matchId": "1278671",
+          "date": "2021-11-17",
+          "points": 94
+        },
+        {
+          "matchId": "1273753",
+          "date": "2021-11-08",
+          "points": 123
+        }
+      ],
+      "projected": 59.01
+    },
+    "8cf9814c": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1273753",
+          "date": "2021-11-08",
+          "points": 21
+        },
+        {
+          "matchId": "1273748",
+          "date": "2021-11-05",
+          "points": 141
+        },
+        {
+          "matchId": "1273739",
+          "date": "2021-10-31",
+          "points": 5
+        },
+        {
+          "matchId": "1273727",
+          "date": "2021-10-24",
+          "points": 5
+        },
+        {
+          "matchId": "1187678",
+          "date": "2020-01-26",
+          "points": 19
+        },
+        {
+          "matchId": "1187677",
+          "date": "2020-01-24",
+          "points": 4
+        },
+        {
+          "matchId": "1187020",
+          "date": "2019-12-11",
+          "points": 85
+        },
+        {
+          "matchId": "1098211",
+          "date": "2017-07-09",
+          "points": 1
+        },
+        {
+          "matchId": "1041617",
+          "date": "2016-08-28",
+          "points": 73
+        },
+        {
+          "matchId": "1041615",
+          "date": "2016-08-27",
+          "points": 43
+        }
+      ],
+      "projected": 42.88
+    },
+    "2e81a32d": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 34
+        },
+        {
+          "matchId": "1327503",
+          "date": "2022-09-20",
+          "points": 5
+        },
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 12
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 40
+        },
+        {
+          "matchId": "1327272",
+          "date": "2022-08-31",
+          "points": 49
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 163
+        },
+        {
+          "matchId": "1317906",
+          "date": "2022-08-06",
+          "points": 14
+        },
+        {
+          "matchId": "1317905",
+          "date": "2022-08-02",
+          "points": 75
+        },
+        {
+          "matchId": "1317904",
+          "date": "2022-08-01",
+          "points": 13
+        },
+        {
+          "matchId": "1317903",
+          "date": "2022-07-29",
+          "points": 74
+        }
+      ],
+      "projected": 49.19
+    },
+    "244048f6": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1327507",
+          "date": "2022-10-02",
+          "points": 63
+        },
+        {
+          "matchId": "1327506",
+          "date": "2022-09-28",
+          "points": 136
+        },
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 7
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 52
+        },
+        {
+          "matchId": "1327272",
+          "date": "2022-08-31",
+          "points": 39
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 93
+        },
+        {
+          "matchId": "1317907",
+          "date": "2022-08-07",
+          "points": 7
+        },
+        {
+          "matchId": "1317906",
+          "date": "2022-08-06",
+          "points": 133
+        },
+        {
+          "matchId": "1317905",
+          "date": "2022-08-02",
+          "points": 42
+        },
+        {
+          "matchId": "1317904",
+          "date": "2022-08-01",
+          "points": 55
+        }
+      ],
+      "projected": 60.57
+    },
+    "919a3be2": {
+      "role": "WK",
+      "appearances": [
+        {
+          "matchId": "1327508",
+          "date": "2022-10-04",
+          "points": 71
+        },
+        {
+          "matchId": "1327507",
+          "date": "2022-10-02",
+          "points": 4
+        },
+        {
+          "matchId": "1327506",
+          "date": "2022-09-28",
+          "points": 12
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 4
+        },
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 35
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 26
+        },
+        {
+          "matchId": "1327272",
+          "date": "2022-08-31",
+          "points": 4
+        },
+        {
+          "matchId": "1317906",
+          "date": "2022-08-06",
+          "points": 84
+        },
+        {
+          "matchId": "1317905",
+          "date": "2022-08-02",
+          "points": 81
+        },
+        {
+          "matchId": "1317904",
+          "date": "2022-08-01",
+          "points": 50
+        }
+      ],
+      "projected": 39.95
+    },
+    "73ad96ed": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 7
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 36
+        },
+        {
+          "matchId": "1317907",
+          "date": "2022-08-07",
+          "points": 82
+        },
+        {
+          "matchId": "1317906",
+          "date": "2022-08-06",
+          "points": 63
+        },
+        {
+          "matchId": "1317905",
+          "date": "2022-08-02",
+          "points": 31
+        },
+        {
+          "matchId": "1276904",
+          "date": "2022-07-07",
+          "points": 79
+        },
+        {
+          "matchId": "1303308",
+          "date": "2022-06-28",
+          "points": 210
+        },
+        {
+          "matchId": "1303307",
+          "date": "2022-06-26",
+          "points": 103
+        },
+        {
+          "matchId": "1278685",
+          "date": "2022-02-26",
+          "points": 4
+        },
+        {
+          "matchId": "1278684",
+          "date": "2022-02-24",
+          "points": 10
+        }
+      ],
+      "projected": 62.09
+    },
+    "57ee1fde": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 46
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 4
+        },
+        {
+          "matchId": "1327503",
+          "date": "2022-09-20",
+          "points": 33
+        },
+        {
+          "matchId": "1327277",
+          "date": "2022-09-06",
+          "points": 115
+        },
+        {
+          "matchId": "1327276",
+          "date": "2022-09-04",
+          "points": 38
+        },
+        {
+          "matchId": "1327272",
+          "date": "2022-08-31",
+          "points": 21
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 8
+        },
+        {
+          "matchId": "1276905",
+          "date": "2022-07-09",
+          "points": 79
+        },
+        {
+          "matchId": "1276904",
+          "date": "2022-07-07",
+          "points": 73
+        },
+        {
+          "matchId": "1303307",
+          "date": "2022-06-26",
+          "points": 47
+        }
+      ],
+      "projected": 48.03
+    },
+    "f986ca1a": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1327508",
+          "date": "2022-10-04",
+          "points": 34
+        },
+        {
+          "matchId": "1327507",
+          "date": "2022-10-02",
+          "points": 2
+        },
+        {
+          "matchId": "1327506",
+          "date": "2022-09-28",
+          "points": 93
+        },
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 41
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 12
+        },
+        {
+          "matchId": "1327503",
+          "date": "2022-09-20",
+          "points": 16
+        },
+        {
+          "matchId": "1276906",
+          "date": "2022-07-10",
+          "points": 97
+        },
+        {
+          "matchId": "1276905",
+          "date": "2022-07-09",
+          "points": 84
+        },
+        {
+          "matchId": "1276904",
+          "date": "2022-07-07",
+          "points": 62
+        },
+        {
+          "matchId": "1303308",
+          "date": "2022-06-28",
+          "points": 37
+        }
+      ],
+      "projected": 49.11
+    }
+  }
+}

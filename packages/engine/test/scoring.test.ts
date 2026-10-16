@@ -1,5 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { buildTimeline, fantasyPoints, foldEvents, squadPoints } from "../src/index.ts";
+import {
+  type BatterLine,
+  buildTimeline,
+  createMatchState,
+  type FantasyRules,
+  fantasyPoints,
+  foldEvents,
+  type MatchState,
+  type Player,
+  type Role,
+  squadPoints,
+} from "../src/index.ts";
 import { loadMatch, MATCH_IDS } from "./helpers/data.ts";
 
 function scoresThrough(id: (typeof MATCH_IDS)[number], seq?: number) {
@@ -74,5 +85,95 @@ describe("fantasy scoring examples", () => {
     const persona = fixture.personas.personas.find((candidate) => candidate.id === personaId);
     if (!persona?.squad) throw new Error(`missing fantasy squad for ${personaId}`);
     expect(squadPoints(points, persona.squad, fixture.rules).total).toBe(total);
+  });
+});
+
+// A one-batter state, so a rule's effect on one line is visible without any other scorer.
+const SYNTHETIC_BATTER = "0000000b";
+
+function syntheticBattingState(line: Omit<BatterLine, "playerId">): MatchState {
+  const state = createMatchState("1234567");
+  state.playingXI = { AAA: [SYNTHETIC_BATTER] };
+  state.innings = [
+    {
+      innings: 1,
+      battingTeam: "AAA",
+      bowlingTeam: "BBB",
+      runs: line.runs,
+      wickets: line.out ? 1 : 0,
+      legalBalls: line.balls,
+      extras: { wides: 0, noballs: 0, byes: 0, legbyes: 0, penalty: 0, total: 0 },
+      target: null,
+      batters: [{ playerId: SYNTHETIC_BATTER, ...line }],
+      bowlers: [],
+      fallOfWickets: [],
+      overs: [],
+      partnership: null,
+      status: "complete",
+      endReason: "overs_complete",
+    },
+  ];
+  return state;
+}
+
+function syntheticPlayer(role: Role): Player {
+  return {
+    id: SYNTHETIC_BATTER,
+    cricsheetName: "Synthetic Batter",
+    displayName: "Synthetic Batter",
+    shortName: "Synthetic",
+    team: "AAA",
+    role,
+    credits: 8,
+  };
+}
+
+describe("fantasy scoring rules on synthetic lines", () => {
+  it.each([
+    { role: "BOWL", breakdown: { playingXI: 4 } },
+    { role: "BAT", breakdown: { playingXI: 4, duck: -2 } },
+  ] as const)("charges a duck only to duck roles: $role out for 0", ({ role, breakdown }) => {
+    const { rules } = loadMatch("1298150");
+    const state = syntheticBattingState({
+      runs: 0,
+      balls: 1,
+      fours: 0,
+      sixes: 0,
+      dots: 1,
+      strikeRate: 0,
+      out: {
+        kind: "bowled",
+        bowlerId: "0000000c",
+        fielderIds: [],
+        label: "0.1",
+        eventId: "1234567:0002",
+      },
+    });
+    expect(
+      fantasyPoints(state, [syntheticPlayer(role)], rules).get(SYNTHETIC_BATTER)?.breakdown,
+    ).toEqual(breakdown);
+  });
+
+  it("rounds the strike rate to 2 decimals before the slab lookup", () => {
+    const { rules } = loadMatch("1298150");
+    const slabRules: FantasyRules = structuredClone(rules);
+    slabRules.points.strikeRate.slabs = [{ min: 133.33, max: 133.33, points: 7 }];
+    // 40 off 30 balls is 133.333..., inside the slab only once rounded to 133.33.
+    const state = syntheticBattingState({
+      runs: 40,
+      balls: 30,
+      fours: 0,
+      sixes: 0,
+      dots: 10,
+      strikeRate: 133.33,
+      out: null,
+    });
+    expect(fantasyPoints(state, [syntheticPlayer("BAT")], slabRules).get(SYNTHETIC_BATTER)).toEqual(
+      {
+        playerId: SYNTHETIC_BATTER,
+        total: 55,
+        breakdown: { playingXI: 4, runs: 40, milestone: 4, strikeRate: 7 },
+      },
+    );
   });
 });

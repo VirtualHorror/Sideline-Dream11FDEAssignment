@@ -10,7 +10,7 @@ Everything Sideline knows about cricket comes from here, never from code.
 | `matches/<id>/context.json` | Title, stage, team codes and colours, sourced pre-match notes | public reporting (URLs in each note) | hand |
 | `matches/<id>/personas.json` | Demo fans: squad, captain/VC, affinity, lens, stream delay, join point | authored | hand; squads must pass `validateSquad` |
 | `rules/t20-fantasy.json` | Team rules and points table (illustrative Dream11-style values) | commonly cited Dream11 T20 table; see its `disclaimer` | hand |
-| `models/` (Task 3) | Trained win-probability model, leverage threshold, player priors | Cricsheet men's T20I archive | `scripts/build-models.ts` only |
+| `models/` (Task 3) | Trained win-probability model, leverage threshold, player priors, and a generated README with every count and exclusion | Cricsheet men's T20I archive (`t20s_male_json.zip`, sha256 in the files) | `scripts/build-models.ts` only (byte-reproducible; Biome-excluded) |
 | `crowd/` (Task 4) | Synthetic watch-along chat corpus (placeholders, no real names) | authored, labelled synthetic | hand |
 | `glossary.json` (Task 5) | Cricket terms in plain English | authored | hand |
 | `ai-replay/` (Task 7) | Recorded real model outputs for keyless demos | `pnpm ai:record` | script only |

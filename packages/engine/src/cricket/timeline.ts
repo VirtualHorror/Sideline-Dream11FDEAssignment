@@ -66,6 +66,9 @@ function wicketsOf(raw: CricsheetMatch, delivery: RawDelivery): DeliveryEvent["w
   }));
 }
 
+// D-035: the stadium clock gets a small, replayable wobble. `2·seconds + 1` whole-second slots
+// centred on zero (-3 s … +3 s for the default 3 000 ms), picked by FNV-1a of the stable event id,
+// so the server, the browser and every refold after a seek compute the same times.
 function jitter(id: string, jitterMs: number): number {
   const seconds = jitterMs / 1000;
   const slotCount = Math.floor(seconds * 2 + 1);
@@ -307,13 +310,14 @@ export function buildTimeline(input: {
   if (outcome?.winner) {
     winner = teamCode(input.context, outcome.winner);
     const by = outcome.by;
+    // A winner without a margin (an awarded match, say) reads "<team> won", never "won by …".
     const margin =
       by?.runs !== undefined
-        ? `${by.runs} ${by.runs === 1 ? "run" : "runs"}`
+        ? ` by ${by.runs} ${by.runs === 1 ? "run" : "runs"}`
         : by?.wickets !== undefined
-          ? `${by.wickets} ${by.wickets === 1 ? "wicket" : "wickets"}`
-          : "the match";
-    resultText = `${contextTeam(input.context, outcome.winner).name} won by ${margin}`;
+          ? ` by ${by.wickets} ${by.wickets === 1 ? "wicket" : "wickets"}`
+          : "";
+    resultText = `${contextTeam(input.context, outcome.winner).name} won${margin}`;
   } else {
     resultText = outcome?.result === "tie" ? "Match tied" : "No result";
   }
