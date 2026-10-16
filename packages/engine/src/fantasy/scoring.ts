@@ -1,4 +1,10 @@
-/** Fantasy point calculation from reducer state; callers supply player and rule data. */
+/**
+ * Fantasy point calculation from reducer state; callers supply player and rule data.
+ *
+ * Callers: scripts/engine-report.ts (oracle comparison), scripts/build-models.ts (player priors
+ * from archive matches) and, from Tasks 5-6, the server session and the web client's live panel.
+ * Everything is read from `MatchState`, so a live state scores exactly like a finished one.
+ */
 
 import type { Player } from "../contracts/match.ts";
 import type { FantasySquad } from "../contracts/persona.ts";
@@ -70,6 +76,9 @@ export function fantasyPoints(
     }
   }
 
+  // Only the announced XI scores (DOMAIN §3, D-038). A substitute fielder credited with a catch
+  // or run out has no entry here, so the credit is dropped on purpose; the oracle agrees since
+  // BUG-001 was fixed.
   const add = (playerId: string, key: string, value: number): void => {
     if (value === 0) return;
     const score = scores.get(playerId);

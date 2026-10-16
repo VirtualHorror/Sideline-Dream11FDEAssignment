@@ -66,6 +66,9 @@ function wicketsOf(raw: CricsheetMatch, delivery: RawDelivery): DeliveryEvent["w
   }));
 }
 
+// D-035: the stadium clock gets a small, replayable wobble. `2·seconds + 1` whole-second slots
+// centred on zero (-3 s … +3 s for the default 3 000 ms), picked by FNV-1a of the stable event id,
+// so the server, the browser and every refold after a seek compute the same times.
 function jitter(id: string, jitterMs: number): number {
   const seconds = jitterMs / 1000;
   const slotCount = Math.floor(seconds * 2 + 1);
