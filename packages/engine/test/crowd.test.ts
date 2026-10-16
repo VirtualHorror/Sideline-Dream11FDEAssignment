@@ -95,6 +95,19 @@ describe.each(MATCH_IDS)("simulated crowd for %s", (id) => {
     expect(partial).toEqual(fromPrefix);
   });
 
+  it("never repeats a line within one delivery's reactions", () => {
+    const { events, messages } = simulate(id, "session-a");
+    const deliveries = new Set(events.filter((e) => e.kind === "delivery").map((e) => e.id));
+    const byEvent = new Map<string, string[]>();
+    for (const message of messages) {
+      const eventId = message.id.split(":c")[0] ?? "";
+      if (deliveries.has(eventId))
+        byEvent.set(eventId, [...(byEvent.get(eventId) ?? []), message.text]);
+    }
+    expect(byEvent.size).toBeGreaterThan(100);
+    for (const texts of byEvent.values()) expect(new Set(texts).size).toBe(texts.length);
+  });
+
   it("names players only from players.json", () => {
     const { messages } = simulate(id, "session-a");
     const shortNames = new Set(loadMatch(id).players.players.map((p) => p.shortName));

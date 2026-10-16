@@ -276,6 +276,49 @@ describe("resolveQuestRule semantics", () => {
     expect(resolveQuestRule(rule(r as QuestRule), through(2, ball))).toBe(outcome);
   });
 
+  // Innings 1's 7.2 (legal ball 44) is a leg bye: a bowler's dot (DOMAIN §2), and with a
+  // retired-hurt batter attached it still takes no team wicket.
+  it("counts a leg bye as a dot and retired hurt as no wicket", () => {
+    let legal = 0;
+    const legBye = events.find((e) => {
+      if (e.kind !== "delivery" || e.innings !== 1 || !e.isLegal) return false;
+      legal += 1;
+      return legal === 44;
+    }) as DeliveryEvent;
+    expect(legBye.extras.legbyes).toBe(1);
+    const dot = rule({
+      type: "dots_in_window",
+      innings: 1,
+      fromLegalBall: 44,
+      toLegalBall: 44,
+      op: "gte",
+      value: 1,
+    });
+    expect(resolveQuestRule(dot, events)).toBe("won");
+    const retired = events.map((e) =>
+      e.seq === legBye.seq
+        ? {
+            ...legBye,
+            wickets: [
+              {
+                kind: "retired hurt" as const,
+                playerOut: legBye.batter,
+                fielders: [],
+                creditedToBowler: false,
+              },
+            ],
+          }
+        : e,
+    );
+    const wicket = rule({
+      type: "wicket_in_window",
+      innings: 1,
+      fromLegalBall: 44,
+      toLegalBall: 44,
+    });
+    expect(resolveQuestRule(wicket, retired)).toBe("lost");
+  });
+
   it("closes every window when the innings ends early", () => {
     // The chase cut at ball 100, then an innings_end (as if the target had been reached).
     const cut = through(2, 100);

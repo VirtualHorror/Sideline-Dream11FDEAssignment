@@ -431,6 +431,21 @@ describe("collapse detector (phase 2: early collapse)", () => {
     expect(step?.verdicts[0]?.verdict).toMatchObject({ outcome, reason });
   });
 
+  // Rahul (C) falls on ball 11 of the chase, before this fan joins after 3 overs; Rohit (VC)
+  // falls on ball 20, where Rahul's quest would still have run. The fan never saw Rahul's
+  // dismissal, so no quest is open and Rohit's triggers the bailout.
+  it("ignores dismissals from before the fan joined", () => {
+    const squad = personaOf("1298150", "late-from-work").squad?.playerIds ?? [];
+    const persona: Persona = {
+      ...armbandPersona("1298150", squad, "b17e2f24", "740742ef"),
+      joinAt: { kind: "over", innings: 2, afterOvers: 3 },
+    };
+    const fired = firings(replay("1298150", persona, [collapseDetector]), "collapse");
+    expect(
+      fired.map((f) => [f.event.kind === "delivery" && f.event.label, f.verdict.reason]),
+    ).toEqual([["3.2", "armband_out_cheaply"]]);
+  });
+
   it("explains every deterministic verdict", () => {
     const reasons = (persona: Persona) =>
       new Set(
@@ -589,6 +604,32 @@ describe("nudge detector (phase 4: hold the spoiler)", () => {
     expect(facts.leverage.value).toBeCloseTo(0.41, 2);
     expect(facts.leverage.threshold).toBe(loadWinProbModel().leverage.nudgeThreshold);
     expect(facts.leverage.wpAfter).toBeGreaterThan(facts.leverage.wpBefore);
+  });
+
+  // With every model weight at zero, P = 0.5 in any live state, so the 18.5 six scores exactly its
+  // spectacle, 0.12. A threshold of exactly 0.12 makes it a big ball; a hair above does not.
+  it("counts a ball exactly at the threshold as a big ball", () => {
+    const events = timelineOf("1298150");
+    const six = events.filter(chaseBall("18.5")).at(-1) as DeliveryEvent;
+    const base = loadWinProbModel();
+    const verdictAt = (threshold: number) =>
+      nudgeDetector.evaluate({
+        before: foldEvents("1298150", events, six.seq - 1),
+        after: foldEvents("1298150", events, six.seq),
+        event: six,
+        events,
+        ctx: {
+          ...contextFor("1298150", personaOf("1298150", "babar-believer")),
+          winprob: {
+            ...base,
+            chase: { ...base.chase, weights: base.chase.weights.map(() => 0) },
+            firstInnings: { ...base.firstInnings, weights: base.firstInnings.weights.map(() => 0) },
+            leverage: { ...base.leverage, nudgeThreshold: threshold },
+          },
+        },
+      });
+    expect(verdictAt(0.12)).toMatchObject({ outcome: "ai_trigger", reason: "big_ball" });
+    expect(verdictAt(0.12 + 1e-9)).toEqual({ outcome: "deterministic", reason: "below_threshold" });
   });
 
   it("is deterministic below the threshold and on anything that is not a delivery", () => {
@@ -781,6 +822,30 @@ describe("room detector (phase 4: the watch-along chat)", () => {
     expect(Object.values(facts.stanceCounts).reduce((sum, n) => sum + n, 0)).toBe(inWindow.length);
     expect(facts.situation).toMatchObject({ score: "144/4", runsRequired: 16, ballsRemaining: 6 });
     expect(facts.why).toBe("death_over_end");
+  });
+
+  // India were 158/5 needing 2 off 2 before 19.5. Make 19.5 a six instead of Karthik's stumping:
+  // the chase ends mid-over, and that closes the over's room read.
+  it("reads the room when the chase is won mid-over in the death overs", () => {
+    const events = timelineOf("1298150");
+    const ball = events.filter(chaseBall("19.5")).at(-1) as DeliveryEvent;
+    const winning: DeliveryEvent = {
+      ...ball,
+      runs: { batter: 6, extras: 0, total: 6 },
+      boundary: 6,
+      wickets: [],
+    };
+    const patched = events.map((e) => (e.seq === ball.seq ? winning : e));
+    const steps = replay("1298150", preMatch("1298150"), [roomDetector], {
+      chat: crowdFor("1298150", "session-a"),
+      events: patched,
+    });
+    const step = steps.find((s) => s.input.event.seq === ball.seq);
+    expect(step?.input.after.innings[1]?.runs).toBe(164);
+    expect(step?.verdicts[0]?.verdict).toMatchObject({
+      outcome: "ai_trigger",
+      reason: "death_over_end",
+    });
   });
 
   it("stays deterministic without chat, and never reads the fan's own messages", () => {
