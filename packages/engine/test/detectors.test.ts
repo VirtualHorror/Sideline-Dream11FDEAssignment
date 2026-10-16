@@ -466,7 +466,7 @@ describe("collapse detector (phase 2: early collapse)", () => {
 
 /** The delivery `pick` selects, with the extras-repeat rule of the leverage tests. */
 const chaseBall =
-  (label: string, extra?: "noballs" | "wides") =>
+  (label: string, extra?: "noballs" | "wides" | "byes") =>
   (event: MatchEvent): event is DeliveryEvent =>
     event.kind === "delivery" &&
     event.innings === 2 &&
@@ -630,6 +630,32 @@ describe("nudge detector (phase 4: hold the spoiler)", () => {
       });
     expect(verdictAt(0.12)).toMatchObject({ outcome: "ai_trigger", reason: "big_ball" });
     expect(verdictAt(0.12 + 1e-9)).toEqual({ outcome: "deterministic", reason: "below_threshold" });
+  });
+
+  // A last-ball win from real doubt: with the free hit's 3 byes made a dot, India need 4 off the
+  // final ball (155/6 after Karthik's stumping, then the wide), and a four there wins it. That
+  // ball is both big and decisive; "decided" is the stronger fact, so it names the reason.
+  it("calls a winning big ball match_decided", () => {
+    const events = timelineOf("1298150");
+    const byes = events.filter(chaseBall("19.4", "byes")).at(-1) as DeliveryEvent;
+    const last = events.filter(chaseBall("19.6")).at(-1) as DeliveryEvent;
+    const dot: DeliveryEvent = {
+      ...byes,
+      runs: { batter: 0, extras: 0, total: 0 },
+      extras: { ...byes.extras, byes: 0 },
+    };
+    const four: DeliveryEvent = { ...last, runs: { batter: 4, extras: 0, total: 4 }, boundary: 4 };
+    const patched = events.map((e) => (e.seq === byes.seq ? dot : e.seq === last.seq ? four : e));
+    const steps = replay("1298150", personaOf("1298150", "babar-believer"), [nudgeDetector], {
+      events: patched,
+    });
+    const step = steps.find((s) => s.input.event.seq === last.seq);
+    expect(step?.input.before.innings[1]).toMatchObject({ runs: 156, wickets: 6, legalBalls: 119 });
+    const verdict = step?.verdicts[0]?.verdict;
+    const facts = triggerOf(verdict ?? { outcome: "none" }, "spoiler_nudge").facts;
+    expect(facts.leverage.value).toBeGreaterThanOrEqual(facts.leverage.threshold);
+    expect(facts.outcome.matchOver).toBe(true);
+    expect([verdict?.reason, facts.why]).toEqual(["match_decided", "match_decided"]);
   });
 
   it("is deterministic below the threshold and on anything that is not a delivery", () => {
