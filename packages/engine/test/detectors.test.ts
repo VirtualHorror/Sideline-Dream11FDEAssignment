@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import {
   buildCatchUpFacts,
   type CatchUpFacts,
+  type ChatMessage,
   catchUpKey,
   collapseDetector,
   type DeliveryEvent,
@@ -15,11 +16,13 @@ import {
   nudgeDetector,
   type Persona,
   type PlayingXIEvent,
+  roomDetector,
   seqAfterOvers,
+  simulateCrowd,
   validateSquad,
   type Wicket,
 } from "../src/index.ts";
-import { loadMatch, loadPriors, loadWinProbModel } from "./helpers/data.ts";
+import { loadCorpus, loadMatch, loadPriors, loadWinProbModel } from "./helpers/data.ts";
 import { contextFor, firings, personaOf, replay, timelineOf } from "./helpers/replay.ts";
 
 /** Narrows a trigger to one kind, failing the test if it is another. */
@@ -732,4 +735,140 @@ describe("catch-up facts (phase 3: joining late)", () => {
     expect(late.previousInnings).toBeNull();
     expect(late.situation).toMatchObject({ innings: 2, overs: "0.4" });
   });
+});
+
+describe("room detector (phase 4: the watch-along chat)", () => {
+  const crowdFor = (id: "1298150" | "1415755", seed: string) =>
+    simulateCrowd({
+      events: timelineOf(id),
+      players: loadMatch(id).players.players,
+      corpus: loadCorpus(),
+      seed,
+    });
+  const preMatch = (id: "1298150" | "1415755") =>
+    personaOf(id, id === "1298150" ? "babar-believer" : "captain-rohit");
+
+  it.each(["1298150", "1415755"] as const)(
+    "%s: reads the room after every over from the 16th",
+    (id) => {
+      const steps = replay(id, preMatch(id), [roomDetector], { chat: crowdFor(id, "session-a") });
+      const overEnds = firings(steps, "room").filter((f) => f.verdict.reason === "death_over_end");
+      expect(overEnds.map((f) => triggerOf(f.verdict, "room_read").key)).toEqual([
+        ...[15, 16, 17, 18, 19].map((over) => `room:${id}:1:${over}`),
+        ...[15, 16, 17, 18, 19].map((over) => `room:${id}:2:${over}`),
+      ]);
+      for (const { event } of overEnds) {
+        expect(event).toMatchObject({ kind: "delivery", isLegal: true, ballInOver: 6 });
+      }
+    },
+  );
+
+  it("summarises up to 60 distinct shared messages from the last five minutes (1298150, after 18.6)", () => {
+    const chat = crowdFor("1298150", "session-a");
+    const steps = replay("1298150", preMatch("1298150"), [roomDetector], { chat });
+    const fired = firings(steps, "room").find(
+      (f) => f.verdict.outcome === "ai_trigger" && f.verdict.trigger.key === "room:1298150:2:18",
+    );
+    const facts = triggerOf(fired?.verdict ?? { outcome: "none" }, "room_read").facts;
+    const t = fired?.event.t ?? Number.NaN;
+    expect(facts.window).toEqual({ fromT: t - 300_000, toT: t });
+    const inWindow = chat.filter((m) => m.t > t - 300_000 && m.t <= t);
+    expect(facts.messageCount).toBe(inWindow.length);
+    expect(facts.messages.length).toBeLessThanOrEqual(60);
+    expect(new Set(facts.messages.map((m) => m.text)).size).toBe(facts.messages.length);
+    const ids = new Set(inWindow.map((m) => m.id));
+    for (const message of facts.messages) expect(ids.has(message.id)).toBe(true);
+    expect(Object.values(facts.stanceCounts).reduce((sum, n) => sum + n, 0)).toBe(inWindow.length);
+    expect(facts.situation).toMatchObject({ score: "144/4", runsRequired: 16, ballsRemaining: 6 });
+    expect(facts.why).toBe("death_over_end");
+  });
+
+  it("stays deterministic without chat, and never reads the fan's own messages", () => {
+    const own: ChatMessage[] = crowdFor("1298150", "session-a").map((m) => ({
+      ...m,
+      fromYou: true,
+    }));
+    for (const chat of [undefined, [], own]) {
+      const steps = replay("1298150", preMatch("1298150"), [roomDetector], { chat });
+      const reasons = new Set(steps.map((s) => s.verdicts[0]?.verdict.reason));
+      expect(reasons).toEqual(new Set(["not_delivery", "no_chat"]));
+    }
+  });
+
+  // The same 2/4 history placed in the innings break, then a burst before the chase's first
+  // ball: the rate counts only this innings' minutes, so there is no history yet and no spike.
+  it("does not compare a new innings with chat from before it", () => {
+    const events = timelineOf("1298150");
+    const ball = events.filter(chaseBall("0.1")).at(-1) as DeliveryEvent;
+    const start = events.find((e) => e.kind === "innings_start" && e.innings === 2);
+    const now = ball.t;
+    expect(now - (start?.t ?? 0)).toBe(60_000);
+    const chat: ChatMessage[] = [];
+    const add = (t: number) =>
+      chat.push({
+        id: `test:${chat.length}`,
+        t,
+        handle: "silly_point",
+        affinity: "neutral",
+        text: `line ${chat.length}`,
+        lang: "en",
+        stance: "neutral",
+        synthetic: true,
+        fromYou: false,
+      });
+    for (let k = 1; k <= 10; k += 1) {
+      for (let i = 0; i < (k % 2 === 0 ? 4 : 2); i += 1) add(now - 60_000 * k - 1_000 * (i + 1));
+    }
+    for (let i = 0; i < 6; i += 1) add(now - 1_000 * (i + 1));
+    const steps = replay("1298150", preMatch("1298150"), [roomDetector], { chat, events });
+    const verdict = steps.find((s) => s.input.event.id === ball.id)?.verdicts[0]?.verdict;
+    expect(verdict).toEqual({ outcome: "deterministic", reason: "quiet" });
+  });
+
+  // A hand-made chat: ten minutes of history alternating 2 and 4 messages (mean 3, population
+  // SD 1, so the bar is 5), then a final minute of 6 (a spike) or 5 (not one: it must exceed).
+  it.each([
+    [6, "ai_trigger", "chat_spike"],
+    [5, "deterministic", "quiet"],
+  ] as const)(
+    "a last minute of %i messages after a 2/4 history is %s",
+    (burst, outcome, reason) => {
+      const events = timelineOf("1298150");
+      const ball = events.filter(chaseBall("5.2")).at(-1) as DeliveryEvent;
+      const now = ball.t;
+      const message = (t: number, n: number): ChatMessage => ({
+        id: `test:${n}`,
+        t,
+        handle: "silly_point",
+        affinity: "neutral",
+        text: `line ${n}`,
+        lang: "en",
+        stance: "neutral",
+        synthetic: true,
+        fromYou: false,
+      });
+      const chat: ChatMessage[] = [];
+      // Minute k (k = 1..10) is (now - 60000(k+1), now - 60000k]: stamp its messages inside it.
+      for (let k = 1; k <= 10; k += 1) {
+        const count = k % 2 === 0 ? 4 : 2;
+        for (let i = 0; i < count; i += 1)
+          chat.push(message(now - 60_000 * k - 1_000 * (i + 1), chat.length));
+      }
+      for (let i = 0; i < burst; i += 1) chat.push(message(now - 1_000 * (i + 1), chat.length));
+      const steps = replay("1298150", preMatch("1298150"), [roomDetector], { chat, events });
+      const verdict = steps.find((s) => s.input.event.id === ball.id)?.verdicts[0]?.verdict;
+      expect(verdict).toMatchObject({ outcome, reason });
+      if (verdict?.outcome === "ai_trigger") {
+        const facts = triggerOf(verdict, "room_read").facts;
+        expect(facts.rate).toEqual({
+          lastMinute: 6,
+          meanPerMinute: 3,
+          sdPerMinute: 1,
+          threshold: 5,
+          minutes: 10,
+        });
+        expect(triggerOf(verdict, "room_read").key).toBe("room:1298150:2:5");
+      }
+    },
+  );
 });
