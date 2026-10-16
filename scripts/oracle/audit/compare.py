@@ -8,13 +8,10 @@ Compares innings totals and extras, every batting and bowling line (as id-keyed 
 of wickets (oracle names mapped to registry ids), fielding and every fantasy entry. Prints each
 difference and exits 1 if there is any.
 
-Two things are deliberately not failures:
-  * Key order of the batters/bowlers maps. The engine report builds them with Object.fromEntries,
-    and JavaScript lists all-digit keys (some Cricsheet ids are all digits) first. The reducer's
-    own order of appearance is checked on the state by check_spec.py.
-  * Fantasy entries the oracle creates for players outside both playing XIs (substitute
-    fielders). DOMAIN.md section 3 says they score nothing; the oracle disagrees. Tracked as
-    docs/bugs/BUG-001; reported on the summary line, not counted as differences.
+Key order of the batters/bowlers maps is deliberately not compared: the engine report builds
+them with Object.fromEntries, and JavaScript lists all-digit keys (some Cricsheet ids are all
+digits) first. The reducer's own order of appearance is checked on the state by check_spec.py.
+(Until BUG-001 was fixed, the oracle also scored substitute fielders; it no longer does.)
 
 Part of the auditor's toolkit (scripts/oracle/audit/README.md). Implementers never edit it.
 """
@@ -28,9 +25,7 @@ def main():
     eng = json.load(open(engine_path, encoding="utf-8"))
     ora = json.load(open(oracle_path, encoding="utf-8"))
     reg = raw["info"]["registry"]["people"]
-    xi = {reg[name] for team in raw["info"]["players"].values() for name in team}
     diffs = []
-    bug001 = []
 
     def d(path, e, o):
         diffs.append(f"{path}: engine={e!r} oracle={o!r}")
@@ -66,9 +61,6 @@ def main():
 
     ef, of = eng.get("fantasy", {}), ora.get("fantasy", {})
     for pid in sorted(set(ef) | set(of)):
-        if pid not in ef and pid in of and pid not in xi:
-            bug001.append(pid)
-            continue
         if pid not in ef or pid not in of:
             d(f"fantasy.{pid}", ef.get(pid), of.get(pid))
             continue
@@ -83,9 +75,8 @@ def main():
     n_bowl = sum(len(i["bowlers"]) for i in ora["innings"])
     n_fow = sum(len(i["fall_of_wickets"]) for i in ora["innings"])
     status = "DIFF" if diffs else "IDENTICAL"
-    note = f"; {len(bug001)} oracle-only non-XI fantasy entries (BUG-001)" if bug001 else ""
     print(f"{status}: {len(diffs)} differences; compared {len(ora['innings'])} innings, {n_bat} batter "
-          f"lines, {n_bowl} bowler lines, {n_fow} wickets, {len(of) - len(bug001)} fantasy players{note}")
+          f"lines, {n_bowl} bowler lines, {n_fow} wickets, {len(of)} fantasy players")
     sys.exit(1 if diffs else 0)
 
 

@@ -165,3 +165,8 @@ findings are test, comment and doc quality items, carried into PLAN Task 3 step 
      commit).
 - **Spec gaps found (Claude's, not Codex's):** BUG-002 (target notation and absence, mid-over bowler
   change, 12-player lists, seven-ball overs) and BUG-001 (oracle).
+- **After the merge (2026-10-16):** Nabhanyu approved fixing the oracle for BUG-001 (D-038). With the
+  fix and a strict comparator, the sweep reports `199 IDENTICAL`, `31 ENGINE_REJECTS`, and 0 spec
+  mismatches. The fixed oracle equals both golden files as data. Its output is not byte-stable
+  between runs (set order, noted in the oracle and golden READMEs), so the earlier "byte-identical"
+  wording in the audit discussion was wrong.

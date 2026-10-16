@@ -23,9 +23,11 @@ Definitions (mirrored in docs/DOMAIN.md, which is the source of truth for both s
                     handled the ball, hit the ball twice, timed out
   catch credit    : "caught" -> listed fielder; "caught and bowled" -> the bowler
   run-out credit  : one fielder listed -> direct hit; two or more -> indirect, last two listed
+  fantasy scorers : the announced playing XIs (info.players) only; substitute fielders score nothing
 
 THIS FILE IS AN AUDIT TOOL. Implementers (Codex) must never edit it. See docs/Constraints.md.
-Python stdlib only.
+Python stdlib only. The key order of the `fantasy` section follows set iteration, which changes
+between runs (string hashing is randomised per process): compare outputs as data, not bytes.
 """
 import argparse
 import json
@@ -157,9 +159,11 @@ def fantasy(raw, innings, players, rules):
     score = {pid: {"total": pts["playingXI"], "breakdown": {"playingXI": pts["playingXI"]}} for pid in xi}
 
     def add(pid, key, value):
-        if value == 0:
+        # DOMAIN.md section 3: a player outside both announced XIs scores nothing, even for a
+        # catch or run out as a substitute fielder (BUG-001, D-038).
+        if value == 0 or pid not in xi:
             return
-        entry = score.setdefault(pid, {"total": 0, "breakdown": {}})
+        entry = score[pid]
         entry["total"] += value
         entry["breakdown"][key] = entry["breakdown"].get(key, 0) + value
 

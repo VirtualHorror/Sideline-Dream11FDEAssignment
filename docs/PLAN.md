@@ -194,8 +194,8 @@ oracle on both matches and on all 199 archive matches it accepts. An independent
 these rules (`scripts/oracle/audit/check_spec.py`) finds 0 mismatches over 46,254 deliveries, and
 12 of 18 mutants are killed. Findings, follow-ups and evidence: `docs/features/F02-cricket-core.md`
 (audit notes). Known limits: `docs/bugs/BUG-002` (31 archive matches rejected, 9 of them inside
-Task 3's filter). The oracle's discrepancy with DOMAIN §3 is `docs/bugs/BUG-001`. Small carry-overs
-are Task 3 step 3.0.
+Task 3's filter). The oracle's discrepancy with DOMAIN §3 (`docs/bugs/BUG-001`) was fixed after
+the audit (D-038). Small carry-overs are Task 3 step 3.0.
 
 ---
 

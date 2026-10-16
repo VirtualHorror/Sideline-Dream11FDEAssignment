@@ -18,6 +18,10 @@ python3 -I scripts/oracle/cricsheet_oracle.py data/raw/cricsheet/<id>.json \
   > packages/engine/test/golden/<id>.oracle.json
 ```
 
+A regenerated file can differ from the committed one in the key order of `fantasy` alone (the
+oracle iterates a set; Python randomises string hashing per process), so compare as data, not
+bytes. The engine tests already do.
+
 Shape: `{ innings: [{ innings, team, totals: {runs, wickets, legal_balls, deliveries, extras},
 batters: {<playerId>: {runs, balls, fours, sixes, dots, strike_rate, out}}, bowlers: {<playerId>:
 {legal_balls, conceded, wickets, lbw_bowled, maidens, dots, wides, noballs, overs, economy}},

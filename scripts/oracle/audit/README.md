@@ -24,14 +24,13 @@ mkdir "$W/raw" && unzip -q "$W/a.zip" -d "$W/raw"   # downloaded data: its own f
 scripts/oracle/audit/run_sweep.sh "$W/raw" "$W/work"
 ```
 
-Baseline at `t02-verified` (230 matches, zip sha256
+Baseline after `t02-verified` and the BUG-001 oracle fix (230 matches, zip sha256
 `df5e2fa71d973929a138c5a64c3d1f92406034df54a3558775b5c93898caa742`, retrieved 2026-10-16):
 
 ```text
 == engine report vs oracle (per match) ==
      31 ENGINE_REJECTS
     199 IDENTICAL
-   of which carry oracle-only substitute-fielder entries (BUG-001): 22
 == engine rejections by reason ==
       8 bowler changed mid-over
       4 fractional target overs (DLS)
@@ -45,10 +44,12 @@ TOTAL mismatches: 0
    check categories ok: 51
 ```
 
-The rejections are documented limits (`docs/bugs/BUG-002`); the substitute entries are the oracle's
-discrepancy with DOMAIN.md (`docs/bugs/BUG-001`). A newer archive can change the counts. Any `DIFF`
-line or `check_spec.py` mismatch is a finding. The strike-rotation line is a property of the data,
-not a check: DOMAIN's rule predicts the next batter on all but 11 of 42,933 balls.
+The rejections are documented limits (`docs/bugs/BUG-002`). In the audit itself, 22 of the 199 also
+showed oracle-only points for substitute fielders: that was the oracle's bug (`docs/bugs/BUG-001`),
+since fixed. A newer archive can change the counts. Any `DIFF` line or `check_spec.py` mismatch is a
+finding. The strike-rotation line is a property of the data, not a check: DOMAIN's rule predicts
+the next batter on all but 11 of 42,933 balls. Compare oracle output as data, never bytes: its
+`fantasy` key order follows Python set order, which changes between runs.
 
 Committed matches (expected `TOTAL mismatches: 0`):
 

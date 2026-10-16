@@ -50,8 +50,7 @@ Totals, extras, every batting/bowling line, fall of wickets and every player's f
 be identical. The comparison script is the auditor's, not the implementer's:
 `python3 -I scripts/oracle/audit/compare.py <raw.json> /tmp/engine.json /tmp/oracle.json` (read-only
 for implementers like the rest of `scripts/oracle/`; see `scripts/oracle/audit/README.md`).
-Oracle-only entries for substitute fielders outside the XI are the oracle's known discrepancy
-(BUG-001), not engine failures.
+Compare oracle output as data, not bytes: its `fantasy` key order changes between runs.
 
 ### C. Holdout match (from Task 2 on)
 Pick a Cricsheet T20 the implementer has never seen (any other game in

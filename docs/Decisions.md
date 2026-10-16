@@ -291,3 +291,19 @@
   holdouts (the 1273712 holdout hit none of the rejection classes or the substitute discrepancy);
   keep the auditor's tools out of the repo (evidence that cannot be repeated).
 - **Open:** BUG-001 waits for Nabhanyu: fix the oracle to follow DOMAIN §3, or change DOMAIN.
+
+### D-038 — Substitute fielders score no fantasy points; the oracle now agrees (2026-10-16, after T2, Nabhanyu)
+- **Context:** BUG-001. The oracle gave catch and run-out points to substitute fielders outside
+  both announced XIs; the engine follows DOMAIN.md §3 and gives them nothing. This resolves the
+  open item in D-037.
+- **Decision:** option A: keep the DOMAIN rule (only the announced XI scores) and fix the oracle's
+  `add()` to skip anyone outside the XIs. DOMAIN.md §3 now names substitute fielders explicitly.
+- **Why:** a one-line fix in the reference, with no engine or test churn. It matches the product's
+  "your player isn't playing" Phase 1 story and Dream11's published guidance (an ICC-Dream11 guide:
+  substitute fielders earn no points for catches or run-outs). Golden files are unchanged (equal as
+  data).
+- **Alternatives:** option B, change DOMAIN so substitutes score. That needs new engine logic and
+  tests, report and UI handling for players outside the squad file, and a priors rule for
+  substitute-only appearances, and it diverges from Dream11.
+- **Not covered:** concussion substitutes (full replacements who can bat and bowl). Dream11 scores
+  them; Sideline does not model them yet.

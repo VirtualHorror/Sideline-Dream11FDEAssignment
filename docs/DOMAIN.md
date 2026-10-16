@@ -88,6 +88,8 @@ A fan picks **11 players from both teams** before the match locks (at the first 
 - One **Captain** (points x2) and one **Vice-captain** (x1.5).
 - Players score points from what they do in the real match. A player who is not in the announced
   **playing XI** scores nothing. That is the Phase 1 problem: picking a player who then sits out.
+  This includes a **substitute fielder**: a squad player who comes on only to field for someone. A
+  catch or run-out he makes earns no fantasy points (D-038).
 
 Points (our illustrative table, `data/rules/t20-fantasy.json`; values are data, not code):
 

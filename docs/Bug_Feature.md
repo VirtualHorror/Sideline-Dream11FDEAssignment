@@ -15,7 +15,7 @@ audit updates this page.
 
 | Id | Summary | Severity | Status |
 | --- | --- | --- | --- |
-| [BUG-001](bugs/BUG-001-oracle-scores-substitute-fielders.md) | The oracle gives fantasy points to substitute fielders outside the playing XI. DOMAIN §3 says they score nothing, and the engine follows DOMAIN. | minor | open: owner decision |
+| [BUG-001](bugs/BUG-001-oracle-scores-substitute-fielders.md) | The oracle gave fantasy points to substitute fielders outside the playing XI. DOMAIN §3 says they score nothing, and the engine follows DOMAIN. | minor | fixed in the oracle (D-038) |
 | [BUG-002](bugs/BUG-002-engine-rejects-cricsheet-edge-cases.md) | `buildTimeline` rejects 31 of 230 archive matches: no two innings, a missing or fractional target, a mid-over bowler change, a 12-player list, a seven-ball over | minor for the product, major for Task 3 if unhandled | open: Task 3 excludes and counts; engine support is backlog |
 
 Fixed while Task 2 was being implemented (logged in F02, no bug file):

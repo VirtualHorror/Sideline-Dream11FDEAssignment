@@ -48,7 +48,6 @@ spec_exit=$?
 
 echo "== engine report vs oracle (per match) =="
 cut -f2 "$WORK/summary.tsv" | sort | uniq -c
-echo "   of which carry oracle-only substitute-fielder entries (BUG-001): $(grep -c 'BUG-001' "$WORK/summary.tsv")"
 echo "== engine rejections by reason =="
 awk -F'\t' '$2=="ENGINE_REJECTS"{print $3}' "$WORK/summary.tsv" | sed -E \
   -e 's/.*missing its Cricsheet target.*/missing innings[1].target (older Cricsheet files)/' \
