@@ -20,6 +20,7 @@ export * from "./buffer/delay.ts";
 export * from "./clock.ts";
 export * from "./contracts/index.ts";
 export * from "./cricket/cricsheet.ts";
+export * from "./cricket/describe.ts";
 export * from "./cricket/format.ts";
 export * from "./cricket/reducer.ts";
 export * from "./cricket/timeline.ts";
