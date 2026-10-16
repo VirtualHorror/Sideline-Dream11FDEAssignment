@@ -319,6 +319,17 @@ describe("resolveQuestRule semantics", () => {
     expect(resolveQuestRule(wicket, retired)).toBe("lost");
   });
 
+  // Task 4 spot-check carry-over (D-048: settled as soon as certain). The chase's first over has
+  // dots on legal balls 1 and 5 (raw file), so after ball 3 there is 1 dot and 3 balls to come.
+  // "At most 4 dots" can no longer fail (1 + 3 = 4); "at most 3" still can.
+  it("settles an at-most dots bet the ball it becomes certain, not before", () => {
+    const window = { type: "dots_in_window", innings: 2, fromLegalBall: 1, toLegalBall: 6 } as const;
+    expect(resolveQuestRule(rule({ ...window, op: "lte", value: 4 }), through(2, 3))).toBe("won");
+    expect(resolveQuestRule(rule({ ...window, op: "lte", value: 3 }), through(2, 3))).toBe(
+      "pending",
+    );
+  });
+
   it("closes every window when the innings ends early", () => {
     // The chase cut at ball 100, then an innings_end (as if the target had been reached).
     const cut = through(2, 100);

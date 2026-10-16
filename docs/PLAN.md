@@ -470,6 +470,8 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
 - Sessions: one global ticker (100 ms) for all sessions; idle TTL 30 min; max 300 sessions; seek and
   jump refold state and send a fresh `snapshot`; crowd chat is generated per session with seed
   `<sessionId>`; `delay` changes do not refold (client-side buffer).
+  *Amended 2026-10-16 by D-050 (Nabhanyu, before T5): one crowd per match, seeded with the match id
+  and shared by every session, so the per-over room-read key cites messages every fan has.*
 - SQLite (`node:sqlite`, `data/runtime/sideline.db`): tables `ai_cache(key, prompt_version, model,
   payload_json, source, created_at, hits, PRIMARY KEY(key, prompt_version, model))`,
   `ai_calls(... AICallTrace columns ...)`, `deliveries(match_id, seq, innings, label, batter_id,

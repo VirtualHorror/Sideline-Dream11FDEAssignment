@@ -455,6 +455,7 @@
 - **Open for Task 5:** the PLAN seeds each session's crowd with the session id, but room keys are
   shared per match and over; a cached room read would cite another session's message ids. Recommended:
   seed the crowd per match (every fan sees the same synthetic room, as in a real watch-along).
+- **Update:** resolved by D-050 (Nabhanyu, before T5): one crowd per match, seeded with the match id.
 
 ### D-048 — Quest rules settle from deliveries, as early as the outcome is certain (2026-10-16, T4, Claude)
 - **Decision:** positions are 1-based legal balls; a wide or no-ball belongs to the legal ball still
@@ -479,3 +480,29 @@
   over; with no complete missed over yet, the previous innings' missed overs are the window.
 - Room reads: five-minute window, up to 60 messages deduplicated by text (latest kept); an innings
   that ends mid-over in the death overs closes that over's read.
+
+### D-050 — One synthetic crowd per match, seeded with the match id (2026-10-16, before T5, Nabhanyu)
+- **Context:** D-047's open question. PLAN Task 5 seeded each session's crowd with the session id,
+  but room-read keys are shared per match and over (`room:<match>:<innings>:<over>`, D-015), so a
+  cached room read (Task 8) would cite message ids and quote lines that other fans never saw.
+- **Decision:** Nabhanyu approved the recommendation: one crowd per match, `simulateCrowd({ …,
+  seed: matchId })`, computed once per match and shared by every session. Every fan in a match sees
+  the same synthetic watch-along room, as in a real watch-along, and the per-over room-read cache key
+  is honest: the messages it cites exist in every fan's chat. The PLAN's sessions rule carries an
+  amendment note; D-047's open question is closed.
+- **Consequences:** a seek or jump re-reads the same crowd (it is prefix-stable per seed, D-047);
+  the crowd costs one simulation per match instead of one per session. Fans' own messages (Task 9)
+  stay per session and never enter shared prompts (Constraint 11).
+- **Alternatives:** per-session seeds (the room read would need a per-session key, so one model call
+  per fan per over, against thesis 1); a seed per room window (rooms would disagree across windows).
+
+### D-051 — Spot-check of `t04-verified`: accepted, two test gaps pinned in Task 5 (2026-10-16, before T5, Claude)
+- **Context:** Task 4 was implemented and audited by the same agent; Nabhanyu asked for an independent
+  check in a fresh session before Task 5 (F05 log). Verify, E2E, the oracle diff, `mutate.py`, a Python
+  re-derivation of the teaser counts and catch-up facts, and two never-examined holdout matches all
+  agree with the Task 4 record. 16 of 18 fresh hand mutants were killed.
+- **Decision:** the two survivors are test gaps, not defects, so `t04-verified` stands and the gaps are
+  closed with tests on the Task 5 branch (no engine source change): nine minutes of chat history are
+  not enough for a spike (pins the ten-minute minimum of D-047), and an at-most dots quest settles as
+  won on the ball that makes it certain (pins D-048's "as early as certain" at its boundary). Each new
+  test fails on its mutant and passes on the merged code.
