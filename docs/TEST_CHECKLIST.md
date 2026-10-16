@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | 1 | `pnpm typecheck` | `packages/engine typecheck: Done`, `apps/server typecheck: Done`, `apps/web typecheck: Done`, then no output from root `tsc`; exit 0 |
 | 2 | `pnpm lint` | `Checked N files in …ms. No fixes applied.` and no `×` or `!` diagnostics; exit 0 |
-| 3 | `pnpm test` | `Test Files  18 passed (18)` and `Tests  180 passed (180)`; no failed, no skipped |
+| 3 | `pnpm test` | `Test Files  18 passed (18)` and `Tests  183 passed (183)`; no failed, no skipped |
 | 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (36 source files, 209 terms)` (counts grow with code/data) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
@@ -105,3 +105,4 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | T1 Foundation | 2026-10-16 | pass | pass (64 files) | 9 files / 65 tests | OK (25 files, 209 terms) | OK (2 matches) | 297 ms | 8 passed |
 | T2 Cricket core | 2026-10-16 | pass | pass (78 files) | 13 files / 106 tests | OK (32 files, 209 terms) | OK (2 matches) | 239 ms | 8 passed |
+| T3 Models | 2026-10-16 | pass | pass (89 files) | 18 files / 183 tests | OK (36 files, 209 terms) | OK (2 matches) | 270 ms | 8 passed |

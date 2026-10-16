@@ -6,7 +6,7 @@
 - **Task:** 03 in `docs/PLAN.md`
 - **Branch:** `task/03-models`
 - **Owner / session:** Claude, implementing in place of Codex (unavailable), then auditing, 2026-10-16
-- **Status:** ready for audit
+- **Status:** audited and merged (`t03-verified`)
 
 ## Scope
 
@@ -72,6 +72,12 @@ detectors or the gate (Task 4), the server (Task 5) or any UI.
   appearance in the other's priors.
 - 2026-10-16: Biome flagged two warnings because the build's helper was called `fit` (Jasmine's
   focused-test alias); renamed `fitModel`. `pnpm verify` green: 18 files, 180 tests.
+- 2026-10-16, final review: two Important findings, fixed test-first. (1) `WinProbModelSchema`
+  accepted a model file whose feature names or order differ from the code's, which would give
+  wrong probabilities silently; it now requires the exact names in order. (2) No test pinned the
+  feature formulas, so a first-innings `wl·bb → wl·r` mutant survived. The first literal cases I
+  wrote had runs/160 equal to balls/120 and the mutant *still* survived; re-running the mutant
+  table caught it, and inputs that separate every term kill it. 183 tests.
 
 ## What worked / what did not
 
@@ -104,12 +110,15 @@ pnpm verify
 packages/engine typecheck: Done
 apps/server typecheck: Done
 apps/web typecheck: Done
-Checked 89 files in 229ms. No fixes applied.
+Checked 89 files in 218ms. No fixes applied.
  Test Files  18 passed (18)
-      Tests  180 passed (180)
+      Tests  183 passed (183)
 check-no-hardcode: OK (36 source files, 209 terms)
 verify-data: OK (2 matches)
-✓ built in 272ms
+✓ built in 270ms
+
+pnpm test:e2e
+  8 passed (13.2s)
 
 node scripts/build-models.ts --zip <t20s_male_json.zip>
 build-models: 3,627 match files, sha256 95305bc2dae8dcce7b8da7755f3992521874b14598ea5828129f37834e8b860a, retrieved 2026-10-16
@@ -140,3 +149,42 @@ mutate: 18 killed, 0 survived
    them automatically.
 
 ## Audit notes (filled by the auditor)
+
+**Audit, 2026-10-16, Claude, on `20a1cb7`. Verdict: accepted; merged `--no-ff`, tagged
+`t03-verified`.** Caveat first: Codex was unavailable, so the same agent implemented and audited
+this task. Every check below ran on real output, but a self-audit is weaker than an independent
+one; an independent re-audit (Codex, or a fresh Claude session) is cheap with the commands below.
+
+- **Verification (fresh runs):** `pnpm install --frozen-lockfile`; `pnpm verify` → 3× `typecheck:
+  Done`, `Checked 89 files … No fixes applied.`, `Test Files  18 passed (18)`, `Tests  183 passed
+  (183)`, `check-no-hardcode: OK (36 source files, 209 terms)`, `verify-data: OK (2 matches)`,
+  `✓ built in 270ms`; `pnpm test:e2e` → `8 passed (13.2s)`.
+- **Read-only files:** `git diff --stat main -- packages/engine/test/golden scripts/oracle` is empty.
+- **Anti-hardcoding (§2A):** scan OK; no `hardcode-ok`; no `.skip`/`.only`; no label, seq or id
+  comparisons in the new source; the only golden-number hit is the PLAN's `runs / 160` feature
+  scaling; demo ids come from the manifest; `packages/engine/src` uses no clock, randomness or Node.
+- **Engine vs oracle (§2B):** both demo matches IDENTICAL (`compare.py`).
+- **Holdout (§2C):** the whole World Cup archive again (sha256 `df5e2fa7…`): `199 IDENTICAL`,
+  `31 ENGINE_REJECTS`, `check_spec.py` `TOTAL mismatches: 0` (51 categories), the Task 2 baseline.
+  Win-probability trajectories of three test-split matches (1415735, 1415742, 1512770) start at
+  the first-innings base rate (0.49), move with runs and wickets, start the chase lower for bigger
+  targets, end at 1 for the winner, and flag wickets and boundaries in tight phases. 40 priors
+  appearances re-scored by the oracle with the same synthesized fixtures: 0 mismatches.
+- **Task 3 hooks:** the download run and the next `--zip` run of the 2026-10-16 archive wrote
+  identical files; after a README template fix, three more `--zip` runs (the last on the audited
+  head) were identical too, and the JSON files never changed. The calibration tables are in `data/models/README.md` (chase within
+  0.05 in every bin; first innings overconfident at the extremes, a recorded limit); both demo
+  matches are in `excludedMatchIds`; the counts reproduce HANDOFF4 and BUG-002 exactly (3,255
+  candidates, 3,093 used, 162 rejected by class, 607 test).
+- **Mutation (§2D):** `mutate.py` → `18 killed, 0 survived` (was 12/6 at `t02-verified`). Twenty
+  hand mutants of the new code: 19 killed after the fix pass; the survivor (dropping the Hessian's
+  off-diagonal terms) still converges to the same optimum on the synthetic data, and would fail
+  loudly at build time otherwise (deferred minor).
+- **Shortcut review:** no test weakened except the one the owner amended (D-043, BUG-003): PLAN
+  3.4's climax list, after the specified model missed two balls and nothing was tuned. Steps 4.5
+  and 5.6 inherited the old list and were amended with it.
+- **Security (§2F, as far as it applies):** `.env` untracked, mode 600, untouched; nothing
+  secret-shaped in the diff.
+- **Deferred minors:** the Hessian survivor above; `projectedPoints` could use `Object.hasOwn`;
+  `roleMean` rounds with `Math.round` where `projectedPoints` uses `round2`; a dead symmetrisation
+  loop in `fitLogistic`; the generated README could show how to save the zip for an exact rebuild.

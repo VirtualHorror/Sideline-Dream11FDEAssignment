@@ -10,7 +10,7 @@ audit updates this page.
 | --- | --- | --- | --- |
 | F01 | Foundation: toolchain, monorepo, contracts, real data, guards, oracle, docs, shell | audited, `t01-verified` | [F01](features/F01-foundation.md) |
 | F02 | Cricket core: Cricsheet timeline, reducer, fantasy scoring, engine report CLI | audited and merged, `t02-verified` | [F02](features/F02-cricket-core.md) |
-| F03 | Models: T20I archive pipeline, win probability, leverage threshold, player priors | ready for audit | [F03](features/F03-models.md) |
+| F03 | Models: T20I archive pipeline, win probability, leverage threshold, player priors | audited and merged, `t03-verified` | [F03](features/F03-models.md) |
 
 ## Bugs
 

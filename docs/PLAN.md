@@ -75,7 +75,7 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | --- | --- | --- | --- | --- |
 | 1 | Foundation: toolchain, monorepo, contracts, real data, guards, docs, shell | Claude | `main` | ✅ done, tagged `t01-verified` |
 | 2 | Cricket core: timeline, reducer, fantasy scoring, engine report | Codex | `task/02-cricket-core` | ✅ done, tagged `t02-verified` |
-| 3 | Models: T20I archive pipeline, win probability, leverage, player priors | Codex | `task/03-models` | ⬜ |
+| 3 | Models: T20I archive pipeline, win probability, leverage, player priors | Claude (Codex unavailable) | `task/03-models` | ✅ done, tagged `t03-verified` |
 | 4 | Moments engine: clock, delay buffer, detectors, gate, quests, crowd, commentary | Codex | `task/04-moments-engine` | ⬜ |
 | 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Codex | `task/05-server-ai` | ⬜ |
 | 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Codex | `task/06-frontend-core` | ⬜ |
@@ -292,6 +292,14 @@ role across all squad players of that match. Output files are deterministic (sta
 
 **Audit hooks:** re-run `node scripts/build-models.ts` and confirm byte-identical outputs; inspect
 calibration table; confirm the demo matches are excluded; holdout match WP trajectory looks sane.
+
+**Audit result (2026-10-16, Claude): accepted, `t03-verified`.** Implemented by Claude because Codex
+was unavailable, so this is a self-audit (F03 says how to repeat it independently). 183 tests;
+`mutate.py` 18/18; the World Cup sweep is unchanged (199 identical, 0 spec mismatches); the build
+reproduces HANDOFF4's archive counts and rebuilds byte for byte; 40 priors appearances match the
+oracle. Step 3.4's trap fired (BUG-003): the specified model scores 1298150's 18.5 and winning
+single below the threshold; nothing was tuned and Nabhanyu amended the list (D-043, with steps 4.5
+and 5.6). Follow-ups: F03.
 
 ---
 
