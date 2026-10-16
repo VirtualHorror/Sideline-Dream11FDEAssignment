@@ -10,7 +10,8 @@
  *   cricket/    Cricsheet schema, timing model, timeline, reducer, format (Task 2; describe Task 4)
  *   fantasy/    squad validation (Task 1), points scoring (Task 2)
  *   util/       FNV-1a hash (Task 2), seeded PRNG (Task 4)
- *   models/     win probability, leverage, player priors and projections (Task 3)
+ *   models/     logistic regression, win probability, leverage, player priors (Task 3);
+ *               the trained weights and priors are data (data/models/), passed in by callers
  *   detectors/, gate/, quests/  phase detectors and the entropy gate     (Task 4)
  *   crowd/      seeded synthetic watch-along chat                       (Task 4)
  *   buffer/, clock.ts  TV clock and per-fan delay buffer (spoiler shield) (Task 4)

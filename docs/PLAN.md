@@ -257,7 +257,7 @@ player's role from our fixtures, others `BAT`, credits 8, `notes: []`); `project
 role across all squad players of that match. Output files are deterministic (stable key order).
 
 **Steps**
-- [ ] **3.0 Task 2 audit carry-overs** (do these first, on this branch; detail in F02 follow-ups 1-7).
+- [x] **3.0 Task 2 audit carry-overs** (do these first, on this branch; detail in F02 follow-ups 1-7).
   The new tests pin behaviour the audit verified independently, so they pass at once. Prove each one
   bites with the matching mutant instead: `python3 -I scripts/oracle/audit/mutate.py <scratch copy>`
   (how to make the copy: `scripts/oracle/audit/README.md`) must end `18 killed, 0 survived`. A
@@ -278,17 +278,17 @@ role across all squad players of that match. Output files are deterministic (sta
     `strikeRate 7` (rounded before lookup).
   - `timeline.ts:315`: an `outcome.winner` without `by` gives `"<team name> won"` (failing test first).
   - Intent comments at the places listed in F02 follow-up 6.
-- [ ] **3.1** Failing `logistic.test.ts`: on a seeded synthetic dataset generated from weights `[−1, 2, −3]`, `fitLogistic` recovers each weight within 0.15; `predictLogistic` ∈ (0, 1). Implement → pass.
-- [ ] **3.2** Failing `winprob.test.ts`:
+- [x] **3.1** Failing `logistic.test.ts`: on a seeded synthetic dataset generated from weights `[−1, 2, −3]`, `fitLogistic` recovers each weight within 0.15; `predictLogistic` ∈ (0, 1). Implement → pass.
+- [x] **3.2** Failing `winprob.test.ts`:
   - committed `data/models/winprob-v1.json` parses; `trainedOn.nMatches ≥ 1000`; `excludedMatchIds` ⊇ `["1298150","1415755"]`; `metrics.chase.brierTest < 0.2`; every chase calibration bin with `n > 500` has `|predicted − observed| < 0.1`.
   - terminal states as specified (build `MatchState`s by folding real events).
   - fast-check: `pChase` non-increasing in `runsNeeded` (balls, wickets fixed) and non-decreasing in `wicketsLeft`; always in [0, 1].
   - demo sanity: 1298150 India after innings-2 `13.6` < 0.35; after `18.6` > after `18.4` + 0.05; 1415755 South Africa after innings-2 `14.6` > 0.65; final state 1 for the winner.
-- [ ] **3.3** Implement `scripts/lib/archive.ts`, `scripts/build-models.ts`, `winprob.ts`; run `node scripts/build-models.ts`; commit the model files; tests pass.
-- [ ] **3.4** Failing `leverage.test.ts` (both matches): the share of deliveries with `value ≥ nudgeThreshold` is between 2% and 20%; 1298150 innings-2 deliveries `18.6`, `19.1`, the `19.4` no-ball, `19.5` and the `19.6` wide are all ≥ threshold; 1415755 innings-2 `16.1` and `19.1` ≥ threshold. **Do not tune weights per ball.** If a listed ball misses with the specified features and weights, stop and report it in the feature file. Implement → pass.
+- [x] **3.3** Implement `scripts/lib/archive.ts`, `scripts/build-models.ts`, `winprob.ts`; run `node scripts/build-models.ts`; commit the model files; tests pass.
+- [x] **3.4** Failing `leverage.test.ts` (both matches): the share of deliveries with `value ≥ nudgeThreshold` is between 2% and 20%; 1298150 innings-2 deliveries `18.6`, `19.1`, the `19.4` no-ball, `19.5` and the `19.6` wide are all ≥ threshold; 1415755 innings-2 `16.1` and `19.1` ≥ threshold. **Do not tune weights per ball.** If a listed ball misses with the specified features and weights, stop and report it in the feature file. Implement → pass.
   *Amended 2026-10-16 by D-043 (Nabhanyu, after BUG-003): the list first named `18.5` and the final `19.6` instead of the `19.6` wide. The specified model scores them 0.093 and 0.019 against a 0.184 threshold, and nothing was tuned.*
-- [ ] **3.5** Failing `priors.test.ts`: both priors files parse; `asOf` equals the match date; every appearance date < `asOf`; every projected value in [0, 200]; a player with no appearances projects exactly `roleMean[role]` (every real squad player has some, so test it with a synthetic `PriorsFile` entry); `projectSquad` equals the hand sum `Σ projected·multiplier` for `babar-believer`. Implement → pass.
-- [ ] **3.6** `pnpm verify` green; docs (F03, Flow, Architecture status incl. model metrics, Decisions for features/split/threshold, TEST_CHECKLIST, ROLLBACK, `data/models/README.md`).
+- [x] **3.5** Failing `priors.test.ts`: both priors files parse; `asOf` equals the match date; every appearance date < `asOf`; every projected value in [0, 200]; a player with no appearances projects exactly `roleMean[role]` (every real squad player has some, so test it with a synthetic `PriorsFile` entry); `projectSquad` equals the hand sum `Σ projected·multiplier` for `babar-believer`. Implement → pass.
+- [x] **3.6** `pnpm verify` green; docs (F03, Flow, Architecture status incl. model metrics, Decisions for features/split/threshold, TEST_CHECKLIST, ROLLBACK, `data/models/README.md`).
 
 **Audit hooks:** re-run `node scripts/build-models.ts` and confirm byte-identical outputs; inspect
 calibration table; confirm the demo matches are excluded; holdout match WP trajectory looks sane.

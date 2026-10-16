@@ -155,3 +155,43 @@ rAF loop: tvT = stadiumAt(clock, now) − delayMs
   → release events/chat with t ≤ tvT into the TV state (same engine reducer)
   → momentVisibility(moment, tvT): hidden → teaser (nudgeAt ≤ tvT) → revealed (revealAt ≤ tvT)
 ```
+
+## 10. Model build and model reads — BUILT (T3)
+
+Numbered after the planned sections so the PLAN's references to §7-9 stay valid.
+
+```
+node scripts/build-models.ts [--zip <path>]                                   scripts/build-models.ts
+  ├─ no --zip: downloadArchive → fresh temp dir (removed in finally)          scripts/lib/archive.ts
+  ├─ sha256File(zip); retrievedAt = committed value if the sha256 matches, else today / zip mtime
+  ├─ extractArchive → every match id, numeric order (a non-id JSON name throws)
+  ├─ for each id:  record XI appearances of the demo squads (for priors)
+  │    ├─ demo match (manifest)?                         → excludedMatchIds
+  │    ├─ filterReason(raw) (PLAN filters, fixed order)  → counted per reason
+  │    ├─ runEngine(id, raw): synthesizeFixtures → buildTimeline → foldEvents
+  │    │     error → named BUG-002 reason, or "<stage>: <message>" → excludedMatchIds
+  │    └─ accepted: matchRows (applyEvent one event at a time)
+  │          chase: before ball 1 of innings 2 + after each legal ball (decided states skipped)
+  │          first innings: after each legal ball;   split by fnv1a32(id) % 5 === 0 → test
+  ├─ throw unless used + filtered + demo + rejected = files
+  ├─ fitLogistic(train rows, l2 = 1e-4·n) per model                       engine/models/logistic.ts
+  ├─ metrics on test rows (Brier, log loss, 10 calibration bins)
+  ├─ test split again: structuredClone(state) → applyEvent → leverage(before, after) for every
+  │    legal ball → nudgeThreshold = nearest-rank 95th percentile        engine/models/leverage.ts
+  ├─ priors per demo match: each squad player's 10 latest accepted XI appearances before the date
+  │    (runEngine with the player's role, others BAT) → fantasyPoints → roleMean → projectedPoints
+  └─ write data/models/{winprob-v1.json, priors-<id>.json, README.md}  (Biome-excluded, byte-stable)
+
+live reads (pure; the model files are passed in as data):
+  winProbability(state, model)                                               engine/models/winprob.ts
+    ├─ no innings yet → null
+    ├─ innings 1 (and the break) → predictLogistic(firstInnings, firstInningsFeatures(runs, wkts, balls))
+    └─ innings 2 → reached 1 | all out or out of balls: level 0.5, else 0 | predictLogistic(chase, …)
+  leverage({before, after, event, model}) → clamp(swing·|ΔP| + spectacle·closeness, 0, 1)
+       caller copies the state before applyEvent (the reducer mutates in place)
+  projectedPoints(playerId, priors) / projectSquad(squad, priors, rules)     engine/models/priors.ts
+```
+
+The test split and the leverage threshold depend only on match ids and the archive, so a rebuild
+from the same zip reproduces every byte (D-039). The nudge detector (Task 4) compares each
+delivery's `leverage().value` with `model.leverage.nudgeThreshold`.

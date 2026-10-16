@@ -47,6 +47,8 @@
 13. **Never commit or log secrets.** `.env` is git-ignored; use `.env.example` for names only.
     Only `publicConfigSummary()` may leave the process.
 14. **`data/raw/` changes only via `scripts/fetch-cricsheet.ts`.** Checksums must match the manifest.
+    Likewise **`data/models/` changes only via `scripts/build-models.ts`** (never by hand), and a rebuild
+    from the zip recorded in `data/models/README.md` must leave it byte-identical (D-039).
 15. **No external managed services** (Supabase, Firebase, hosted DBs, analytics SDKs, CDNs for
     runtime assets). Everything runs on the one host. Fonts are self-hosted.
 16. **Keep the security headers.** Do not add `'unsafe-inline'` or `'unsafe-eval'` to `script-src`,
