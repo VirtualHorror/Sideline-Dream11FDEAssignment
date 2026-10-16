@@ -219,7 +219,11 @@ describe("live reducer values", () => {
   });
 });
 
-function syntheticInnings(deliveryExtras: readonly ("none" | "legbye" | "wide" | "penalty")[]) {
+// One synthetic over: "penalty" is a penalty-only delivery (5 runs, nothing off the bat) and
+// "single" is one run off the bat, so the maiden cases separate team runs from runs charged.
+type SyntheticBall = "none" | "legbye" | "wide" | "penalty" | "single";
+
+function syntheticInnings(deliveryExtras: readonly SyntheticBall[]) {
   const matchId = "1234567";
   const events = [
     MatchEventSchema.parse({
@@ -244,7 +248,7 @@ function syntheticInnings(deliveryExtras: readonly ("none" | "legbye" | "wide" |
   for (const [index, extra] of deliveryExtras.entries()) {
     const isWide = extra === "wide";
     const isLegal = !isWide;
-    const batterRuns = extra === "penalty" ? 4 : 0;
+    const batterRuns = extra === "single" ? 1 : 0;
     const ballInOver = legalBall + 1;
     if (isLegal) legalBall += 1;
     const extras = {
@@ -252,7 +256,7 @@ function syntheticInnings(deliveryExtras: readonly ("none" | "legbye" | "wide" |
       noballs: 0,
       byes: 0,
       legbyes: extra === "legbye" ? 1 : 0,
-      penalty: extra === "penalty" ? 1 : 0,
+      penalty: extra === "penalty" ? 5 : 0,
     };
     const runs = {
       batter: batterRuns,
@@ -277,7 +281,7 @@ function syntheticInnings(deliveryExtras: readonly ("none" | "legbye" | "wide" |
         extras,
         isLegal,
         isFreeHit: false,
-        boundary: batterRuns === 4 ? 4 : 0,
+        boundary: 0,
         wickets: [],
       }),
     );
@@ -288,12 +292,51 @@ function syntheticInnings(deliveryExtras: readonly ("none" | "legbye" | "wide" |
 const dotBalls = (count: number): "none"[] => Array.from({ length: count }, () => "none");
 
 describe("reducer invariants", () => {
-  it("counts maidens for six dots or a leg-bye, but not a wide or charged penalty", () => {
-    expect(syntheticInnings(dotBalls(6)).innings[0]?.bowlers[0]?.maidens).toBe(1);
-    expect(syntheticInnings(["legbye", ...dotBalls(5)]).innings[0]?.bowlers[0]?.maidens).toBe(1);
-    expect(syntheticInnings(["wide", ...dotBalls(6)]).innings[0]?.bowlers[0]?.maidens).toBe(0);
-    expect(syntheticInnings(["penalty", ...dotBalls(5)]).innings[0]?.bowlers[0]?.maidens).toBe(0);
-  });
+  // DOMAIN §2: runs conceded = total - byes - leg-byes - penalty, and a maiden is a complete
+  // over with none of them. Team runs (`runs`) and runs charged (`runsConceded`, D-036) differ.
+  it.each([
+    { name: "six dots", balls: dotBalls(6), runs: 0, runsConceded: 0, maidens: 1 },
+    {
+      name: "a leg-bye",
+      balls: ["legbye", ...dotBalls(5)] as SyntheticBall[],
+      runs: 1,
+      runsConceded: 0,
+      maidens: 1,
+    },
+    {
+      name: "a wide",
+      balls: ["wide", ...dotBalls(6)] as SyntheticBall[],
+      runs: 1,
+      runsConceded: 1,
+      maidens: 0,
+    },
+    {
+      name: "a penalty-only delivery",
+      balls: ["penalty", ...dotBalls(5)] as SyntheticBall[],
+      runs: 5,
+      runsConceded: 0,
+      maidens: 1,
+    },
+    {
+      name: "a single off the bat",
+      balls: ["single", ...dotBalls(5)] as SyntheticBall[],
+      runs: 1,
+      runsConceded: 1,
+      maidens: 0,
+    },
+  ])(
+    "charges the bowler correctly for an over with $name",
+    ({ balls, runs, runsConceded, maidens }) => {
+      const innings = syntheticInnings(balls).innings[0];
+      expect(innings?.overs[0]).toMatchObject({
+        runs,
+        runsConceded,
+        complete: true,
+        isMaiden: maidens === 1,
+      });
+      expect(innings?.bowlers[0]).toMatchObject({ runsConceded, maidens });
+    },
+  );
 
   it("rejects non-consecutive event sequences", () => {
     const state = createMatchState("1298150");
