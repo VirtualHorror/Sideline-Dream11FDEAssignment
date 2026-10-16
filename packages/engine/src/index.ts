@@ -16,6 +16,8 @@
  *   crowd/      seeded synthetic watch-along chat                       (Task 4)
  *   buffer/, clock.ts  TV clock and per-fan delay buffer (spoiler shield) (Task 4)
  */
+export * from "./buffer/delay.ts";
+export * from "./clock.ts";
 export * from "./contracts/index.ts";
 export * from "./cricket/cricsheet.ts";
 export * from "./cricket/format.ts";
