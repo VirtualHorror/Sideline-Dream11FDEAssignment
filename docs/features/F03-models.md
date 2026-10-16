@@ -172,8 +172,9 @@ one; an independent re-audit (Codex, or a fresh Claude session) is cheap with th
   appearances re-scored by the oracle with the same synthesized fixtures: 0 mismatches.
 - **Task 3 hooks:** the download run and the next `--zip` run of the 2026-10-16 archive wrote
   identical files; after a README template fix, three more `--zip` runs (the last on the audited
-  head) were identical too, and the JSON files never changed. The calibration tables are in `data/models/README.md` (chase within
-  0.05 in every bin; first innings overconfident at the extremes, a recorded limit); both demo
+  head) were identical too, and the JSON files never changed. The calibration tables are in
+  `data/models/README.md` (chase within 0.05 in every bin; first innings overconfident at the
+  extremes, a recorded limit); both demo
   matches are in `excludedMatchIds`; the counts reproduce HANDOFF4 and BUG-002 exactly (3,255
   candidates, 3,093 used, 162 rejected by class, 607 test).
 - **Mutation (§2D):** `mutate.py` → `18 killed, 0 survived` (was 12/6 at `t02-verified`). Twenty
