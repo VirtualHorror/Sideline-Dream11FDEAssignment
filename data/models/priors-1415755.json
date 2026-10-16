@@ -1,0 +1,1619 @@
+{
+  "matchId": "1415755",
+  "asOf": "2024-06-29",
+  "source": "https://cricsheet.org/downloads/t20s_male_json.zip (sha256 95305bc2dae8dcce7b8da7755f3992521874b14598ea5828129f37834e8b860a)",
+  "k": 3,
+  "roleMean": {
+    "WK": 43.49,
+    "BAT": 54.26,
+    "AR": 55.02,
+    "BOWL": 62.6
+  },
+  "players": {
+    "740742ef": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 107
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 198
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 67
+        },
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 7
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 27
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 100
+        },
+        {
+          "matchId": "1298178",
+          "date": "2022-11-10",
+          "points": 51
+        },
+        {
+          "matchId": "1298176",
+          "date": "2022-11-06",
+          "points": 35
+        },
+        {
+          "matchId": "1298169",
+          "date": "2022-11-02",
+          "points": 6
+        },
+        {
+          "matchId": "1298164",
+          "date": "2022-10-30",
+          "points": 29
+        }
+      ],
+      "projected": 60.75
+    },
+    "ba607b88": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 19
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 2
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 77
+        },
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 2
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 12
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 13
+        },
+        {
+          "matchId": "1298178",
+          "date": "2022-11-10",
+          "points": 84
+        },
+        {
+          "matchId": "1298176",
+          "date": "2022-11-06",
+          "points": 50
+        },
+        {
+          "matchId": "1298169",
+          "date": "2022-11-02",
+          "points": 116
+        },
+        {
+          "matchId": "1298164",
+          "date": "2022-10-30",
+          "points": 24
+        }
+      ],
+      "projected": 43.21
+    },
+    "919a3be2": {
+      "role": "WK",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 28
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 29
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 74
+        },
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 54
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 104
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 92
+        },
+        {
+          "matchId": "1322277",
+          "date": "2022-11-22",
+          "points": 39
+        },
+        {
+          "matchId": "1322276",
+          "date": "2022-11-20",
+          "points": 28
+        },
+        {
+          "matchId": "1298178",
+          "date": "2022-11-10",
+          "points": 14
+        },
+        {
+          "matchId": "1298176",
+          "date": "2022-11-06",
+          "points": 7
+        }
+      ],
+      "projected": 46.11
+    },
+    "271f83cd": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 97
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 77
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 24
+        },
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 82
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 23
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 6
+        },
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 202
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 118
+        },
+        {
+          "matchId": "1389395",
+          "date": "2023-12-03",
+          "points": 9
+        },
+        {
+          "matchId": "1389394",
+          "date": "2023-12-01",
+          "points": 5
+        }
+      ],
+      "projected": 61.98
+    },
+    "2e171977": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 142
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 53
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 11
+        },
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 47
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 86
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 45
+        },
+        {
+          "matchId": "1389395",
+          "date": "2023-12-03",
+          "points": 102
+        },
+        {
+          "matchId": "1389394",
+          "date": "2023-12-01",
+          "points": 131
+        },
+        {
+          "matchId": "1389393",
+          "date": "2023-11-28",
+          "points": 43
+        },
+        {
+          "matchId": "1389392",
+          "date": "2023-11-26",
+          "points": 56
+        }
+      ],
+      "projected": 67.77
+    },
+    "a4e37e47": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 2
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 50
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 62
+        },
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 52
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 7
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 12
+        },
+        {
+          "matchId": "1399117",
+          "date": "2023-10-06",
+          "points": 14
+        },
+        {
+          "matchId": "1399113",
+          "date": "2023-10-03",
+          "points": 51
+        },
+        {
+          "matchId": "1384637",
+          "date": "2023-08-20",
+          "points": 53
+        },
+        {
+          "matchId": "1384634",
+          "date": "2023-08-18",
+          "points": 7
+        }
+      ],
+      "projected": 36.54
+    },
+    "dbe50b21": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 50
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 67
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 136
+        },
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 109
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 84
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 134
+        },
+        {
+          "matchId": "1381221",
+          "date": "2023-08-13",
+          "points": 38
+        },
+        {
+          "matchId": "1381220",
+          "date": "2023-08-12",
+          "points": 5
+        },
+        {
+          "matchId": "1381219",
+          "date": "2023-08-08",
+          "points": 45
+        },
+        {
+          "matchId": "1381218",
+          "date": "2023-08-06",
+          "points": 146
+        }
+      ],
+      "projected": 75.31
+    },
+    "fe93fd9d": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 39
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 19
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 9
+        },
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 4
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 11
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 6
+        },
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 88
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 43
+        },
+        {
+          "matchId": "1327272",
+          "date": "2022-08-31",
+          "points": 64
+        },
+        {
+          "matchId": "1327270",
+          "date": "2022-08-28",
+          "points": 79
+        }
+      ],
+      "projected": 40.54
+    },
+    "8d2c70ad": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 146
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 91
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 131
+        },
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 216
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 41
+        },
+        {
+          "matchId": "1381221",
+          "date": "2023-08-13",
+          "points": 22
+        },
+        {
+          "matchId": "1381220",
+          "date": "2023-08-12",
+          "points": 84
+        },
+        {
+          "matchId": "1381219",
+          "date": "2023-08-08",
+          "points": 128
+        },
+        {
+          "matchId": "1381217",
+          "date": "2023-08-03",
+          "points": 51
+        },
+        {
+          "matchId": "1348651",
+          "date": "2023-02-01",
+          "points": 5
+        }
+      ],
+      "projected": 84.83
+    },
+    "244048f6": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 10
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 110
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 84
+        },
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 163
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 66
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 86
+        },
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 44
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 1
+        },
+        {
+          "matchId": "1389395",
+          "date": "2023-12-03",
+          "points": 72
+        },
+        {
+          "matchId": "1389393",
+          "date": "2023-11-28",
+          "points": 39
+        }
+      ],
+      "projected": 66.37
+    },
+    "462411b3": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1415754",
+          "date": "2024-06-27",
+          "points": 94
+        },
+        {
+          "matchId": "1415751",
+          "date": "2024-06-24",
+          "points": 53
+        },
+        {
+          "matchId": "1415747",
+          "date": "2024-06-22",
+          "points": 85
+        },
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 20
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 127
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 111
+        },
+        {
+          "matchId": "1384637",
+          "date": "2023-08-20",
+          "points": 98
+        },
+        {
+          "matchId": "1384634",
+          "date": "2023-08-18",
+          "points": 90
+        },
+        {
+          "matchId": "1327505",
+          "date": "2022-09-25",
+          "points": 3
+        },
+        {
+          "matchId": "1327504",
+          "date": "2022-09-23",
+          "points": 39
+        }
+      ],
+      "projected": 69.83
+    },
+    "6c19c6e5": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 124
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 10
+        },
+        {
+          "matchId": "1389395",
+          "date": "2023-12-03",
+          "points": 43
+        },
+        {
+          "matchId": "1389394",
+          "date": "2023-12-01",
+          "points": 93
+        },
+        {
+          "matchId": "1389393",
+          "date": "2023-11-28",
+          "points": 14
+        },
+        {
+          "matchId": "1389392",
+          "date": "2023-11-26",
+          "points": 135
+        },
+        {
+          "matchId": "1389391",
+          "date": "2023-11-23",
+          "points": 53
+        },
+        {
+          "matchId": "1399117",
+          "date": "2023-10-06",
+          "points": 18
+        },
+        {
+          "matchId": "1399113",
+          "date": "2023-10-03",
+          "points": 216
+        },
+        {
+          "matchId": "1384637",
+          "date": "2023-08-20",
+          "points": 40
+        }
+      ],
+      "projected": 69.91
+    },
+    "a4cc73aa": {
+      "role": "WK",
+      "appearances": [
+        {
+          "matchId": "1384637",
+          "date": "2023-08-20",
+          "points": 92
+        },
+        {
+          "matchId": "1384634",
+          "date": "2023-08-18",
+          "points": 13
+        },
+        {
+          "matchId": "1381221",
+          "date": "2023-08-13",
+          "points": 25
+        },
+        {
+          "matchId": "1381220",
+          "date": "2023-08-12",
+          "points": 20
+        },
+        {
+          "matchId": "1381219",
+          "date": "2023-08-08",
+          "points": 16
+        },
+        {
+          "matchId": "1381218",
+          "date": "2023-08-06",
+          "points": 23
+        },
+        {
+          "matchId": "1381217",
+          "date": "2023-08-03",
+          "points": 22
+        },
+        {
+          "matchId": "1348640",
+          "date": "2023-01-03",
+          "points": 25
+        },
+        {
+          "matchId": "1317907",
+          "date": "2022-08-07",
+          "points": 29
+        },
+        {
+          "matchId": "1317906",
+          "date": "2022-08-06",
+          "points": 68
+        }
+      ],
+      "projected": 35.65
+    },
+    "57ee1fde": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1381221",
+          "date": "2023-08-13",
+          "points": 2
+        },
+        {
+          "matchId": "1381220",
+          "date": "2023-08-12",
+          "points": 39
+        },
+        {
+          "matchId": "1381219",
+          "date": "2023-08-08",
+          "points": 13
+        },
+        {
+          "matchId": "1381218",
+          "date": "2023-08-06",
+          "points": 81
+        },
+        {
+          "matchId": "1381217",
+          "date": "2023-08-03",
+          "points": 88
+        },
+        {
+          "matchId": "1348650",
+          "date": "2023-01-29",
+          "points": 70
+        },
+        {
+          "matchId": "1348642",
+          "date": "2023-01-07",
+          "points": 68
+        },
+        {
+          "matchId": "1348641",
+          "date": "2023-01-05",
+          "points": 47
+        },
+        {
+          "matchId": "1348640",
+          "date": "2023-01-03",
+          "points": 8
+        },
+        {
+          "matchId": "1322277",
+          "date": "2022-11-22",
+          "points": 12
+        }
+      ],
+      "projected": 47.37
+    },
+    "2f49c897": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1415725",
+          "date": "2024-06-12",
+          "points": 39
+        },
+        {
+          "matchId": "1415719",
+          "date": "2024-06-09",
+          "points": 28
+        },
+        {
+          "matchId": "1415708",
+          "date": "2024-06-05",
+          "points": 60
+        },
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 48
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 57
+        },
+        {
+          "matchId": "1322277",
+          "date": "2022-11-22",
+          "points": 164
+        },
+        {
+          "matchId": "1322276",
+          "date": "2022-11-20",
+          "points": 107
+        },
+        {
+          "matchId": "1327508",
+          "date": "2022-10-04",
+          "points": 18
+        },
+        {
+          "matchId": "1278671",
+          "date": "2021-11-17",
+          "points": 48
+        },
+        {
+          "matchId": "1133821",
+          "date": "2018-03-14",
+          "points": 36
+        }
+      ],
+      "projected": 60.98
+    },
+    "372455c4": {
+      "role": "WK",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 40
+        },
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 123
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 158
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 32
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 50
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 10
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 42
+        },
+        {
+          "matchId": "1433364",
+          "date": "2024-05-26",
+          "points": 43
+        },
+        {
+          "matchId": "1433363",
+          "date": "2024-05-25",
+          "points": 103
+        },
+        {
+          "matchId": "1433362",
+          "date": "2024-05-23",
+          "points": 12
+        }
+      ],
+      "projected": 57.19
+    },
+    "b8cc58c9": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 2
+        },
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 35
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 21
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 77
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 2
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 1
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 28
+        },
+        {
+          "matchId": "1433364",
+          "date": "2024-05-26",
+          "points": 18
+        },
+        {
+          "matchId": "1433363",
+          "date": "2024-05-25",
+          "points": 82
+        },
+        {
+          "matchId": "1433362",
+          "date": "2024-05-23",
+          "points": 180
+        }
+      ],
+      "projected": 46.83
+    },
+    "6a26221c": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 81
+        },
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 15
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 80
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 65
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 48
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 22
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 30
+        },
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 74
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 100
+        },
+        {
+          "matchId": "1373570",
+          "date": "2023-09-03",
+          "points": 130
+        }
+      ],
+      "projected": 62.14
+    },
+    "85b3fab2": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 69
+        },
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 28
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 48
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 51
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 2
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 51
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 19
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 34
+        },
+        {
+          "matchId": "1373570",
+          "date": "2023-09-03",
+          "points": 53
+        },
+        {
+          "matchId": "1373569",
+          "date": "2023-09-01",
+          "points": 55
+        }
+      ],
+      "projected": 44.06
+    },
+    "235c2bb6": {
+      "role": "WK",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 50
+        },
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 22
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 74
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 13
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 80
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 16
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 41
+        },
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 19
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 17
+        },
+        {
+          "matchId": "1339606",
+          "date": "2023-03-28",
+          "points": 24
+        }
+      ],
+      "projected": 37.42
+    },
+    "d67d5f00": {
+      "role": "BAT",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 2
+        },
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 83
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 2
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 9
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 55
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 115
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 14
+        },
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 65
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 41
+        },
+        {
+          "matchId": "1339606",
+          "date": "2023-03-28",
+          "points": 39
+        }
+      ],
+      "projected": 45.21
+    },
+    "81c36ee9": {
+      "role": "AR",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 81
+        },
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 11
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 11
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 35
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 32
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 110
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 27
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 53
+        },
+        {
+          "matchId": "1373568",
+          "date": "2023-08-30",
+          "points": 80
+        },
+        {
+          "matchId": "1339605",
+          "date": "2023-03-26",
+          "points": 109
+        }
+      ],
+      "projected": 54.93
+    },
+    "0b60eb09": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 48
+        },
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 92
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 43
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 116
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 12
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 86
+        },
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 86
+        },
+        {
+          "matchId": "1373570",
+          "date": "2023-09-03",
+          "points": 20
+        },
+        {
+          "matchId": "1298174",
+          "date": "2022-11-06",
+          "points": 97
+        },
+        {
+          "matchId": "1298164",
+          "date": "2022-10-30",
+          "points": 17
+        }
+      ],
+      "projected": 61.91
+    },
+    "e62dd25d": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 70
+        },
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 73
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 118
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 10
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 90
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 18
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 103
+        },
+        {
+          "matchId": "1339606",
+          "date": "2023-03-28",
+          "points": 83
+        },
+        {
+          "matchId": "1339605",
+          "date": "2023-03-26",
+          "points": 16
+        },
+        {
+          "matchId": "1298174",
+          "date": "2022-11-06",
+          "points": 21
+        }
+      ],
+      "projected": 60.75
+    },
+    "acdc62f5": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 31
+        },
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 46
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 52
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 59
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 84
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 92
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 162
+        },
+        {
+          "matchId": "1433364",
+          "date": "2024-05-26",
+          "points": 2
+        },
+        {
+          "matchId": "1433363",
+          "date": "2024-05-25",
+          "points": 8
+        },
+        {
+          "matchId": "1339606",
+          "date": "2023-03-28",
+          "points": 79
+        }
+      ],
+      "projected": 61.75
+    },
+    "a03bba42": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1415750",
+          "date": "2024-06-23",
+          "points": 111
+        },
+        {
+          "matchId": "1415741",
+          "date": "2024-06-19",
+          "points": 41
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 174
+        },
+        {
+          "matchId": "1387599",
+          "date": "2023-12-14",
+          "points": 40
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 50
+        },
+        {
+          "matchId": "1373569",
+          "date": "2023-09-01",
+          "points": 40
+        },
+        {
+          "matchId": "1373568",
+          "date": "2023-08-30",
+          "points": 40
+        },
+        {
+          "matchId": "1339605",
+          "date": "2023-03-26",
+          "points": 2
+        },
+        {
+          "matchId": "1339604",
+          "date": "2023-03-25",
+          "points": 30
+        },
+        {
+          "matchId": "1298170",
+          "date": "2022-11-03",
+          "points": 51
+        }
+      ],
+      "projected": 58.98
+    },
+    "6b9eb501": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1415745",
+          "date": "2024-06-21",
+          "points": 41
+        },
+        {
+          "matchId": "1415731",
+          "date": "2024-06-14",
+          "points": 23
+        },
+        {
+          "matchId": "1415721",
+          "date": "2024-06-10",
+          "points": 17
+        },
+        {
+          "matchId": "1415716",
+          "date": "2024-06-08",
+          "points": 155
+        },
+        {
+          "matchId": "1415704",
+          "date": "2024-06-03",
+          "points": 80
+        },
+        {
+          "matchId": "1433362",
+          "date": "2024-05-23",
+          "points": 115
+        }
+      ],
+      "projected": 68.76
+    },
+    "3204c99f": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1433364",
+          "date": "2024-05-26",
+          "points": 35
+        },
+        {
+          "matchId": "1433362",
+          "date": "2024-05-23",
+          "points": 46
+        },
+        {
+          "matchId": "1387598",
+          "date": "2023-12-12",
+          "points": 116
+        },
+        {
+          "matchId": "1373570",
+          "date": "2023-09-03",
+          "points": 95
+        },
+        {
+          "matchId": "1373569",
+          "date": "2023-09-01",
+          "points": 17
+        },
+        {
+          "matchId": "1373568",
+          "date": "2023-08-30",
+          "points": 63
+        }
+      ],
+      "projected": 62.2
+    },
+    "9a2fc964": {
+      "role": "BOWL",
+      "appearances": [
+        {
+          "matchId": "1433364",
+          "date": "2024-05-26",
+          "points": 5
+        },
+        {
+          "matchId": "1433363",
+          "date": "2024-05-25",
+          "points": 61
+        },
+        {
+          "matchId": "1433362",
+          "date": "2024-05-23",
+          "points": 13
+        },
+        {
+          "matchId": "1373570",
+          "date": "2023-09-03",
+          "points": 80
+        },
+        {
+          "matchId": "1373569",
+          "date": "2023-09-01",
+          "points": 14
+        },
+        {
+          "matchId": "1339606",
+          "date": "2023-03-28",
+          "points": 7
+        },
+        {
+          "matchId": "1339604",
+          "date": "2023-03-25",
+          "points": 38
+        },
+        {
+          "matchId": "1271632",
+          "date": "2021-09-14",
+          "points": 80
+        },
+        {
+          "matchId": "1271631",
+          "date": "2021-09-12",
+          "points": 100
+        },
+        {
+          "matchId": "1271630",
+          "date": "2021-09-10",
+          "points": 54
+        }
+      ],
+      "projected": 49.22
+    },
+    "e66732f8": {
+      "role": "WK",
+      "appearances": [
+        {
+          "matchId": "1433364",
+          "date": "2024-05-26",
+          "points": 34
+        },
+        {
+          "matchId": "1433363",
+          "date": "2024-05-25",
+          "points": 47
+        },
+        {
+          "matchId": "1433362",
+          "date": "2024-05-23",
+          "points": 18
+        }
+      ],
+      "projected": 38.25
+    }
+  }
+}
