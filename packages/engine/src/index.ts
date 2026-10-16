@@ -26,6 +26,7 @@ export * from "./cricket/join.ts";
 export * from "./cricket/reducer.ts";
 export * from "./cricket/timeline.ts";
 export * from "./cricket/timing.ts";
+export * from "./detectors/catchup.ts";
 export * from "./detectors/collapse.ts";
 export * from "./detectors/lineup.ts";
 export * from "./detectors/nudge.ts";

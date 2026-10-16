@@ -1,5 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import {
+  buildCatchUpFacts,
+  type CatchUpFacts,
+  catchUpKey,
   collapseDetector,
   type DeliveryEvent,
   enumerateSwaps,
@@ -8,9 +11,11 @@ import {
   lineupDetector,
   type MatchEvent,
   type MomentTrigger,
+  missedLegalBalls,
   nudgeDetector,
   type Persona,
   type PlayingXIEvent,
+  seqAfterOvers,
   validateSquad,
   type Wicket,
 } from "../src/index.ts";
@@ -589,5 +594,142 @@ describe("nudge detector (phase 4: hold the spoiler)", () => {
     expect(reasons).toEqual(
       new Set(["not_delivery", "below_threshold", "big_ball", "match_decided"]),
     );
+  });
+});
+
+describe("catch-up facts (phase 3: joining late)", () => {
+  const events = timelineOf("1298150");
+  const persona = personaOf("1298150", "late-from-work");
+  const joined = joinSeq(events, persona.joinAt);
+  let facts: CatchUpFacts;
+  beforeAll(() => {
+    facts = buildCatchUpFacts({
+      events,
+      fromSeq: 0,
+      toSeq: joined,
+      ctx: contextFor("1298150", persona),
+      lens: "casual",
+    });
+  });
+
+  it("counts only legal balls as missed", () => {
+    // late-from-work missed the whole first innings and 14 overs of the chase.
+    expect(missedLegalBalls(events, -1, joined)).toBe(120 + 84);
+    expect(missedLegalBalls(events, seqAfterOvers(events, 2, 12), joined)).toBe(12);
+    // The chase's last over has nine deliveries (two wides, a no-ball) but six legal balls.
+    expect(missedLegalBalls(events, seqAfterOvers(events, 2, 19), events.length - 1)).toBe(6);
+    expect(missedLegalBalls(events, joined, joined)).toBe(0);
+  });
+
+  it("keys the reel by innings, whole overs and lens", () => {
+    const { innings, fromOver, toOver } = facts.window;
+    expect(catchUpKey("1298150", innings, fromOver, toOver, facts.lens)).toBe(
+      "catchup:1298150:2:0-14:casual",
+    );
+    expect(facts.window).toMatchObject({ fromLabel: "0.1", toLabel: "13.6" });
+    expect(facts.window.deliveryIds).toHaveLength(
+      events.filter((e) => e.kind === "delivery" && e.innings === 2 && e.over < 14).length,
+    );
+  });
+
+  it("states the situation at the join point (DOMAIN §4: 90/4, 70 off 36)", () => {
+    expect(facts.situation).toMatchObject({
+      score: "90/4",
+      runsRequired: 70,
+      ballsRemaining: 36,
+      rrr: 11.67,
+      crr: 6.43,
+    });
+    // PLAN 3.2: India's chance is under 35% here.
+    expect(facts.winProbability?.battingTeam).toBe("IND");
+    expect(facts.winProbability?.pBattingTeamWins).toBeLessThan(0.35);
+  });
+
+  it("summarises the first innings (159/8; Shan Masood and Iftikhar; Hardik and Arshdeep)", () => {
+    expect(facts.previousInnings).toMatchObject({
+      innings: 1,
+      battingTeam: "PAK",
+      score: "159/8",
+      overs: "20.0",
+    });
+    expect(
+      facts.previousInnings?.topBatters.map((b) => [b.shortName, b.runs, b.balls, b.out]),
+    ).toEqual([
+      ["Shan Masood", 52, 42, false],
+      ["Iftikhar", 51, 34, true],
+    ]);
+    expect(
+      facts.previousInnings?.topBowlers.map((b) => [b.shortName, b.wickets, b.runsConceded]),
+    ).toEqual([
+      ["Hardik", 3, 30],
+      ["Arshdeep", 3, 32],
+    ]);
+  });
+
+  it("flags the 20-run 12th over as the anomaly (population z = 3.04)", () => {
+    expect(facts.overs.map((o) => o.runs)).toEqual([5, 2, 3, 7, 5, 9, 2, 5, 3, 4, 9, 20, 9, 7]);
+    expect(facts.overs.map((o) => o.wickets)).toEqual([0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0]);
+    expect(facts.anomalies).toHaveLength(1);
+    const [anomaly] = facts.anomalies;
+    expect(anomaly).toMatchObject({ over: 11, runs: 20 });
+    expect(anomaly?.z).toBeGreaterThanOrEqual(3.0);
+    expect(anomaly?.z).toBeCloseTo(3.04, 2);
+    expect(anomaly?.bowler.shortName).toBe("Nawaz");
+  });
+
+  // Independent Python re-derivation from the raw file and the model JSON (F04 log).
+  it("finds the longest run-less spell and the three biggest win-probability swings", () => {
+    expect(facts.longestRunless).toMatchObject({ balls: 4, fromLabel: "1.4", toLabel: "2.1" });
+    expect(facts.biggestSwings.map((s) => [s.label, Number(s.swing.toFixed(5))])).toEqual([
+      ["1.5", -0.14064],
+      ["3.2", -0.10795],
+      ["5.3", -0.09061],
+    ]);
+    expect(facts.biggestSwings[0]?.description).toBe("1.5 Naseem to Rahul, OUT, bowled");
+    for (const swing of facts.biggestSwings) {
+      expect(facts.window.deliveryIds).toContain(swing.eventId);
+    }
+  });
+
+  it("reports the stand at the crease and the fan's squad so far", () => {
+    expect(facts.partnership?.runs).toBe(59);
+    expect(facts.partnership?.balls).toBe(47);
+    expect(facts.partnership?.batters.map((b) => b.shortName).sort()).toEqual(["Hardik", "Kohli"]);
+    const impact = facts.squadImpact;
+    if (!impact) throw new Error("late-from-work has a squad");
+    expect(impact.players).toHaveLength(11);
+    const sum = impact.players.reduce((total, p) => total + p.points, 0);
+    expect(impact.total).toBeCloseTo(sum, 9);
+    const points = impact.players.map((p) => p.points);
+    expect(points).toEqual([...points].sort((a, b) => b - a));
+    // Rohit (VC) was out at 3.2 and his match was over by 14.0, so his base points are final:
+    // the oracle's full-match total.
+    const golden = loadMatch("1298150").golden.fantasy["740742ef"]?.total;
+    const rohit = impact.players.find((p) => p.playerId === "740742ef");
+    expect(rohit).toMatchObject({ base: golden, multiplier: 1.5 });
+    expect(rohit?.points).toBe((golden ?? Number.NaN) * 1.5);
+  });
+
+  it("falls back to the previous innings when the current one has no complete missed over", () => {
+    // Paused at 18.0 of the first innings, back at 0.4 of the chase: 16 legal balls missed.
+    const from = seqAfterOvers(events, 1, 18) + 1;
+    const to = (events.filter(chaseBall("0.4")).at(-1) as DeliveryEvent).seq;
+    expect(missedLegalBalls(events, from - 1, to)).toBe(16);
+    const late = buildCatchUpFacts({
+      events,
+      fromSeq: from,
+      toSeq: to,
+      ctx: contextFor("1298150", persona),
+      lens: "analyst",
+    });
+    expect(late.window).toMatchObject({
+      innings: 1,
+      fromOver: 18,
+      toOver: 20,
+      fromLabel: "18.1",
+      toLabel: "19.6",
+    });
+    expect(late.previousInnings).toBeNull();
+    expect(late.situation).toMatchObject({ innings: 2, overs: "0.4" });
   });
 });
