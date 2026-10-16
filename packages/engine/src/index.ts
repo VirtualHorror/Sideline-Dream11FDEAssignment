@@ -40,5 +40,6 @@ export * from "./models/leverage.ts";
 export * from "./models/logistic.ts";
 export * from "./models/priors.ts";
 export * from "./models/winprob.ts";
+export * from "./quests/resolve.ts";
 export * from "./util/hash.ts";
 export * from "./util/prng.ts";
