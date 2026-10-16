@@ -74,6 +74,19 @@ describe.each(MATCH_IDS)("committed priors for %s", (id) => {
     }
   });
 
+  // D-042: a role's mean pools every appearance of the squad's players in that role, to 2 decimals.
+  it("stores role means pooled over the squad's appearances", () => {
+    const priors = loadPriors(id);
+    for (const role of ["WK", "BAT", "AR", "BOWL"] as const) {
+      const points = Object.values(priors.players)
+        .filter((entry) => entry.role === role)
+        .flatMap((entry) => entry.appearances.map((a) => a.points));
+      expect(points.length).toBeGreaterThan(0);
+      const mean = points.reduce((sum, p) => sum + p, 0) / points.length;
+      expect(Math.abs(priors.roleMean[role] - mean)).toBeLessThanOrEqual(0.005 + 1e-9);
+    }
+  });
+
   it("stores projections that the engine formula reproduces, all within 0-200", () => {
     const priors = loadPriors(id);
     for (const [playerId, entry] of Object.entries(priors.players)) {
