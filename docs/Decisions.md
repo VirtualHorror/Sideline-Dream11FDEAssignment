@@ -525,3 +525,18 @@
   and types); the Anthropic SDK's `zodOutputFormat` helper and `messages.parse()` (provider-specific;
   the gateway already converts zod 4 with `z.toJSONSchema()` and re-validates, so both providers share
   one path); Vercel's AI SDK or LangChain (a large abstraction over two calls, and more supply chain).
+
+### D-053 — `AICallTrace` gains `costEstimated` and `detail` (2026-10-16, T5, Claude)
+- **Context:** PLAN Task 5 says a model without a built-in price has its cost "flagged `estimated` in
+  traces and shown as 'est.' in the UI", but `AICallTraceSchema` had no such field. And the PLAN asks
+  each failure path (timeout, refusal, invalid output, guard, no provider, budget) for "a matching
+  trace outcome" from a fixed enum of seven, where an invalid output and a network error both read
+  `error`, and a guard rejection and a missing provider both read `fallback`: the control plane could
+  not say why a card is a fallback.
+- **Decision (Constraint 8):** two required fields, added rather than changing any: `costEstimated:
+  boolean` and `detail: string | null` (at most 300 characters; null for a clean result). Outcomes
+  stay as the enum defines them; `detail` carries the specifics ("no answer within 9000 ms",
+  "invalid output: …", "guard: …", "no provider configured", "daily budget of $3.00 spent"). No
+  trace had been produced before Task 5, so nothing else changes. Contract tests pin both fields.
+- **Alternatives:** keep the reason only in SQLite (the control plane could not show it); new outcome
+  values (a breaking change to an enum the UI will switch on).

@@ -37,10 +37,20 @@ export const AICallTraceSchema = z.object({
   tokensIn: z.number().int().nonnegative(),
   tokensOut: z.number().int().nonnegative(),
   costUsd: z.number().nonnegative(),
+  /**
+   * True when the model has no built-in price and the cost uses the configured per-token prices
+   * (SIDELINE_PRICE_*_PER_MTOK); the UI shows such costs as "est." (Task 5 addition, D-053).
+   */
+  costEstimated: z.boolean(),
   promptVersion: z.string().min(1),
   startedAtWall: z.iso.datetime(),
   /** For deadline-bound skills (spoiler nudges): ms available when the call started. */
   budgetMs: z.number().int().nullable(),
+  /**
+   * Why the attempt ended as it did when it was not a clean result ("no answer within 9000 ms",
+   * "guard: …", "no provider configured"); null otherwise (Task 5 addition, D-053).
+   */
+  detail: z.string().max(300).nullable(),
 });
 export type AICallTrace = z.infer<typeof AICallTraceSchema>;
 

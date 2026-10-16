@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  AICallTraceSchema,
   ControlRequestSchema,
   DeliveryEventSchema,
   MatchEventSchema,
@@ -193,5 +194,43 @@ describe("StreamMessageSchema and ControlRequestSchema", () => {
   it("bounds the broadcast delay between stadium (0s) and 60s", () => {
     expect(ControlRequestSchema.safeParse({ action: "delay", ms: 25_000 }).success).toBe(true);
     expect(ControlRequestSchema.safeParse({ action: "delay", ms: 90_000 }).success).toBe(false);
+  });
+});
+
+// Task 5 addition (D-053): a trace says whether its cost is an estimate (a model without a
+// built-in price, PLAN Task 5) and, for anything but a clean result, why it ended as it did.
+describe("AICallTraceSchema", () => {
+  const trace = {
+    id: "trace-1",
+    skill: "spoiler_nudge",
+    momentKey: "nudge:1298150:1298150:0414",
+    provider: "openai",
+    model: "gpt-6.1-sol",
+    cache: "miss",
+    outcome: "timeout",
+    latencyMs: 9_000,
+    tokensIn: 0,
+    tokensOut: 0,
+    costUsd: 0,
+    costEstimated: true,
+    promptVersion: "teaser-v1",
+    startedAtWall: "2026-10-16T18:00:00.000Z",
+    budgetMs: 19_000,
+    detail: "no answer within 9000 ms",
+  };
+
+  it("carries the estimate flag and the reason a call fell back", () => {
+    expect(AICallTraceSchema.parse(trace)).toEqual(trace);
+    expect(AICallTraceSchema.safeParse({ ...trace, outcome: "ok", detail: null }).success).toBe(
+      true,
+    );
+  });
+
+  it("requires both fields and bounds the detail", () => {
+    const { costEstimated: _flag, ...noFlag } = trace;
+    expect(AICallTraceSchema.safeParse(noFlag).success).toBe(false);
+    const { detail: _detail, ...noDetail } = trace;
+    expect(AICallTraceSchema.safeParse(noDetail).success).toBe(false);
+    expect(AICallTraceSchema.safeParse({ ...trace, detail: "x".repeat(301) }).success).toBe(false);
   });
 });
