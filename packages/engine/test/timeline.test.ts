@@ -6,6 +6,7 @@ import {
   DEFAULT_TIMING,
   type DeliveryEvent,
   fnv1a32,
+  type InningsEndEvent,
   MatchEventSchema,
 } from "../src/index.ts";
 import { type CricsheetRaw, loadMatch, MATCH_IDS, type RawDelivery } from "./helpers/data.ts";
@@ -17,6 +18,39 @@ const build = (id: (typeof MATCH_IDS)[number]) => {
 
 const deliveries = (events: ReturnType<typeof buildTimeline>) =>
   events.filter((event): event is DeliveryEvent => event.kind === "delivery");
+
+// Hand-derived from DEFAULT_TIMING and the raw files (PLAN Task 3 step 3.0); they pin the
+// structural clock that seeking, the TV delay and teaser timing all read.
+const STRUCTURAL_TIMES = {
+  "1298150": {
+    toss: 600_000,
+    playingXI: [660_000, 661_000],
+    inningsStart: [1_740_000, 8_673_000],
+    firstBalls: [
+      { id: "1298150:0011", t: 1_800_000 },
+      { id: "1298150:0139", t: 8_733_000 },
+    ],
+    // 1 800 000 + 34 000 (legal dot) + 2 000 jitter
+    secondBall: 1_836_000,
+    inningsEnd: [7_773_000, 14_543_000],
+    matchEnd: 14_558_000,
+    endReasons: ["overs_complete", "target_reached"],
+  },
+  "1415755": {
+    toss: 600_000,
+    playingXI: [660_000, 661_000],
+    inningsStart: [1_740_000, 8_636_000],
+    firstBalls: [
+      { id: "1415755:0008", t: 1_800_000 },
+      { id: "1415755:0137", t: 8_696_000 },
+    ],
+    // 1 800 000 + 34 000 (legal dot) - 2 000 jitter
+    secondBall: 1_832_000,
+    inningsEnd: [7_736_000, 14_679_000],
+    matchEnd: 14_694_000,
+    endReasons: ["overs_complete", "overs_complete"],
+  },
+} as const;
 
 function minimalRawWithDeliveries(
   match: CricsheetRaw,
@@ -85,6 +119,74 @@ describe.each(MATCH_IDS)("timeline for match %s", (id) => {
         innings.overs.reduce((sum, over) => sum + over.deliveries.length, 0),
       ),
     );
+  });
+
+  it("pins the structural event times", () => {
+    const { events } = build(id);
+    const expected = STRUCTURAL_TIMES[id];
+    const timesOf = (kind: (typeof events)[number]["kind"]) =>
+      events.filter((event) => event.kind === kind).map((event) => event.t);
+    expect(timesOf("toss")).toEqual([expected.toss]);
+    expect(timesOf("playing_xi")).toEqual(expected.playingXI);
+    expect(timesOf("innings_start")).toEqual(expected.inningsStart);
+    expect(timesOf("innings_end")).toEqual(expected.inningsEnd);
+    expect(timesOf("match_end")).toEqual([expected.matchEnd]);
+    const firstBalls = [1, 2].map((innings) =>
+      deliveries(events).find((event) => event.innings === innings),
+    );
+    expect(firstBalls.map((event) => ({ id: event?.id, t: event?.t }))).toEqual(
+      expected.firstBalls,
+    );
+    expect(deliveries(events)[1]?.t).toBe(expected.secondBall);
+  });
+
+  it("records why each innings ended", () => {
+    const { events } = build(id);
+    expect(
+      events
+        .filter((event): event is InningsEndEvent => event.kind === "innings_end")
+        .map((event) => event.reason),
+    ).toEqual(STRUCTURAL_TIMES[id].endReasons);
+  });
+
+  it("is deterministic", () => {
+    const match = loadMatch(id);
+    expect(buildTimeline(match)).toEqual(buildTimeline(match));
+  });
+
+  it("gives wickets a longer gap than dot balls after matching delivery types", () => {
+    const { events } = build(id);
+    const byOver = new Map<string, DeliveryEvent[]>();
+    for (const event of deliveries(events)) {
+      const key = `${event.innings}:${event.over}`;
+      byOver.set(key, [...(byOver.get(key) ?? []), event]);
+    }
+    let comparisons = 0;
+    for (const overEvents of byOver.values()) {
+      const lastSeq = overEvents.at(-1)?.seq;
+      const gap = (event: DeliveryEvent) => {
+        const next = events[event.seq + 1];
+        if (!next) throw new Error("delivery has no following event");
+        return next.t - event.t;
+      };
+      const isLast = (event: DeliveryEvent) => event.seq === lastSeq;
+      for (const wicket of overEvents.filter((event) => event.wickets.length > 0)) {
+        for (const dot of overEvents.filter(
+          (event) => event.runs.total === 0 && event.wickets.length === 0,
+        )) {
+          if (
+            wicket.isLegal !== dot.isLegal ||
+            wicket.boundary !== dot.boundary ||
+            isLast(wicket) !== isLast(dot)
+          ) {
+            continue;
+          }
+          expect(gap(wicket) - gap(dot)).toBeGreaterThanOrEqual(50_000 - 2 * 3_000);
+          comparisons += 1;
+        }
+      }
+    }
+    expect(comparisons).toBeGreaterThan(0);
   });
 });
 
@@ -258,47 +360,8 @@ describe("timeline cricket details", () => {
     expect(event?.boundary).toBe(0);
   });
 
-  it("gives wickets a longer gap than dot balls after matching delivery types", () => {
-    const { events } = build("1298150");
-    const byOver = new Map<string, DeliveryEvent[]>();
-    for (const event of deliveries(events)) {
-      const key = `${event.innings}:${event.over}`;
-      byOver.set(key, [...(byOver.get(key) ?? []), event]);
-    }
-    let comparisons = 0;
-    for (const overEvents of byOver.values()) {
-      const lastSeq = overEvents.at(-1)?.seq;
-      const gap = (event: DeliveryEvent) => {
-        const next = events[event.seq + 1];
-        if (!next) throw new Error("delivery has no following event");
-        return next.t - event.t;
-      };
-      const isLast = (event: DeliveryEvent) => event.seq === lastSeq;
-      for (const wicket of overEvents.filter((event) => event.wickets.length > 0)) {
-        for (const dot of overEvents.filter(
-          (event) => event.runs.total === 0 && event.wickets.length === 0,
-        )) {
-          if (
-            wicket.isLegal !== dot.isLegal ||
-            wicket.boundary !== dot.boundary ||
-            isLast(wicket) !== isLast(dot)
-          ) {
-            continue;
-          }
-          expect(gap(wicket) - gap(dot)).toBeGreaterThanOrEqual(50_000 - 2 * 3_000);
-          comparisons += 1;
-        }
-      }
-    }
-    expect(comparisons).toBeGreaterThan(0);
-  });
-
-  it("is deterministic and fails loudly for unknown registry names", () => {
+  it("fails loudly for unknown registry names", () => {
     const { raw, players, context } = loadMatch("1298150");
-    expect(buildTimeline({ raw, players, context })).toEqual(
-      buildTimeline({ raw, players, context }),
-    );
-
     const unknown = structuredClone(raw);
     const firstDelivery = unknown.innings[0]?.overs[0]?.deliveries[0];
     if (!firstDelivery) throw new Error("fixture has no opening delivery");
