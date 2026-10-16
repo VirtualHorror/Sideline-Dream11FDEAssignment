@@ -35,6 +35,7 @@ export * from "./detectors/room.ts";
 export type * from "./detectors/types.ts";
 export * from "./fantasy/scoring.ts";
 export * from "./fantasy/squad.ts";
+export * from "./gate/gate.ts";
 export * from "./models/leverage.ts";
 export * from "./models/logistic.ts";
 export * from "./models/priors.ts";
