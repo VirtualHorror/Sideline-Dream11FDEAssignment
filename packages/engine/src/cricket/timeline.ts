@@ -36,10 +36,14 @@ function nameId(raw: CricsheetMatch, name: string): string {
   return id;
 }
 
-function teamCode(context: MatchContextFile, cricsheetName: string): TeamCode {
+function contextTeam(context: MatchContextFile, cricsheetName: string) {
   const team = context.teams.find((candidate) => candidate.cricsheetName === cricsheetName);
   if (!team) throw new Error(`Cricsheet team ${cricsheetName} is missing from match context`);
-  return team.code;
+  return team;
+}
+
+function teamCode(context: MatchContextFile, cricsheetName: string): TeamCode {
+  return contextTeam(context, cricsheetName).code;
 }
 
 function extrasOf(delivery: RawDelivery): DeliveryEvent["extras"] {
@@ -309,7 +313,7 @@ export function buildTimeline(input: {
         : by?.wickets !== undefined
           ? `${by.wickets} ${by.wickets === 1 ? "wicket" : "wickets"}`
           : "the match";
-    resultText = `${outcome.winner} won by ${margin}`;
+    resultText = `${contextTeam(input.context, outcome.winner).name} won by ${margin}`;
   } else {
     resultText = outcome?.result === "tie" ? "Match tied" : "No result";
   }

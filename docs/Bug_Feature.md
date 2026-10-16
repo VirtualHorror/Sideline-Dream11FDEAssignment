@@ -11,5 +11,7 @@
 
 ## Bugs
 
-No product or scoring bug was recorded for Task 2. The fixture-helper parse error and the first live
-scoring test's incorrect event selection were corrected during implementation and are logged in F02.
+A final review found and fixed a result-label issue: output used Cricsheet's team name instead of
+the authored context display name. An alias-name regression test now covers the distinction. No
+open Task 2 bugs remain. The fixture-helper parse error and the first live scoring test's incorrect
+event selection were corrected during implementation and are logged in F02.

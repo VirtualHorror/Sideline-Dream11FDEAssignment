@@ -141,7 +141,7 @@ Latin, theme control, attribution footer); the whole docs suite.
 - `ballInOver`, `label`, `isLegal`, `isFreeHit`, `boundary`, wickets (`creditedToBowler`), runs-out fielders: exactly per `docs/DOMAIN.md` §1-2.
   Free hit: `true` when the previous delivery had a no-ball, or the previous delivery was itself a free hit and was a wide or no-ball.
 - `innings_end.reason`: `target_reached` if the chase got there, else `all_out` at 10 wickets, else `overs_complete`.
-- `match_end`: winner code from `info.outcome.winner`; `resultText` `"<Team name> won by N runs|wickets"` (singular for 1),
+- `match_end`: winner code from `info.outcome.winner`; `resultText` `"<context team.name> won by N runs|wickets"` (singular for 1),
   `"Match tied"` / `"No result"` otherwise, `" (DLS method)"` appended when `outcome.method` is present; `playerOfMatch` as ids.
 - Every emitted event is re-validated with `MatchEventSchema`; unknown Cricsheet names throw `Error` mentioning "registry".
 

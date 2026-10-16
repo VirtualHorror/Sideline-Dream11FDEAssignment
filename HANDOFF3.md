@@ -1,6 +1,6 @@
 # Handoff: Task 02 Cricket core
 
-**Generated**: 2026-10-16 14:23 IST (Codex)
+**Generated**: 2026-10-16 14:33 IST (Codex)
 **Branch**: `task/02-cricket-core`
 **Status**: Ready for Review
 
@@ -13,6 +13,7 @@ fantasy scoring, and oracle-compatible report CLI. No merge, tag, or push was pe
 
 - [x] Added the permissive Cricsheet schema, FNV-1a hash, deterministic timing model, timeline builder, and match summary.
 - [x] Added scorecard reducer, live chase state, partnership/fall-of-wicket tracking, and maiden accounting.
+- [x] Formats result text with authored team display names while retaining Cricsheet winner codes.
 - [x] Added fantasy scoring from `MatchState`, captain/vice-captain multipliers, and the report CLI.
 - [x] Added timeline, reducer, fold-property, and scoring tests for both committed fixtures.
 - [x] Matched both committed fixtures and unseen archive match `1273712` against the Python oracle.
@@ -30,6 +31,7 @@ fantasy scoring, and oracle-compatible report CLI. No merge, tag, or push was pe
 - The first live scoring assertion selected the opening recorded delivery instead of the plan's `1.1` ball; select by the specified event label.
 - The initial oracle comparison included display-name fields on one side and registry ids on the other; normalize identity fields before comparing.
 - Over display runs alone cannot determine maidens when extras are involved. Use the explicit `runsConceded` accumulator.
+- Mapping the synthetic context teams widened the fixed two-team tuple and failed typecheck; clone the context and replace the indexed team instead.
 
 ## Key Decisions
 
@@ -42,8 +44,8 @@ fantasy scoring, and oracle-compatible report CLI. No merge, tag, or push was pe
 ## Current State
 
 `task/02-cricket-core` contains the complete Task 2 implementation and documentation. The final
-verification run passed 13 test files / 106 tests. The files are committed on this branch and the
-worktree is clean.
+verification run passed 13 test files / 106 tests. The implementation and its final display-name
+regression test are committed on this branch and the worktree is clean.
 Golden fixtures, raw match data, the oracle, and dependencies are unchanged.
 
 ## Files to Know
@@ -94,15 +96,15 @@ pnpm verify
 packages/engine typecheck: Done
 apps/server typecheck: Done
 apps/web typecheck: Done
-Checked 77 files in 160ms. No fixes applied.
+Checked 77 files in 187ms. No fixes applied.
 Test Files  13 passed (13)
 Tests  106 passed (106)
 check-no-hardcode: OK (32 source files, 209 terms)
 verify-data: OK (2 matches)
-✓ built in 317ms
+✓ built in 398ms
 
 pnpm test:e2e
-8 passed (14.1s)
+8 passed (14.4s)
 
 Oracle comparisons
 1298150: normalized engine report equals oracle
@@ -113,6 +115,7 @@ Oracle comparisons
 ## Audit Requests
 
 - Review D-035's integer-second jitter formula and D-036's `OverSummary.runsConceded` contract addition.
+- The CLI's `--json` output was compared with the oracle manually on both committed matches and the holdout; option parsing does not have a separate process-level automated test.
 - Both demo reports and a holdout report matched the oracle. The temporary holdout fixture assigned a valid `BAT` role to each XI player; an auditor can rerun the archive match with richer authored roles.
 - The free-hit mutation check made the literal timeline assertion fail as expected; the implementation was restored before final verification.
 

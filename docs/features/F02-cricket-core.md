@@ -40,6 +40,10 @@ or add dependencies.
   `1273712` using temporary fixtures under `/tmp`; it also matched.
 - 2026-10-16: Mutation check set the free-hit carry branch to `false`; the literal free-hit timeline
   test failed on the two expected free-hit deliveries. Restored the implementation and reran the suite.
+- 2026-10-16: A final review found that result text used Cricsheet's source team label instead of the
+  authored context display name. Updated the lookup and added an alias-name regression test.
+- 2026-10-16: The first synthetic alias fixture widened the fixed two-team tuple with `.map`; cloning
+  the context and replacing the indexed team preserves the contract type.
 
 ## What worked / what did not
 
@@ -62,15 +66,15 @@ pnpm verify
 packages/engine typecheck: Done
 apps/server typecheck: Done
 apps/web typecheck: Done
-Checked 77 files in 160ms. No fixes applied.
+Checked 77 files in 187ms. No fixes applied.
 Test Files  13 passed (13)
 Tests  106 passed (106)
 check-no-hardcode: OK (32 source files, 209 terms)
 verify-data: OK (2 matches)
-✓ built in 317ms
+✓ built in 398ms
 
 pnpm test:e2e
-8 passed (14.1s)
+8 passed (14.4s)
 
 Oracle comparisons:
 1298150: normalized engine report equals oracle

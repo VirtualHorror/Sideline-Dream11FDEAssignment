@@ -94,4 +94,4 @@ this checklist's baselines updated, ROLLBACK row added.
 | Task | Verified on | Typecheck | Lint | Unit tests | Hardcode | Data | Build | E2E |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | T1 Foundation | 2026-10-16 | pass | pass (64 files) | 9 files / 65 tests | OK (25 files, 209 terms) | OK (2 matches) | 297 ms | 8 passed |
-| T2 Cricket core | 2026-10-16 | pass | pass (77 files) | 13 files / 106 tests | OK (32 files, 209 terms) | OK (2 matches) | 317 ms | 8 passed |
+| T2 Cricket core | 2026-10-16 | pass | pass (77 files) | 13 files / 106 tests | OK (32 files, 209 terms) | OK (2 matches) | 398 ms | 8 passed |

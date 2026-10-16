@@ -142,8 +142,26 @@ describe("timeline cricket details", () => {
     if (!winningTeam) throw new Error("missing first team");
     expect(resultText({ result: "tie" })).toBe("Match tied");
     expect(resultText({ result: "no result" })).toBe("No result");
-    expect(resultText({ winner: winningTeam.cricsheetName, by: { runs: 1 }, method: "DLS" })).toBe(
-      `${winningTeam.name} won by 1 run (DLS method)`,
+    const displayContext = structuredClone(context);
+    const winningTeamIndex = displayContext.teams.findIndex(
+      (team) => team.code === winningTeam.code,
+    );
+    const displayTeam = displayContext.teams[winningTeamIndex];
+    if (!displayTeam) throw new Error("winning team missing from context");
+    displayContext.teams[winningTeamIndex] = { ...displayTeam, name: "Authored display label" };
+    const synthetic = structuredClone(raw);
+    synthetic.info.outcome = {
+      winner: winningTeam.cricsheetName,
+      by: { runs: 1 },
+      method: "DLS",
+    };
+    const displayResult = buildTimeline({
+      raw: synthetic,
+      players,
+      context: displayContext,
+    }).find((event) => event.kind === "match_end");
+    expect(displayResult?.kind === "match_end" ? displayResult.resultText : undefined).toBe(
+      "Authored display label won by 1 run (DLS method)",
     );
   });
 
