@@ -59,6 +59,26 @@ describe("logistic regression", () => {
     expect(norm(tight)).toBeLessThan(norm(loose) / 2);
   });
 
+  // Newton's method converges in a handful of steps because it uses the full Hessian. Here the two
+  // features correlate at about 0.99 (x2 = x1 + small noise), which is where a diagonal-only
+  // Hessian (the Task 3 audit's surviving mutant) oscillates and never converges. The real fit
+  // needs 6 steps on this data, so 10 leaves room and still catches a slow approximation.
+  it("takes full Newton steps on strongly correlated features", () => {
+    const random = seededRandom(20_261_016);
+    const rows = Array.from({ length: 2_000 }, () => {
+      const x1 = random() * 2 - 1;
+      const x = [1, x1, x1 + 0.2 * (random() * 2 - 1)];
+      const z = TRUE_WEIGHTS.reduce((sum, weight, index) => sum + weight * (x[index] ?? 0), 0);
+      return { x, y: (random() < 1 / (1 + Math.exp(-z)) ? 1 : 0) as 0 | 1 };
+    });
+    const opts = { l2: 1e-4 * rows.length, maxIter: 10, tol: 1e-8 };
+    const fast = fitLogistic(rows, opts);
+    const patient = fitLogistic(rows, { ...opts, maxIter: 50 });
+    fast.forEach((weight, index) => {
+      expect(weight).toBeCloseTo(patient[index] ?? Number.NaN, 7);
+    });
+  });
+
   it("fails loudly instead of returning an unconverged or ill-posed fit", () => {
     const rows = syntheticRows(500, 11);
     expect(() => fitLogistic(rows, { l2: 1e-2, maxIter: 1, tol: 1e-12 })).toThrow(/converge/);

@@ -26,7 +26,14 @@ node scripts/build-models.ts --zip <path>   # rebuilds from a saved archive
 
 The same zip always rebuilds byte-identical files, and `retrievedAt` is kept while the sha256 is
 unchanged. Cricsheet republishes the archive as matches are added, so a new download changes the
-sha256, the counts and the weights.
+sha256, the counts and the weights. To be able to rebuild exactly later, download the archive
+once, keep the file, and build from it:
+
+```bash
+curl -fsSL -o t20s_male_json.zip https://cricsheet.org/downloads/t20s_male_json.zip
+sha256sum t20s_male_json.zip                # the build records this value in the files
+node scripts/build-models.ts --zip t20s_male_json.zip
+```
 
 ## Matches
 

@@ -14,12 +14,12 @@
 
 ## 1. Every change, every task (must all pass)
 
-| # | Command | Expected (baseline after Task 3) |
+| # | Command | Expected (baseline after Task 4) |
 | --- | --- | --- |
 | 1 | `pnpm typecheck` | `packages/engine typecheck: Done`, `apps/server typecheck: Done`, `apps/web typecheck: Done`, then no output from root `tsc`; exit 0 |
 | 2 | `pnpm lint` | `Checked N files in …ms. No fixes applied.` and no `×` or `!` diagnostics; exit 0 |
-| 3 | `pnpm test` | `Test Files  18 passed (18)` and `Tests  183 passed (183)`; no failed, no skipped |
-| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (36 source files, 209 terms)` (counts grow with code/data) |
+| 3 | `pnpm test` | `Test Files  25 passed (25)` and `Tests  337 passed (337)`; no failed, no skipped |
+| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (51 source files, 209 terms)` (counts grow with code/data) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
 | 7 | `pnpm test:e2e` (any UI-visible change) | `8 passed` (desktop + mobile) |
@@ -57,7 +57,13 @@ Compare oracle output as data, not bytes: its `fantasy` key order changes betwee
 Pick a Cricsheet T20 the implementer has never seen (any other game in
 `icc_mens_t20_world_cup_male_json.zip`), generate throwaway fixtures, and run B on it. From Task 4
 on, also run the detectors and check that triggers land on sensible balls (cheap captain
-dismissals, the biggest win-probability swings), not on the demo match's labels.
+dismissals, the biggest win-probability swings), not on the demo match's labels. The Task 4 audit
+did this on 951373 and 951353 (F04 audit notes): build the timeline from `gen_fixtures.py`
+fixtures, give a synthetic pre-match persona the two innings' first strikers as captain and
+vice-captain, give every player an audit-only priors entry (no appearances, one role mean), simulate
+the crowd, replay every event through `createGate` with all four detectors, and check that every
+one of the biggest |WP swings| has a teaser, that the match's last ball is `match_decided`, that
+bailouts follow only cheap early dismissals, and that the deterministic share stays above 0.80.
 From Task 3 on, rebuild `data/models` from the recorded zip (row 11) and plot or print a holdout
 match's win-probability trajectory: it should start near the first-innings base rate, move with
 wickets and boundaries, and end at 1 for the winner.
@@ -75,8 +81,11 @@ An implementer may try any single match; the sweep covers the ones they did not.
 - Both matches are covered wherever the engine is touched.
 - Standing mutant table: `python3 -I scripts/oracle/audit/mutate.py <scratch copy of the repo>`
   (never the working repo). Baseline at `t02-verified`: `12 killed, 6 survived`; from Task 3 step
-  3.0 on (`t03-verified`): `18 killed, 0 survived`. The table covers Task 2 code; mutate new code by
-  hand (Task 3's audit: winprob terminal rules, leverage spectacle, priors formula, archive filters).
+  3.0 on (`t03-verified`, `t04-verified`): `18 killed, 0 survived`. The table covers Task 2 code;
+  mutate new code by hand (Task 3's audit: winprob terminal rules, leverage spectacle, priors
+  formula, archive filters; Task 4's: 48 mutants over the clocks, buffer, commentary, join points,
+  every detector, the gate, quests, crowd and PRNG, 47 killed, the survivor equivalent in practice,
+  listed in F04's audit notes).
 
 ### E. Docs currency
 Feature file complete (scope, what was tried, what worked, verification output), Flow.md flows
@@ -106,3 +115,4 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 | T1 Foundation | 2026-10-16 | pass | pass (64 files) | 9 files / 65 tests | OK (25 files, 209 terms) | OK (2 matches) | 297 ms | 8 passed |
 | T2 Cricket core | 2026-10-16 | pass | pass (78 files) | 13 files / 106 tests | OK (32 files, 209 terms) | OK (2 matches) | 239 ms | 8 passed |
 | T3 Models | 2026-10-16 | pass | pass (89 files) | 18 files / 183 tests | OK (36 files, 209 terms) | OK (2 matches) | 270 ms | 8 passed |
+| T4 Moments engine | 2026-10-16 | pass | pass (113 files) | 25 files / 337 tests | OK (51 files, 209 terms) | OK (2 matches) | 641 ms | 8 passed |

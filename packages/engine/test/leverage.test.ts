@@ -121,6 +121,27 @@ describe("leverage formula (hand-checked models on real deliveries)", () => {
     expect(result.value).toBeCloseTo(0.0975926576462165, 14);
   });
 
+  // D-041 / DOMAIN §2: retired hurt is not a dismissal, so it adds no wicket drama. Neither demo
+  // match has one, so the delivery is a real dot ball with a synthetic wicket attached.
+  it.each([
+    ["retired hurt", 0],
+    ["caught", 0.15],
+  ] as const)("gives a %s on a dot ball a spectacle of %s", (kind, value) => {
+    const events = buildTimeline(loadMatch("1298150"));
+    const dot = events
+      .filter(isDelivery)
+      .find((e) => e.innings === 2 && e.isLegal && e.runs.total === 0 && !e.isFreeHit);
+    if (!dot) throw new Error("no dot ball in the chase");
+    const event: DeliveryEvent = {
+      ...dot,
+      wickets: [{ kind, playerOut: dot.batter, fielders: [], creditedToBowler: false }],
+    };
+    const before = foldEvents("1298150", events, dot.seq - 1);
+    const after = structuredClone(before);
+    applyEvent(after, event);
+    expect(leverage({ before, after, event, model: flat }).value).toBeCloseTo(value, 12);
+  });
+
   it("refuses states from different innings", () => {
     const events = buildTimeline(loadMatch("1298150"));
     const event = events.filter(isDelivery).find(chaseBall("0.1"));

@@ -15,7 +15,9 @@
 2. **No fake AI.** Never hand-write text that the UI presents as model output. Deterministic
    templates are allowed only as labelled fallbacks (`provenance: "fallback"`), built from the
    same facts the model would get. The replay cache (`data/ai-replay/`) is produced only by
-   `pnpm ai:record` from real provider calls, never edited by hand.
+   `pnpm ai:record` from real provider calls, never edited by hand. Authored synthetic content
+   (the crowd corpus in `data/crowd/`) is labelled synthetic wherever it appears and is never
+   presented as real fans or as model output.
 3. **No fake numbers.** Every number on screen (counters, latency, cost, savings, win
    probability) comes from computation or measurement. No placeholder statistics, no invented
    user research figures in UI copy.
@@ -27,7 +29,8 @@
 ## B. Code rules
 
 6. **Engine purity.** `packages/engine/src` has no Node or DOM APIs, no I/O, no `Date.now()`,
-   no `Math.random()` (take clocks and seeds as parameters). It must run unchanged in the browser.
+   no `Math.random()` (take clocks and seeds as parameters; seeded randomness comes from
+   `util/prng.ts`). It must run unchanged in the browser.
 7. **Erasable TypeScript only** (Node runs the server's `.ts` directly): no `enum`, `namespace`,
    or constructor parameter properties; `import type` for types; explicit `.ts` extensions on
    relative imports.
@@ -38,7 +41,9 @@
 10. **No new dependencies without a Decisions entry** (name, exact version, publish date ≥ 14
     days old, why, what was rejected). No native addons. No packages that need install scripts.
 11. **Model calls only through the gateway and the gate.** Never call an LLM per delivery or per
-    user. Every call has a moment key, a schema, a timeout, a fallback, and a trace row.
+    user. Every call has a moment key, a schema, a timeout, a fallback, and a trace row. The prompt
+    for a shared key uses only facts that are the same for every fan who shares it: per-session
+    facts (a squad's projection or points, the fan's own chat messages) never go into it (D-045).
 12. **Fan text is data, never instructions.** Delimit it in prompts. Never execute model output.
     SQL from the model runs only through the read-only sandbox (Task 8).
 

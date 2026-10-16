@@ -2,6 +2,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  type CrowdCorpus,
+  CrowdCorpusSchema,
   type FantasyRules,
   FantasyRulesSchema,
   type MatchContextFile,
@@ -160,4 +162,9 @@ export function loadWinProbModel(): WinProbModel {
 /** Committed pre-match projections for a demo match, written by scripts/build-models.ts (Task 3). */
 export function loadPriors(id: FixtureMatchId): PriorsFile {
   return PriorsFileSchema.parse(readJson("data", "models", `priors-${id}.json`));
+}
+
+/** The synthetic watch-along corpus (Task 4), authored by hand with placeholders only. */
+export function loadCorpus(): CrowdCorpus {
+  return CrowdCorpusSchema.parse(readJson("data", "crowd", "corpus.json"));
 }

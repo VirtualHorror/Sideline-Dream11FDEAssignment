@@ -7,25 +7,42 @@
  *
  * Module map (filled in task by task, see docs/PLAN.md):
  *   contracts/  zod schemas + types shared across packages              (Task 1)
- *   cricket/    Cricsheet schema, timing model, timeline, reducer, format (Task 2; describe Task 4)
+ *   cricket/    Cricsheet schema, timing model, timeline, reducer, format (Task 2);
+ *               commentary lines (describe) and join points (join) (Task 4)
  *   fantasy/    squad validation (Task 1), points scoring (Task 2)
  *   util/       FNV-1a hash (Task 2), seeded PRNG (Task 4)
  *   models/     logistic regression, win probability, leverage, player priors (Task 3);
  *               the trained weights and priors are data (data/models/), passed in by callers
- *   detectors/, gate/, quests/  phase detectors and the entropy gate     (Task 4)
+ *   detectors/  lineup, collapse, nudge, room detectors, catch-up facts (Task 4)
+ *   gate/       the entropy gate that runs them on every event         (Task 4)
+ *   quests/     prediction rules resolved from real deliveries         (Task 4)
  *   crowd/      seeded synthetic watch-along chat                       (Task 4)
  *   buffer/, clock.ts  TV clock and per-fan delay buffer (spoiler shield) (Task 4)
  */
+export * from "./buffer/delay.ts";
+export * from "./clock.ts";
 export * from "./contracts/index.ts";
 export * from "./cricket/cricsheet.ts";
+export * from "./cricket/describe.ts";
 export * from "./cricket/format.ts";
+export * from "./cricket/join.ts";
 export * from "./cricket/reducer.ts";
 export * from "./cricket/timeline.ts";
 export * from "./cricket/timing.ts";
+export * from "./crowd/simulate.ts";
+export * from "./detectors/catchup.ts";
+export * from "./detectors/collapse.ts";
+export * from "./detectors/lineup.ts";
+export * from "./detectors/nudge.ts";
+export * from "./detectors/room.ts";
+export type * from "./detectors/types.ts";
 export * from "./fantasy/scoring.ts";
 export * from "./fantasy/squad.ts";
+export * from "./gate/gate.ts";
 export * from "./models/leverage.ts";
 export * from "./models/logistic.ts";
 export * from "./models/priors.ts";
 export * from "./models/winprob.ts";
+export * from "./quests/resolve.ts";
 export * from "./util/hash.ts";
+export * from "./util/prng.ts";

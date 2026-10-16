@@ -33,8 +33,9 @@ export function predictLogistic(weights: readonly number[], features: readonly n
 }
 
 /**
- * Solves H·x = g for a symmetric positive-definite H (Cholesky, H = L·Lᵀ). The ridge term keeps
- * the Hessian positive definite; a non-positive pivot means the problem is ill-posed, so throw.
+ * Solves H·x = g for a symmetric positive-definite H (Cholesky, H = L·Lᵀ). Only the lower triangle
+ * (`h[i][j]` with j ≤ i) is read, which is all fitLogistic fills in. The ridge term keeps the
+ * Hessian positive definite; a non-positive pivot means the problem is ill-posed, so throw.
  */
 function solveSpd(h: number[][], g: number[]): number[] {
   const n = g.length;
@@ -100,15 +101,11 @@ export function fitLogistic(
       for (let i = 0; i < width; i += 1) {
         const xi = row.x[i] ?? 0;
         gradient[i] = (gradient[i] ?? 0) + residual * xi;
+        // The Hessian is symmetric and solveSpd reads only its lower triangle, so fill only that.
         const hessianRow = hessian[i] as number[];
         for (let j = 0; j <= i; j += 1) {
           hessianRow[j] = (hessianRow[j] ?? 0) + curvature * xi * (row.x[j] ?? 0);
         }
-      }
-    }
-    for (let i = 0; i < width; i += 1) {
-      for (let j = i + 1; j < width; j += 1) {
-        (hessian[i] as number[])[j] = hessian[j]?.[i] ?? 0;
       }
     }
     const step = solveSpd(hessian, gradient);

@@ -44,6 +44,7 @@ import {
   predictLogistic,
   projectedPoints,
   type Role,
+  round2,
   type WinProbModel,
   WinProbModelSchema,
 } from "../packages/engine/src/index.ts";
@@ -305,13 +306,14 @@ function buildPriors(
       : points.reduce((sum, value) => sum + value, 0) / points.length;
   };
   // A role nobody in the squad has played would have no mean; fall back to the squad's overall
-  // mean (no squad needs it today, see data/models/README.md).
+  // mean (no squad needs it today, see data/models/README.md). round2 is the engine's rounding,
+  // the same one projectedPoints applies.
   const overall = pooled(null) ?? 0;
   const roleMean = {
-    WK: Math.round((pooled("WK") ?? overall) * 100) / 100,
-    BAT: Math.round((pooled("BAT") ?? overall) * 100) / 100,
-    AR: Math.round((pooled("AR") ?? overall) * 100) / 100,
-    BOWL: Math.round((pooled("BOWL") ?? overall) * 100) / 100,
+    WK: round2(pooled("WK") ?? overall),
+    BAT: round2(pooled("BAT") ?? overall),
+    AR: round2(pooled("AR") ?? overall),
+    BOWL: round2(pooled("BOWL") ?? overall),
   } satisfies Record<(typeof roles)[number], number>;
 
   const draft: PriorsFile = {
@@ -442,7 +444,14 @@ function readme(
     "",
     "The same zip always rebuilds byte-identical files, and `retrievedAt` is kept while the sha256 is",
     "unchanged. Cricsheet republishes the archive as matches are added, so a new download changes the",
-    "sha256, the counts and the weights.",
+    "sha256, the counts and the weights. To be able to rebuild exactly later, download the archive",
+    "once, keep the file, and build from it:",
+    "",
+    "```bash",
+    `curl -fsSL -o t20s_male_json.zip ${model.trainedOn.source}`,
+    "sha256sum t20s_male_json.zip                # the build records this value in the files",
+    "node scripts/build-models.ts --zip t20s_male_json.zip",
+    "```",
     "",
     "## Matches",
     "",

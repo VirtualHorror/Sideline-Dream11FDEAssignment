@@ -126,9 +126,11 @@ POST /api/sessions {matchId, personaId, delayMs?, lens?}
 GET /api/sessions/:id/stream (SSE)
   → hello → snapshot{clock, events ≤ stadiumNow, moments, chat}
 one global tick (≈100 ms) for all live sessions:
-  stadiumNow = clock.stadiumAt(now)
-  for each newly due event: applyEvent → gate.process(before, after, event) → triggers
-     → orchestrator.handle(trigger) → (cache | provider | fallback) → Moment → SSE "moment"
+  stadiumNow = stadiumAt(clock, now)                                  (engine/clock.ts, built T4)
+  for each newly due event: applyEvent → gate.process({before, after, event, events, ctx, chat})
+     (§11, built T4; chat = the session's simulated crowd, §12)
+     → triggers → orchestrator.handle(trigger) → (cache | provider | fallback) → Moment → SSE "moment"
+  late join or return after ≥ 12 missed legal balls → buildCatchUpFacts → catch_up trigger (§11)
   batched SSE "events" / "chat"; periodic SSE "telemetry"
 POST /api/sessions/:id/control {play|pause|speed|seek|jump|delay|lens}
   → clock update → seek/jump refolds state and sends a new "snapshot"
@@ -147,13 +149,17 @@ orchestrator.handle(trigger)
      every path writes one AICallTrace row and updates counters
 ```
 
-## 9. Client delay buffer — PLANNED (Task 4 logic, Task 6 UI)
+## 9. Client delay buffer — logic BUILT (T4), UI PLANNED (Task 6)
 
 ```
-SSE events/chat/moments (stadium time) → store
-rAF loop: tvT = stadiumAt(clock, now) − delayMs
-  → release events/chat with t ≤ tvT into the TV state (same engine reducer)
+SSE events/chat/moments (stadium time) → store                                 (Task 6)
+rAF loop: tvT = tvTimeAt(clock, now)                                            engine/clock.ts
+            = max(0, stadiumAt(clock, now) − delayMs)
+            stadiumAt = playing ? stadiumT + max(0, now − wallAt)·speed : stadiumT
+  → releaseDue(items, tvT) → { released: t ≤ tvT, held }, input order kept     engine/buffer/delay.ts
+  → released events fold into the TV state (same engine reducer)
   → momentVisibility(moment, tvT): hidden → teaser (nudgeAt ≤ tvT) → revealed (revealAt ≤ tvT)
+       null nudgeAt: hidden → revealed; null revealAt: revealed at once
 ```
 
 ## 10. Model build and model reads — BUILT (T3)
@@ -195,3 +201,61 @@ live reads (pure; the model files are passed in as data):
 The test split and the leverage threshold depend only on match ids and the archive, so a rebuild
 from the same zip reproduces every byte (D-039). The nudge detector (Task 4) compares each
 delivery's `leverage().value` with `model.leverage.nudgeThreshold`.
+
+## 11. Detectors and the entropy gate — BUILT (T4)
+
+The server's tick loop (Task 5) will run this for every released event; the tests replay whole
+matches through it (`packages/engine/test/helpers/replay.ts`).
+
+```
+before = structuredClone(state); applyEvent(state, event)                     engine/cricket/reducer.ts
+gate.process({ before, after: state, event, events, ctx, chat })              engine/gate/gate.ts
+  for each detector (lineup, collapse, nudge, room):                          engine/detectors/*.ts
+    t0 = nowMicros(); verdict = detector.evaluate(input); costMicros = nowMicros() − t0
+    lineup    the second playing_xi: squad picks outside both XIs → ai_trigger lineup_patch
+              facts: squad, benched picks + enumerateSwaps (validateSquad, priors), XIs, toss, notes
+    collapse  a delivery: C/VC out (not retired hurt), ≤ 10 runs, within the first 36 legal balls
+              → bailout:<match>:<eventId>:<C|VC> with a quest window of the next 18 legal balls,
+              unless an earlier one since joinSeq(persona.joinAt) still runs → suppressed quest_active
+                                                                              engine/cricket/join.ts
+    nudge     a delivery: leverage ≥ model.leverage.nudgeThreshold, or the ball that ends the chase
+              → nudge:<match>:<eventId>; facts split "before the ball" (teaser) from "outcome"
+                                                                              engine/models/leverage.ts
+    room      a delivery: an over ends from 15.6 on, or the last minute's chat > mean + 2 SD of this
+              innings' minutes (≥ 10 of them) → room:<match>:<innings>:<over>; crowd messages only
+    an ai_trigger whose key this gate already asked for → suppressed duplicate_key
+  → GateDecision per verdict (reason, momentKey, costMicros)
+  → counters { eventsTotal, eventsDeterministic (no trigger), triggers, suppressed }
+  → triggers: MomentTrigger { kind, key, scope, facts } → orchestrator (Task 5)
+
+session-driven (not per event), when a fan joins late or comes back:
+  missedLegalBalls(events, lastSeenSeq, currentSeq) ≥ 12                      engine/detectors/catchup.ts
+    → buildCatchUpFacts({ events, fromSeq, toSeq, ctx, lens })
+         window: whole missed overs of the innings in progress (else the previous innings')
+         facts: per-over runs, anomalies (z ≥ 2, population SD), longest run-less spell, top 3 WP
+         swings, previous-innings summary, partnership, situation, WP now, squad impact (per session)
+    → key catchUpKey(match, innings, fromOver, toOver, lens)
+
+predictions, on server and client as events arrive:
+  resolveQuestRule(rule, events) → pending | won | lost                       engine/quests/resolve.ts
+```
+
+Detectors keep no state between calls (D-045): history comes from `events` (only `seq <= event.seq`
+is read) and the states, so one detector object serves every session; the gate is per session.
+
+## 12. Synthetic crowd — BUILT (T4)
+
+```
+simulateCrowd({ events, players, corpus, seed })                               engine/crowd/simulate.ts
+  corpus = CrowdCorpusSchema.parse(data/crowd/corpus.json)   (placeholders, sides, rates per trigger)
+  for each event (a timeline from its first event; a prefix is fine):
+    applyEvent(state, event)
+    random = mulberry32(seedFrom(`${seed}|${event.id}`))                       engine/util/prng.ts
+    triggers: toss | playing_xi | innings_start | innings_end (break) | match_end | ambient, or for a
+              delivery its main reaction (wicket, six, four, noball, wide, dot, runs) plus noball,
+              freehit (a free hit is next), over_end, pressure (live chase, death overs), ambient
+    per trigger: n in rates[trigger].min..max; lines whose placeholders and side resolve; drawn
+      without replacement; t = event.t + exponential delay; affinity from the line's side;
+      text filled from players.json short names and team codes; synthetic: true, fromYou: false
+  → ChatMessage[] sorted by t (Task 5 releases them on the fan's TV clock; the room detector reads them)
+```

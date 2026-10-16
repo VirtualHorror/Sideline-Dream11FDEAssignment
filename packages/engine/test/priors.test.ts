@@ -46,6 +46,12 @@ describe("projectedPoints (shrinkage toward the role mean)", () => {
   it("fails loudly for a player the priors file does not cover", () => {
     expect(() => projectedPoints("0000000d", handPriors({}))).toThrow(/0000000d/);
   });
+
+  // `players` is a plain object, so a lookup by a name it inherits (toString, constructor) must
+  // still be "not covered", never a function treated as a priors entry.
+  it.each(["toString", "constructor"])("does not take the inherited name %s for a player", (id) => {
+    expect(() => projectedPoints(id, handPriors({}))).toThrow(`no priors for player ${id}`);
+  });
 });
 
 const MATCH_DATES = { "1298150": "2022-10-23", "1415755": "2024-06-29" } as const;
@@ -65,6 +71,19 @@ describe.each(MATCH_IDS)("committed priors for %s", (id) => {
       const dates = entry?.appearances.map((a) => a.date) ?? [];
       for (const date of dates) expect(date < priors.asOf).toBe(true);
       expect(dates).toEqual([...dates].sort().reverse());
+    }
+  });
+
+  // D-042: a role's mean pools every appearance of the squad's players in that role, to 2 decimals.
+  it("stores role means pooled over the squad's appearances", () => {
+    const priors = loadPriors(id);
+    for (const role of ["WK", "BAT", "AR", "BOWL"] as const) {
+      const points = Object.values(priors.players)
+        .filter((entry) => entry.role === role)
+        .flatMap((entry) => entry.appearances.map((a) => a.points));
+      expect(points.length).toBeGreaterThan(0);
+      const mean = points.reduce((sum, p) => sum + p, 0) / points.length;
+      expect(Math.abs(priors.roleMean[role] - mean)).toBeLessThanOrEqual(0.005 + 1e-9);
     }
   });
 

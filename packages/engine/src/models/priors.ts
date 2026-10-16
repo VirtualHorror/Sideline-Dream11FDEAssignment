@@ -42,7 +42,9 @@ export type PriorsFile = z.infer<typeof PriorsFileSchema>;
  * does not cover rather than inventing a number.
  */
 export function projectedPoints(playerId: string, priors: PriorsFile): number {
-  const entry = priors.players[playerId];
+  // Own keys only: `players` is a plain object, so `toString` or `constructor` would otherwise
+  // look like an entry.
+  const entry = Object.hasOwn(priors.players, playerId) ? priors.players[playerId] : undefined;
   if (!entry) throw new Error(`no priors for player ${playerId} in match ${priors.matchId}`);
   const n = entry.appearances.length;
   const total = entry.appearances.reduce((sum, appearance) => sum + appearance.points, 0);
