@@ -506,3 +506,22 @@
   not enough for a spike (pins the ten-minute minimum of D-047), and an at-most dots quest settles as
   won on the ball that makes it certain (pins D-048's "as early as certain" at its boundary). Each new
   test fails on its mutant and passes on the merged code.
+
+### D-052 — The provider SDKs: `@anthropic-ai/sdk` 0.131.0 and `openai` 7.27.0 (2026-10-16, T5, Claude)
+- **Context:** PLAN Task 5 adds both providers (D-014, D-033). pnpm's `minimumReleaseAge` (D-007)
+  allows only versions published at least 14 days ago (on or before 2026-10-02).
+- **Decision:** `@anthropic-ai/sdk` **0.131.0** (published 2026-09-30) and `openai` **7.27.0**
+  (published 2026-10-01), exact pins in `apps/server/package.json`, the newest versions old enough.
+  New transitive packages: `json-schema-to-ts` 3.1.1, `ts-algebra` 2.0.0, `standardwebhooks` 1.1.1,
+  `@stablelib/base64` 1.0.1, `fast-sha256` 1.3.0 (Anthropic SDK); `openai` takes the existing
+  `undici` and `zod` as optional peers. No install scripts, no native code.
+- **Why these SDKs:** typed requests and errors (`Anthropic.RateLimitError`, `APIUserAbortError`, …,
+  never message matching), `AbortSignal` support, and the types for the features the PLAN names:
+  0.131.0 types `output_config: { effort, format: { type: "json_schema" } }`, `stop_reason:
+  "refusal"`, and on `client.beta.messages` the `fallbacks: "default"` parameter with the
+  `server-side-fallback-2026-07-01` beta; 7.27.0 types the Responses API's strict `json_schema`
+  text format, `output_text` and `usage.input_tokens/output_tokens`.
+- **Alternatives:** raw `fetch` against both HTTP APIs (we would re-implement retries, error classes
+  and types); the Anthropic SDK's `zodOutputFormat` helper and `messages.parse()` (provider-specific;
+  the gateway already converts zod 4 with `z.toJSONSchema()` and re-validates, so both providers share
+  one path); Vercel's AI SDK or LangChain (a large abstraction over two calls, and more supply chain).
