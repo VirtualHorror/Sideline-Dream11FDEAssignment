@@ -30,4 +30,5 @@
 | Task | Tag | What it adds | Risk | Rollback specifics |
 | --- | --- | --- | --- | --- |
 | T1 Foundation | `t01-verified` | toolchain, monorepo, contracts, data, guards, docs, shell | low (no runtime state) | to start over: delete the repo folder; Node/pnpm/ffmpeg live in `~/.local` (remove `~/.local/share/node`, `~/.local/bin/{node,npm,npx,corepack,pnpm,pnpx,ffmpeg,ffprobe}`) |
-| T2 … T10 | — | filled in at each merge | — | — |
+| T2 Cricket core | `t02-verified` | Cricsheet timeline, match reducer, fantasy scoring, engine report CLI; auditor toolkit `scripts/oracle/audit/` | medium (the pure engine API every later task builds on) | `git revert -m 1 t02-verified` (the tag is the merge commit), then `pnpm install --frozen-lockfile && pnpm verify`. No dependencies, data or migrations to restore. Timeline, reducer, scoring and CLI go together, so revert any later task that uses them first |
+| T3 … T10 | — | filled in at each merge | — | — |

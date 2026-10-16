@@ -69,7 +69,10 @@ export interface FallOfWicket {
 export interface OverSummary {
   over: number;
   bowlerId: PlayerId;
+  /** Team runs scored in the over, extras included. */
   runs: number;
+  /** Runs charged to the bowler under DOMAIN.md section 2's extras rule. */
+  runsConceded: number;
   wickets: number;
   balls: BallMark[];
   /** Six legal balls, no runs charged to the bowler. */

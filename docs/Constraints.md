@@ -68,7 +68,8 @@
     delete tags, never rewrite history, never push. The auditor merges after verification.
 22. **Docs are part of "done".** Every task updates: its feature file, `docs/Flow.md`,
     `docs/Architecture.md` status, `docs/Decisions.md`, `docs/TEST_CHECKLIST.md` (new commands and
-    expected outputs), `docs/ROLLBACK.md` (task row). Stale docs fail the audit.
+    expected outputs), `docs/ROLLBACK.md` (task row), `docs/Bug_Feature.md` (register rows).
+    Stale docs fail the audit.
 23. **`pnpm verify` must be green** (and `pnpm test:e2e` for UI tasks) before you write the
     HANDOFF, and the HANDOFF must paste the actual summary lines, not a paraphrase.
 24. **Stay in scope.** Implement your task's checklist. Note ideas for later in the feature file
