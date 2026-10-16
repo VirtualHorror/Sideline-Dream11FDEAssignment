@@ -174,9 +174,8 @@ one; an independent re-audit (Codex, or a fresh Claude session) is cheap with th
   identical files; after a README template fix, three more `--zip` runs (the last on the audited
   head) were identical too, and the JSON files never changed. The calibration tables are in
   `data/models/README.md` (chase within 0.05 in every bin; first innings overconfident at the
-  extremes, a recorded limit); both demo
-  matches are in `excludedMatchIds`; the counts reproduce HANDOFF4 and BUG-002 exactly (3,255
-  candidates, 3,093 used, 162 rejected by class, 607 test).
+  extremes, a recorded limit); both demo matches are in `excludedMatchIds`; the counts reproduce
+  HANDOFF4 and BUG-002 exactly (3,255 candidates, 3,093 used, 162 rejected by class, 607 test).
 - **Mutation (§2D):** `mutate.py` → `18 killed, 0 survived` (was 12/6 at `t02-verified`). Twenty
   hand mutants of the new code: 19 killed after the fix pass; the survivor (dropping the Hessian's
   off-diagonal terms) still converges to the same optimum on the synthetic data, and would fail
