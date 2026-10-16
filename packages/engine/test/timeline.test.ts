@@ -165,6 +165,25 @@ describe("timeline cricket details", () => {
     );
   });
 
+  it("names the winner alone when Cricsheet records no margin", () => {
+    const { raw, players, context } = loadMatch("1298150");
+    const displayContext = structuredClone(context);
+    const [winningTeam] = displayContext.teams;
+    displayContext.teams[0] = { ...winningTeam, name: "Authored display label" };
+    const resultText = (by: { runs?: number; wickets?: number } | undefined) => {
+      const synthetic = structuredClone(raw);
+      synthetic.info.outcome = by
+        ? { winner: winningTeam.cricsheetName, by }
+        : { winner: winningTeam.cricsheetName };
+      const result = buildTimeline({ raw: synthetic, players, context: displayContext }).find(
+        (event) => event.kind === "match_end",
+      );
+      return result?.kind === "match_end" ? result.resultText : undefined;
+    };
+    expect(resultText(undefined)).toBe("Authored display label won");
+    expect(resultText({})).toBe("Authored display label won");
+  });
+
   it("labels extras with the legal ball still to come and carries free hits over a wide", () => {
     const { events } = build("1298150");
     const finalOver = deliveries(events).filter(

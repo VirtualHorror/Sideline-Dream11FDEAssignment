@@ -307,13 +307,14 @@ export function buildTimeline(input: {
   if (outcome?.winner) {
     winner = teamCode(input.context, outcome.winner);
     const by = outcome.by;
+    // A winner without a margin (an awarded match, say) reads "<team> won", never "won by …".
     const margin =
       by?.runs !== undefined
-        ? `${by.runs} ${by.runs === 1 ? "run" : "runs"}`
+        ? ` by ${by.runs} ${by.runs === 1 ? "run" : "runs"}`
         : by?.wickets !== undefined
-          ? `${by.wickets} ${by.wickets === 1 ? "wicket" : "wickets"}`
-          : "the match";
-    resultText = `${contextTeam(input.context, outcome.winner).name} won by ${margin}`;
+          ? ` by ${by.wickets} ${by.wickets === 1 ? "wicket" : "wickets"}`
+          : "";
+    resultText = `${contextTeam(input.context, outcome.winner).name} won${margin}`;
   } else {
     resultText = outcome?.result === "tie" ? "Match tied" : "No result";
   }
