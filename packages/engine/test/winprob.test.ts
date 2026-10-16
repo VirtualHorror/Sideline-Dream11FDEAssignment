@@ -158,8 +158,9 @@ describe("feature vectors (PLAN Task 3 formulas, worked by hand)", () => {
   });
 
   it("builds the first-innings features", () => {
-    expectVector(firstInningsFeatures(80, 3, 60), [1, 0.5, 0.3, 0.5, 0.25, 0.15]);
-    expectVector(firstInningsFeatures(120, 4, 90), [1, 0.75, 0.4, 0.75, 0.5625, 0.3]);
+    // Inputs where runs/160 and balls/120 differ, so each interaction term is distinguishable.
+    expectVector(firstInningsFeatures(40, 2, 96), [1, 0.25, 0.2, 0.8, 0.2, 0.16]);
+    expectVector(firstInningsFeatures(150, 7, 120), [1, 0.9375, 0.7, 1, 0.9375, 0.7]);
   });
 
   it("rejects a model file whose features are not the code's, in the code's order", () => {
