@@ -17,7 +17,8 @@ cached by moment so the cost scales with the match, not with the number of fans.
 The demo replays **real ball-by-ball data** (Cricsheet) of India vs Pakistan at the 2022 T20 World
 Cup, with the 2024 final as a second match to prove nothing is hardcoded.
 
-> Status: Task 1 (foundation) complete. See `docs/PLAN.md` for the build sequence and status.
+> Status: Task 1 (foundation) and Task 2 (cricket core: Cricsheet timeline, match reducer, fantasy
+> scoring, engine report) complete and audited. See `docs/PLAN.md` for the build sequence and status.
 
 ## Quick start
 
@@ -29,6 +30,10 @@ pnpm verify          # typecheck, lint, unit tests, anti-hardcoding scan, data g
 pnpm test:e2e        # Playwright on system Chrome, desktop + 390 px mobile
 pnpm dev             # web on http://127.0.0.1:5173 (proxies /api to the server on :8787)
 pnpm build && pnpm start   # production: server on :8787 serving apps/web/dist
+
+# scorecard + fantasy points for a match, straight from the engine (--json for the oracle format)
+node scripts/engine-report.ts data/raw/cricsheet/1298150.json \
+  --players data/matches/1298150/players.json --rules data/rules/t20-fantasy.json
 ```
 
 Optional AI configuration: copy `.env.example` to `.env` and add an Anthropic key or an
@@ -47,9 +52,9 @@ plan inside the app, rendered from the same docs in this repository.
 | `apps/server` | Node 24 + Hono API, SSE stream, sessions, AI gateway (runs `.ts` directly) |
 | `apps/web` | React 19 + Vite 8 + Tailwind 4 client |
 | `data/` | Real Cricsheet data, authored fixtures, rules, models (see `data/README.md`) |
-| `scripts/` | data fetch/verify, anti-hardcoding scan, independent Python oracle |
+| `scripts/` | data fetch/verify, anti-hardcoding scan, engine report, independent Python oracle and the auditor's toolkit |
 | `e2e/` | Playwright tests |
-| `docs/` | Architecture, Decisions, Flow, Constraints, TEST_CHECKLIST, ROLLBACK, PLAN, DOMAIN, design |
+| `docs/` | Architecture, Decisions, Flow, Constraints, TEST_CHECKLIST, ROLLBACK, PLAN, DOMAIN, Bug_Feature register, design, features, bugs |
 
 ## How this was built
 

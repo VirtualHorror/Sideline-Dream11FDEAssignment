@@ -85,6 +85,9 @@ pnpm verify
   → pnpm build          (vite build → apps/web/dist)
 pnpm test:e2e           (playwright: builds, starts server on :8799, desktop + 390 px mobile, system Chrome)
 python3 -I scripts/oracle/cricsheet_oracle.py <raw> [--players --rules] [--json]   (auditor's reference)
+scripts/oracle/audit/run_sweep.sh <raw-dir> <work-dir>    (auditor's archive sweep, from the T2 audit)
+  → per match: gen_fixtures.py → engine-report --json + oracle --json → compare.py
+  → dump_engine.ts (events + per-delivery state) → check_spec.py (rules re-derived from the raw file)
 ```
 
 ---

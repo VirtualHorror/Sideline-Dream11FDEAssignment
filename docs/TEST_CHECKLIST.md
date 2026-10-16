@@ -47,7 +47,11 @@ node scripts/engine-report.ts data/raw/cricsheet/<id>.json --players data/matche
 python3 -I scripts/oracle/cricsheet_oracle.py data/raw/cricsheet/<id>.json --players data/matches/<id>/players.json --rules data/rules/t20-fantasy.json --json > /tmp/oracle.json
 ```
 Totals, extras, every batting/bowling line, fall of wickets and every player's fantasy total must
-be identical. (The comparison script is the auditor's, not the implementer's.)
+be identical. The comparison script is the auditor's, not the implementer's:
+`python3 -I scripts/oracle/audit/compare.py <raw.json> /tmp/engine.json /tmp/oracle.json` (read-only
+for implementers like the rest of `scripts/oracle/`; see `scripts/oracle/audit/README.md`).
+Oracle-only entries for substitute fielders outside the XI are the oracle's known discrepancy
+(BUG-001), not engine failures.
 
 ### C. Holdout match (from Task 2 on)
 Pick a Cricsheet T20 the implementer has never seen (any other game in
@@ -55,24 +59,26 @@ Pick a Cricsheet T20 the implementer has never seen (any other game in
 on, also run the detectors and check that triggers land on sensible balls (cheap captain
 dismissals, the biggest win-probability swings), not on the demo match's labels.
 
-Task 2 implementation check: archive match `1273712` was run with temporary fixtures under `/tmp`;
-scorecards, fielding, fall of wickets, and fantasy output matched the oracle. No holdout files were
-added to the repository.
+From the Task 2 audit on, sweep the whole archive rather than one match:
+`scripts/oracle/audit/run_sweep.sh <fresh-raw-dir> <scratch-dir>` runs B on every match with
+synthesized fixtures, then re-derives the timeline and reducer rules independently
+(`check_spec.py`). The baseline and the exact commands are in `scripts/oracle/audit/README.md`.
+An implementer may try any single match; the sweep covers the ones they did not.
 
 ### D. Test quality
 - New tests assert behaviour with hand-derived or oracle-derived literals, never values computed
   by the code under test.
 - Mutation spot check: change one constant or branch in new source code; at least one test must fail.
 - Both matches are covered wherever the engine is touched.
-
-Task 2 mutation evidence: changing the free-hit carry branch to always return `false` made the
-timeline test fail on the two expected free-hit deliveries. The branch was restored and the suite
-passed again.
+- Standing mutant table: `python3 -I scripts/oracle/audit/mutate.py <scratch copy of the repo>`
+  (never the working repo). Baseline at `t02-verified`: `12 killed, 6 survived`; after Task 3
+  step 3.0 it must be `18 killed, 0 survived`.
 
 ### E. Docs currency
 Feature file complete (scope, what was tried, what worked, verification output), Flow.md flows
 moved from PLANNED to BUILT, Architecture status updated, Decisions added for new choices,
-this checklist's baselines updated, ROLLBACK row added.
+this checklist's baselines updated, ROLLBACK row added, `docs/Bug_Feature.md` register updated,
+README status line and code module maps (e.g. `packages/engine/src/index.ts`) current.
 
 ### F. Security (from Task 5 on)
 - `curl -sI http://127.0.0.1:8787/` shows the CSP, `x-frame-options: DENY`, `nosniff`.
@@ -94,4 +100,4 @@ this checklist's baselines updated, ROLLBACK row added.
 | Task | Verified on | Typecheck | Lint | Unit tests | Hardcode | Data | Build | E2E |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | T1 Foundation | 2026-10-16 | pass | pass (64 files) | 9 files / 65 tests | OK (25 files, 209 terms) | OK (2 matches) | 297 ms | 8 passed |
-| T2 Cricket core | 2026-10-16 | pass | pass (77 files) | 13 files / 106 tests | OK (32 files, 209 terms) | OK (2 matches) | 398 ms | 8 passed |
+| T2 Cricket core | 2026-10-16 | pass | pass (78 files) | 13 files / 106 tests | OK (32 files, 209 terms) | OK (2 matches) | 239 ms | 8 passed |

@@ -74,7 +74,7 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | # | Task | Owner | Branch | Status |
 | --- | --- | --- | --- | --- |
 | 1 | Foundation: toolchain, monorepo, contracts, real data, guards, docs, shell | Claude | `main` | ✅ done, tagged `t01-verified` |
-| 2 | Cricket core: timeline, reducer, fantasy scoring, engine report | Codex | `task/02-cricket-core` | ⬜ |
+| 2 | Cricket core: timeline, reducer, fantasy scoring, engine report | Codex | `task/02-cricket-core` | ✅ done, tagged `t02-verified` |
 | 3 | Models: T20I archive pipeline, win probability, leverage, player priors | Codex | `task/03-models` | ⬜ |
 | 4 | Moments engine: clock, delay buffer, detectors, gate, quests, crowd, commentary | Codex | `task/04-moments-engine` | ⬜ |
 | 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Codex | `task/05-server-ai` | ⬜ |
@@ -165,29 +165,37 @@ balls since the last wicket; `null` from a wicket until the next delivery.
   - `is deterministic`: two builds are deep-equal.
   - `fails loudly on unknown names`: synthetic raw with an unregistered batter throws `/registry/`.
   - `summarises the match`: `buildMatchSummary(1298150)` → `venue "Melbourne Cricket Ground"`, `city "Melbourne"`, `date "2022-10-23"`, `title "Pakistan vs India"`, `stage "Super 12, Group 2"`.
-- [x] **2.3** Implement `hash.ts`, `cricsheet.ts`, `timing.ts`, and `timeline.ts`; after correcting a malformed fixture-helper template literal, `pnpm vitest run --project engine timeline` passes.
-- [x] **2.4 Reducer tests** (`reducer.test.ts`):
+- [x] **2.3** Run `pnpm vitest run --project engine timeline` → FAIL (missing exports). Implement `hash.ts`, `cricsheet.ts`, `timing.ts`, `timeline.ts`. Run → PASS.
+- [x] **2.4 Failing reducer tests** (`reducer.test.ts`):
   - `matches the oracle scorecard for both matches`: for each innings, totals (`runs`, `wickets`, `legalBalls`, extras incl. `total`), every batter line (`runs, balls, fours, sixes, dots, strikeRate`, out kind or null), every bowler line (`legalBalls, runsConceded, wickets, maidens, dots, wides, noballs, economy, oversText`) and the fall of wickets (`runs, label`, player id) equal `golden.innings[i]` (map oracle names to ids via `raw.info.registry.people`).
   - `records the result`: 1298150 → `{ winner: "IND", text: "India won by 4 wickets", playerOfMatch: ["ba607b88"] }`, phase `complete`; 1415755 → `"India won by 7 runs"`.
   - `tracks the chase situation` ("through X" = folded through the **last** delivery labelled X, since extras repeat labels): 1298150 through innings-2 `13.6` → `live.runsRequired 70, ballsRemaining 36, requiredRunRate 11.67, currentRunRate 6.43`; through `17.6` → `31, 12, 15.5`; through `18.6` → `16, 6` and `live.strikerId "dbe50b21"`. 1415755 through innings-2 `14.6` → `30, 30, 6`; through `17.6` → `20, 12, 10`.
   - `rotates strike like the data` (property over both matches): after every non-wicket delivery that has a next delivery in the same innings, `live.strikerId` equals that next delivery's batter (470 checks).
   - `tracks the partnership`: 1298150 innings 2 after `18.6`: partnership batters `{ba607b88, dbe50b21}`, `runs 113`, `legalBalls 77`; after `19.1` it is `null`.
-  - `counts maidens`: synthetic over of six dots → `maidens 1`; with one leg-bye → still `1`; with a wide or bowler-charged penalty → `0`.
+  - `counts maidens`: synthetic over of six dots → `maidens 1`; with one leg-bye → still `1`; with a wide → `0`.
   - `rejects out-of-order events`: applying seq 5 to a fresh state throws.
-- [x] **2.5** Implement `format.ts` and `reducer.ts`; reducer, scorecard, live-state, strike, partnership, and maiden tests pass.
+- [x] **2.5** Run → FAIL. Implement `format.ts`, `reducer.ts`. Run → PASS.
 - [x] **2.6 Failing fold property** (`fold.test.ts`, fast-check, both matches): for random `k`, `foldEvents(id, events, k)` deep-equals applying events `0..k` one by one to `createMatchState(id)`.
-- [x] **2.7 Scoring tests** (`scoring.test.ts`):
+- [x] **2.7 Failing scoring tests** (`scoring.test.ts`):
   - `matches the oracle's fantasy totals and breakdowns for all 22 players` (both matches; breakdown keys as in the oracle; zero components omitted).
   - `spot checks`: 1298150 Kohli `150` = `{playingXI 4, runs 82, boundaryBonus 24, sixBonus 24, milestone 12, strikeRate 4}`; Rizwan `32` incl. `stumping 12`, `runOutIndirect 6`, `strikeRate -6`; Babar `16` incl. `duck -2`.
   - `scores live`: folded through innings-1 `1.1` of 1298150 → Babar total `2`, Arshdeep total `43`.
   - `applies captain and vice-captain multipliers`: full-time `squadPoints` totals: `babar-believer 755`, `late-from-work 926` (1298150); `captain-rohit 685`, `proteas-late 924.5` (1415755).
-- [x] **2.8** Implement `fantasy/scoring.ts` from `MatchState` only; oracle breakdowns, live points, and squad totals pass.
+- [x] **2.8** Run → FAIL. Implement `fantasy/scoring.ts` (from `MatchState` only). Run → PASS.
 - [x] **2.9 Engine report CLI.** `node scripts/engine-report.ts <raw.json> --players <players.json> --rules <rules.json> [--json]` prints the same numeric fields as `scripts/oracle/cricsheet_oracle.py --json` (innings totals and extras, batters and bowlers keyed by player id, fall of wickets with `player_id`, fantasy). Without `--json` it prints a human-readable card.
 - [x] **2.10** `pnpm verify` green; docs: `docs/features/F02-cricket-core.md`, `docs/Bug_Feature.md`, Flow §6 → BUILT, Architecture status, Decisions (D-035/D-036; retain D-032 owner approval), TEST_CHECKLIST baselines, ROLLBACK row.
 
 **Acceptance:** all of the above green on both matches; `pnpm check:hardcode` OK; no golden file changed (`git diff --stat main -- packages/engine/test/golden` empty).
 
 **Audit hooks (Claude):** oracle diff on both matches and on a holdout match (TEST_CHECKLIST §2B-C); grep for literal labels/seq numbers in `src`; mutation spot check on the free-hit and maiden rules.
+
+**Audit result (2026-10-16, Claude): accepted, `t02-verified`.** The engine is identical to the
+oracle on both matches and on all 199 archive matches it accepts. An independent re-derivation of
+these rules (`scripts/oracle/audit/check_spec.py`) finds 0 mismatches over 46,254 deliveries, and
+12 of 18 mutants are killed. Findings, follow-ups and evidence: `docs/features/F02-cricket-core.md`
+(audit notes). Known limits: `docs/bugs/BUG-002` (31 archive matches rejected, 9 of them inside
+Task 3's filter). The oracle's discrepancy with DOMAIN §3 is `docs/bugs/BUG-001`. Small carry-overs
+are Task 3 step 3.0.
 
 ---
 
@@ -223,7 +231,12 @@ threshold for "big balls", and pre-match player projections, all reproducible by
 
 **Build script rules (decided):** source `https://cricsheet.org/downloads/t20s_male_json.zip`; keep
 men's T20Is with 20-over innings, two innings, a winner or tie, no `outcome.method`, no super-over
-innings, chase `target.overs == 20`; exclude `1298150` and `1415755`. Test split: matches with
+innings, chase `target.overs == 20`; exclude `1298150` and `1415755`. `buildTimeline` rejects
+some valid files by design (`docs/bugs/BUG-002`; in the World Cup archive, 9 of the rejected
+matches pass the filters above: 8 mid-over bowler changes and one 12-player list). Catch the
+error, exclude the match, add it to `excludedMatchIds`, and report counts per reason in
+`data/models/README.md`. Never skip a match silently. A rejected match is not a player appearance
+for priors: the next most recent appearance takes its place. Test split: matches with
 `fnv1a32(matchId) % 5 === 0`. Chase rows: the state before the first ball and after every legal
 ball of innings 2 (skip terminal states), label = chasing team won. First-innings rows: after every
 legal ball of innings 1, label = batting-first team won. Fit with `l2 = 1e-4 · n`, `maxIter 50`,
@@ -236,6 +249,27 @@ player's role from our fixtures, others `BAT`, credits 8, `notes: []`); `project
 role across all squad players of that match. Output files are deterministic (stable key order).
 
 **Steps**
+- [ ] **3.0 Task 2 audit carry-overs** (do these first, on this branch; detail in F02 follow-ups 1-7).
+  The new tests pin behaviour the audit verified independently, so they pass at once. Prove each one
+  bites with the matching mutant instead: `python3 -I scripts/oracle/audit/mutate.py <scratch copy>`
+  (how to make the copy: `scripts/oracle/audit/README.md`) must end `18 killed, 0 survived`. A
+  `SKIP` means a snippet drifted: report it in the HANDOFF and do not edit the tool.
+  - `timeline.test.ts`, structural times: 1298150 → toss `600000`, XIs `660000`/`661000`, innings starts
+    `1740000`/`8673000`, first balls `1800000` (`1298150:0011`)/`8733000` (`1298150:0139`), second ball
+    `1836000` (jitter `+2000`), innings ends `7773000`/`14543000`, match end `14558000`. 1415755 → innings
+    starts `1740000`/`8636000`, first balls `1800000`/`8696000`, second ball `1832000` (jitter `−2000`),
+    innings ends `7736000`/`14679000`, match end `14694000`.
+  - `innings_end.reason`: 1298150 `["overs_complete","target_reached"]`, 1415755
+    `["overs_complete","overs_complete"]`.
+  - Run "is deterministic" and the wicket-gap test on both matches.
+  - `reducer.test.ts` maidens: replace the mislabelled "penalty" case with a penalty-only delivery
+    (`penalty 5`, batter `0`) that keeps `maidens 1` (DOMAIN §2: penalties are not charged to the
+    bowler) and a separate "single off the bat → 0" case; assert `overs[0].runsConceded` directly.
+  - `scoring.test.ts` (synthetic state and rules): a BOWL batter out for 0 gets no `duck`; with a rules
+    copy whose strike-rate slab is `{ min: 133.33, max: 133.33, points: 7 }`, 40 runs off 30 balls scores
+    `strikeRate 7` (rounded before lookup).
+  - `timeline.ts:315`: an `outcome.winner` without `by` gives `"<team name> won"` (failing test first).
+  - Intent comments at the places listed in F02 follow-up 6.
 - [ ] **3.1** Failing `logistic.test.ts`: on a seeded synthetic dataset generated from weights `[−1, 2, −3]`, `fitLogistic` recovers each weight within 0.15; `predictLogistic` ∈ (0, 1). Implement → pass.
 - [ ] **3.2** Failing `winprob.test.ts`:
   - committed `data/models/winprob-v1.json` parses; `trainedOn.nMatches ≥ 1000`; `excludedMatchIds` ⊇ `["1298150","1415755"]`; `metrics.chase.brierTest < 0.2`; every chase calibration bin with `n > 500` has `|predicted − observed| < 0.1`.

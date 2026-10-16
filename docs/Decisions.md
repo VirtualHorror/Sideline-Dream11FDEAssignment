@@ -272,3 +272,22 @@
 - **Why:** reducing an over from only its display marks can misclassify a penalty delivery that also
   contains batter runs. The additional state field preserves the domain calculation without changing
   the meaning of the existing `runs` field.
+
+### D-037 — Task 2 audit: accept, exclude archive rejections explicitly, commit the auditor's toolkit (2026-10-16, T2 audit, Claude)
+- **Context:** the audit swept all 230 matches of the T20 World Cup archive. The engine matched the
+  oracle on every match it accepts. It rejects 31 valid files on contract limits (BUG-002), and 9 of
+  those fall inside Task 3's training filters. Separately, the oracle scores substitute fielders that
+  DOMAIN §3 excludes (BUG-001).
+- **Decision:** accept Task 2 as built. Task 3's archive loader excludes rejected matches explicitly:
+  reason, `excludedMatchIds`, counts in `data/models/README.md`, never a silent skip. Widening the
+  contracts waits: engine support for missing or fractional targets and split overs is backlog
+  (Constraint 8 applies when it lands). The auditor's comparator, fixture generator, spec
+  re-derivation, survey and mutant table live in `scripts/oracle/audit/`, read-only for implementers
+  under Constraint 5, so later audits (Task 3's holdout trajectory, Task 10) re-run the same sweep.
+- **Why:** the demo matches are unaffected and the rejections fail loudly. A contract change for
+  about 4% of archive matches is not worth making before the models exist. Committed tools make audit
+  evidence reproducible instead of leaving it in a session scratchpad.
+- **Alternatives:** fix BUG-002 inside Task 2 (scope creep into a contract change); keep single-match
+  holdouts (the 1273712 holdout hit none of the rejection classes or the substitute discrepancy);
+  keep the auditor's tools out of the repo (evidence that cannot be repeated).
+- **Open:** BUG-001 waits for Nabhanyu: fix the oracle to follow DOMAIN §3, or change DOMAIN.

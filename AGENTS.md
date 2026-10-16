@@ -58,7 +58,9 @@ Update in the same branch: your `docs/features/FNN-*.md` (log, what worked and w
 verification output), `docs/Flow.md` (move flows from PLANNED to BUILT, add new ones),
 `docs/Architecture.md` (status column), `docs/Decisions.md` (every meaningful choice, with
 rationale), `docs/TEST_CHECKLIST.md` (new commands, new baselines), `docs/ROLLBACK.md` (task row),
-and tick your task's checkboxes in `docs/PLAN.md`.
+`docs/Bug_Feature.md` (your feature's row; a row per bug you file in `docs/bugs/`), the README
+status line, and tick your task's checkboxes in `docs/PLAN.md` (tick them; don't reword them). The
+TEST_CHECKLIST task-log row and your feature file's "Audit notes" belong to the auditor.
 
 ## Finishing: write the next HANDOFF file
 
