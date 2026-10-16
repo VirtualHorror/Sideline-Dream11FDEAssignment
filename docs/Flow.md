@@ -89,20 +89,31 @@ python3 -I scripts/oracle/cricsheet_oracle.py <raw> [--players --rules] [--json]
 
 ---
 
-## 6. Timeline build — PLANNED (Task 2)
+## 6. Timeline build — BUILT (T2)
 
 ```
-loadMatchBundle (server, T5) → buildTimeline({raw, players, context, timing})   engine/cricket/timeline.ts
-  ├─ CricsheetMatchSchema.parse(raw)                                             engine/cricket/cricsheet.ts
-  ├─ map Cricsheet names → registry ids (info.registry.people); teams → codes (context.teams)
-  ├─ emit: coverage_start, squads, note×N, toss, playing_xi×2, innings_start, delivery×n, innings_end, …, match_end
-  ├─ per delivery: legal?, ballInOver/label (extras share the next legal ball's number), free hit
-  │   (after a no-ball; carried over by wides/no-balls), boundary (4/6 unless non_boundary), wickets
-  ├─ t from the timing model (engine/cricket/timing.ts): deterministic gaps by outcome
-  └─ every emitted event re-validated with MatchEventSchema (throws on bad data)
-foldEvents(matchId, events, uptoSeq?) → MatchState                               engine/cricket/reducer.ts
-fantasyPoints(state, players, rules) → per-player totals + breakdown             engine/fantasy/scoring.ts
+data/raw/cricsheet/<id>.json + data/matches/<id>/{players,context}.json
+  → buildTimeline({raw, players, context, timing?})                            engine/cricket/timeline.ts
+       ├─ CricsheetMatchSchema.parse(raw)                                     engine/cricket/cricsheet.ts
+       ├─ map Cricsheet names → registry ids; team names → context codes
+       ├─ emit coverage, squads, notes, toss, XIs, innings, deliveries, result
+       ├─ label legal balls (illegal extras share the next legal-ball number)
+       ├─ carry free hits through a wide/no-ball and mark non-boundary fours
+       ├─ time events from DEFAULT_TIMING plus FNV-1a jitter of stable event ids
+       └─ validate every event with MatchEventSchema
+  → foldEvents(matchId, events, uptoSeq?)                                    engine/cricket/reducer.ts
+       └─ update scorecards, live rates, partnerships, fall of wickets, over/maiden state
+  → fantasyPoints(state, players, rules)                                      engine/fantasy/scoring.ts
+       └─ score XI players from state, then squadPoints applies captain/vice multipliers
+
+node scripts/engine-report.ts <raw.json> --players <players.json> --rules <rules.json> [--json]
+  └─ load context.json beside players.json and print the reducer report for oracle comparison
 ```
+
+`buildMatchSummary(raw, context)` uses Cricsheet venue, city, and date with authored context
+metadata. `applyEvent` mutates a state one event at a time; `foldEvents` creates a fresh state for
+seeking and replay. Over summaries retain both team runs and bowler-conceded runs so maiden
+classification follows the extras rules exactly.
 
 ## 7. Session lifecycle and tick loop — PLANNED (Task 5)
 

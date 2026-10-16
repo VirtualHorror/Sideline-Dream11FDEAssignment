@@ -63,11 +63,11 @@ the only outbound dependency is the optional LLM API.
 
 | Path | What | Status |
 | --- | --- | --- |
-| `packages/engine` | Pure, isomorphic TypeScript domain core. Contracts (zod), cricket timeline + reducer, fantasy, models, detectors, gate, delay buffer, crowd. **No I/O, no clocks, no unseeded randomness.** Runs identically on server and client. | contracts + squad validator **built** (T1); rest planned (T2-T4) |
+| `packages/engine` | Pure, isomorphic TypeScript domain core. Contracts (zod), cricket timeline + reducer, fantasy, models, detectors, gate, delay buffer, crowd. **No I/O, no clocks, no unseeded randomness.** Runs identically on server and client. | contracts, squad validator (T1), timeline, reducer, fantasy scoring (T2) **built**; models, detectors, gate, buffer, crowd planned (T3-T4) |
 | `apps/server` | Node 24 + Hono. Runs `.ts` directly (native type stripping, no build). Config, HTTP, sessions, SSE, AI gateway, SQLite. | config, health, static + SPA, security headers **built** (T1); rest planned (T5, T8) |
 | `apps/web` | React 19 + Vite 8 + Tailwind 4 SPA. Theme system, effects, TV pane, companion, control plane. | shell, tokens, theme control, attribution **built** (T1); rest planned (T6, T9) |
 | `data/` | Real Cricsheet files + manifest/checksums; authored fixtures (squads, credits, notes, personas); rules; trained models; crowd corpus; AI replay cache. | raw, fixtures, rules **built** (T1); models (T3), corpus (T4), replay (T7) planned |
-| `scripts/` | `fetch-cricsheet`, `verify-data`, `check-no-hardcode` (built, T1); `oracle/` audit reference (built, T1); `build-models` (T3), `ai-record` (T7) planned. | |
+| `scripts/` | `fetch-cricsheet`, `verify-data`, `check-no-hardcode` (built, T1); `engine-report` (built, T2); `oracle/` audit reference (built, T1); `build-models` (T3), `ai-record` (T7) planned. | |
 | `e2e/` | Playwright smoke tests on system Chrome, desktop + mobile. | **built** (T1), grows every UI task |
 | `deploy/` | Caddyfile, systemd unit, install/update scripts. | planned (T7) |
 | `docs/` | This file, Decisions, Flow, Constraints, TEST_CHECKLIST, ROLLBACK, PLAN, DOMAIN, design/, features/, bugs/. | **built** (T1), kept current every task |
@@ -194,7 +194,7 @@ the spoiler latency budget (`budgetMs` vs `usedMs`), and the scale projection. T
 | --- | --- | --- |
 | Contracts | invariant tests (wide can't be legal, totals add up, …) | `packages/engine/test/contracts.test.ts` |
 | Data | fixtures vs raw data, persona legality, checksums | `packages/engine/test/fixtures.test.ts`, `scripts/verify-data.ts` |
-| Engine | golden scorecards/points vs the **independent Python oracle**; property tests (strike rotation, fold = replay) | T2-T4 |
+| Engine | golden scorecards/points vs the **independent Python oracle**; property tests (strike rotation, fold = replay) | T2 built; T3-T4 extend |
 | Generality | every engine test runs on **both** matches; auditor adds a third, unseen Cricsheet match | T2+ / audits |
 | Anti-hardcoding | deny-list scan built from data | `scripts/check-no-hardcode.ts` |
 | AI | scripted provider: prompts must contain state-derived facts; schema + guard + fallback paths | T5, T8 |

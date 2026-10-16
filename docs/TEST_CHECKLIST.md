@@ -14,17 +14,18 @@
 
 ## 1. Every change, every task (must all pass)
 
-| # | Command | Expected (baseline after Task 1) |
+| # | Command | Expected (baseline after Task 2) |
 | --- | --- | --- |
 | 1 | `pnpm typecheck` | `packages/engine typecheck: Done`, `apps/server typecheck: Done`, `apps/web typecheck: Done`, then no output from root `tsc`; exit 0 |
 | 2 | `pnpm lint` | `Checked N files in …ms. No fixes applied.` and no `×` or `!` diagnostics; exit 0 |
-| 3 | `pnpm test` | `Test Files  9 passed (9)` and `Tests  65 passed (65)`; no failed, no skipped |
-| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (25 source files, 209 terms)` (counts grow with code/data) |
+| 3 | `pnpm test` | `Test Files  13 passed (13)` and `Tests  106 passed (106)`; no failed, no skipped |
+| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (32 source files, 209 terms)` (counts grow with code/data) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
 | 7 | `pnpm test:e2e` (any UI-visible change) | `8 passed` (desktop + mobile) |
 | 8 | `grep -rnE "\.(skip\|only)\(" --include=*.ts --include=*.tsx packages apps scripts e2e` | no output |
 | 9 | `git status --short` | only files the task intended to change |
+| 10 | `node scripts/engine-report.ts <raw.json> --players <players.json> --rules <rules.json> --json` | JSON scorecard, fall-of-wicket ids and fantasy report; compare with the Python oracle on both fixtures |
 
 `pnpm verify` runs rows 1-6 in order and stops at the first failure.
 
@@ -54,11 +55,19 @@ Pick a Cricsheet T20 the implementer has never seen (any other game in
 on, also run the detectors and check that triggers land on sensible balls (cheap captain
 dismissals, the biggest win-probability swings), not on the demo match's labels.
 
+Task 2 implementation check: archive match `1273712` was run with temporary fixtures under `/tmp`;
+scorecards, fielding, fall of wickets, and fantasy output matched the oracle. No holdout files were
+added to the repository.
+
 ### D. Test quality
 - New tests assert behaviour with hand-derived or oracle-derived literals, never values computed
   by the code under test.
 - Mutation spot check: change one constant or branch in new source code; at least one test must fail.
 - Both matches are covered wherever the engine is touched.
+
+Task 2 mutation evidence: changing the free-hit carry branch to always return `false` made the
+timeline test fail on the two expected free-hit deliveries. The branch was restored and the suite
+passed again.
 
 ### E. Docs currency
 Feature file complete (scope, what was tried, what worked, verification output), Flow.md flows
@@ -85,3 +94,4 @@ this checklist's baselines updated, ROLLBACK row added.
 | Task | Verified on | Typecheck | Lint | Unit tests | Hardcode | Data | Build | E2E |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | T1 Foundation | 2026-10-16 | pass | pass (64 files) | 9 files / 65 tests | OK (25 files, 209 terms) | OK (2 matches) | 297 ms | 8 passed |
+| T2 Cricket core | 2026-10-16 | pass | pass (77 files) | 13 files / 106 tests | OK (32 files, 209 terms) | OK (2 matches) | 317 ms | 8 passed |

@@ -253,3 +253,22 @@
   HTML disabled, so the page can never drift from the docs. Basic route in Task 6 (ships with the
   public link); designed pipeline diagram and live "when we don't call AI" table in Task 9.
   Replaces the earlier `/how-it-works` idea.
+
+### D-035 — Deterministic stadium timing by stable event id (2026-10-16, T2, Codex)
+- **Context:** the timeline needs plausible gaps for a live clock while remaining identical during
+  browser replay, server replay, and seek/refold.
+- **Decision:** timing constants live in `DEFAULT_TIMING`; delivery gaps vary by legality, boundary,
+  wicket, and over completion. A small integer-second jitter comes from `fnv1a32(event.id)`, never
+  from a wall clock or unseeded randomness. Every resulting event still passes `MatchEventSchema`.
+- **Why:** stable ids make every timestamp reproducible across processes and runs, while outcome-based
+  gaps preserve a readable match pace without making timing part of cricket scoring.
+- **Alternatives:** evenly spaced deliveries (too uniform) and `Math.random` (non-replayable).
+
+### D-036 — Retain bowler-conceded runs in over state (2026-10-16, T2, Codex)
+- **Context:** a maiden depends on runs charged to the bowler, while `BallMark.runs` is the team total
+  for that delivery and does not retain each extras amount.
+- **Decision:** `OverSummary` carries both team `runs` and `runsConceded`; the reducer accumulates the
+  latter using `total - byes - leg-byes - penalty` and uses it for maiden classification.
+- **Why:** reducing an over from only its display marks can misclassify a penalty delivery that also
+  contains batter runs. The additional state field preserves the domain calculation without changing
+  the meaning of the existing `runs` field.

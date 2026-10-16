@@ -107,6 +107,7 @@ Latin, theme control, attribution footer); the whole docs suite.
 **Files:**
 - Create `packages/engine/src/util/hash.ts`, `packages/engine/src/cricket/{cricsheet,timing,timeline,format,reducer}.ts`,
   `packages/engine/src/fantasy/scoring.ts`, `scripts/engine-report.ts`
+- Modify `packages/engine/src/contracts/state.ts` to retain per-over bowler-conceded runs for exact maiden accounting (D-036)
 - Modify `packages/engine/src/index.ts` (export the new modules)
 - Test `packages/engine/test/helpers/data.ts`, `packages/engine/test/{timeline,reducer,scoring,fold}.test.ts`
 
@@ -150,8 +151,8 @@ DOMAIN §1 (verified: 470 deliveries, 0 mismatches). Partnership: total runs (in
 balls since the last wicket; `null` from a wicket until the next delivery.
 
 **Steps**
-- [ ] **2.1 Test helper.** `test/helpers/data.ts` exports `loadMatch(id)` → `{ raw, players, context, personas, rules, golden }` reading `data/` and `test/golden/<id>.oracle.json`.
-- [ ] **2.2 Failing timeline tests** (`timeline.test.ts`), for `1298150` and `1415755` unless stated:
+- [x] **2.1 Test helper.** `test/helpers/data.ts` exports `loadMatch(id)` → `{ raw, players, context, personas, rules, golden }` reading `data/` and `test/golden/<id>.oracle.json`.
+- [x] **2.2 Failing timeline tests** (`timeline.test.ts`), for `1298150` and `1415755` unless stated:
   - `builds a schema-valid, strictly ordered timeline`: every event passes `MatchEventSchema`; `seq === index`; `id === \`${matchId}:${pad4(seq)}\``; `t` non-decreasing.
   - `emits the pre-match sequence`: kinds before the first delivery are `coverage_start, squads, note×5, toss, playing_xi, playing_xi, innings_start` for 1298150 (`note×2` for 1415755).
   - `counts deliveries per innings like Cricsheet`: 1298150 → `[126, 125]`; 1415755 → `[127, 124]`.
@@ -164,25 +165,25 @@ balls since the last wicket; `null` from a wicket until the next delivery.
   - `is deterministic`: two builds are deep-equal.
   - `fails loudly on unknown names`: synthetic raw with an unregistered batter throws `/registry/`.
   - `summarises the match`: `buildMatchSummary(1298150)` → `venue "Melbourne Cricket Ground"`, `city "Melbourne"`, `date "2022-10-23"`, `title "Pakistan vs India"`, `stage "Super 12, Group 2"`.
-- [ ] **2.3** Run `pnpm vitest run --project engine timeline` → FAIL (missing exports). Implement `hash.ts`, `cricsheet.ts`, `timing.ts`, `timeline.ts`. Run → PASS.
-- [ ] **2.4 Failing reducer tests** (`reducer.test.ts`):
+- [x] **2.3** Implement `hash.ts`, `cricsheet.ts`, `timing.ts`, and `timeline.ts`; after correcting a malformed fixture-helper template literal, `pnpm vitest run --project engine timeline` passes.
+- [x] **2.4 Reducer tests** (`reducer.test.ts`):
   - `matches the oracle scorecard for both matches`: for each innings, totals (`runs`, `wickets`, `legalBalls`, extras incl. `total`), every batter line (`runs, balls, fours, sixes, dots, strikeRate`, out kind or null), every bowler line (`legalBalls, runsConceded, wickets, maidens, dots, wides, noballs, economy, oversText`) and the fall of wickets (`runs, label`, player id) equal `golden.innings[i]` (map oracle names to ids via `raw.info.registry.people`).
   - `records the result`: 1298150 → `{ winner: "IND", text: "India won by 4 wickets", playerOfMatch: ["ba607b88"] }`, phase `complete`; 1415755 → `"India won by 7 runs"`.
   - `tracks the chase situation` ("through X" = folded through the **last** delivery labelled X, since extras repeat labels): 1298150 through innings-2 `13.6` → `live.runsRequired 70, ballsRemaining 36, requiredRunRate 11.67, currentRunRate 6.43`; through `17.6` → `31, 12, 15.5`; through `18.6` → `16, 6` and `live.strikerId "dbe50b21"`. 1415755 through innings-2 `14.6` → `30, 30, 6`; through `17.6` → `20, 12, 10`.
   - `rotates strike like the data` (property over both matches): after every non-wicket delivery that has a next delivery in the same innings, `live.strikerId` equals that next delivery's batter (470 checks).
   - `tracks the partnership`: 1298150 innings 2 after `18.6`: partnership batters `{ba607b88, dbe50b21}`, `runs 113`, `legalBalls 77`; after `19.1` it is `null`.
-  - `counts maidens`: synthetic over of six dots → `maidens 1`; with one leg-bye → still `1`; with a wide → `0`.
+  - `counts maidens`: synthetic over of six dots → `maidens 1`; with one leg-bye → still `1`; with a wide or bowler-charged penalty → `0`.
   - `rejects out-of-order events`: applying seq 5 to a fresh state throws.
-- [ ] **2.5** Run → FAIL. Implement `format.ts`, `reducer.ts`. Run → PASS.
-- [ ] **2.6 Failing fold property** (`fold.test.ts`, fast-check, both matches): for random `k`, `foldEvents(id, events, k)` deep-equals applying events `0..k` one by one to `createMatchState(id)`.
-- [ ] **2.7 Failing scoring tests** (`scoring.test.ts`):
+- [x] **2.5** Implement `format.ts` and `reducer.ts`; reducer, scorecard, live-state, strike, partnership, and maiden tests pass.
+- [x] **2.6 Failing fold property** (`fold.test.ts`, fast-check, both matches): for random `k`, `foldEvents(id, events, k)` deep-equals applying events `0..k` one by one to `createMatchState(id)`.
+- [x] **2.7 Scoring tests** (`scoring.test.ts`):
   - `matches the oracle's fantasy totals and breakdowns for all 22 players` (both matches; breakdown keys as in the oracle; zero components omitted).
   - `spot checks`: 1298150 Kohli `150` = `{playingXI 4, runs 82, boundaryBonus 24, sixBonus 24, milestone 12, strikeRate 4}`; Rizwan `32` incl. `stumping 12`, `runOutIndirect 6`, `strikeRate -6`; Babar `16` incl. `duck -2`.
   - `scores live`: folded through innings-1 `1.1` of 1298150 → Babar total `2`, Arshdeep total `43`.
   - `applies captain and vice-captain multipliers`: full-time `squadPoints` totals: `babar-believer 755`, `late-from-work 926` (1298150); `captain-rohit 685`, `proteas-late 924.5` (1415755).
-- [ ] **2.8** Run → FAIL. Implement `fantasy/scoring.ts` (from `MatchState` only). Run → PASS.
-- [ ] **2.9 Engine report CLI.** `node scripts/engine-report.ts <raw.json> --players <players.json> --rules <rules.json> [--json]` prints the same numeric fields as `scripts/oracle/cricsheet_oracle.py --json` (innings totals and extras, batters and bowlers keyed by player id, fall of wickets with `player_id`, fantasy). Without `--json` it prints a human-readable card.
-- [ ] **2.10** `pnpm verify` green; docs: `docs/features/F02-cricket-core.md`, Flow §6 → BUILT, Architecture status, Decisions (timing model, D-032), TEST_CHECKLIST baselines, ROLLBACK row.
+- [x] **2.8** Implement `fantasy/scoring.ts` from `MatchState` only; oracle breakdowns, live points, and squad totals pass.
+- [x] **2.9 Engine report CLI.** `node scripts/engine-report.ts <raw.json> --players <players.json> --rules <rules.json> [--json]` prints the same numeric fields as `scripts/oracle/cricsheet_oracle.py --json` (innings totals and extras, batters and bowlers keyed by player id, fall of wickets with `player_id`, fantasy). Without `--json` it prints a human-readable card.
+- [x] **2.10** `pnpm verify` green; docs: `docs/features/F02-cricket-core.md`, `docs/Bug_Feature.md`, Flow §6 → BUILT, Architecture status, Decisions (D-035/D-036; retain D-032 owner approval), TEST_CHECKLIST baselines, ROLLBACK row.
 
 **Acceptance:** all of the above green on both matches; `pnpm check:hardcode` OK; no golden file changed (`git diff --stat main -- packages/engine/test/golden` empty).
 

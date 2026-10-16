@@ -25,9 +25,14 @@
 | AI replay cache is wrong (Task 7+) | `git checkout tNN-verified -- data/ai-replay` or delete it and re-run `pnpm ai:record` | `pnpm test` |
 | A deploy is broken (Task 7+) | `deploy/update.sh tNN-verified` (checks out the tag, installs, builds, restarts) | `curl -fsS https://<host>/api/health` |
 
+Task 2 does not add dependencies or change match data. Its runtime change is confined to the pure
+engine and a standalone report script, so reverting the Task 2 merge removes the timeline, reducer,
+scoring, and CLI together without a database or deployment migration.
+
 ## Per-task notes
 
 | Task | Tag | What it adds | Risk | Rollback specifics |
 | --- | --- | --- | --- | --- |
 | T1 Foundation | `t01-verified` | toolchain, monorepo, contracts, data, guards, docs, shell | low (no runtime state) | to start over: delete the repo folder; Node/pnpm/ffmpeg live in `~/.local` (remove `~/.local/share/node`, `~/.local/bin/{node,npm,npx,corepack,pnpm,pnpx,ffmpeg,ffprobe}`) |
-| T2 … T10 | — | filled in at each merge | — | — |
+| T2 Cricket core | `t02-verified` | Cricsheet timeline, match reducer, fantasy scoring, report CLI | medium (shared pure engine API used by later tasks) | revert the Task 2 merge with `git revert -m 1 <merge-commit-sha>`, then run `pnpm install --frozen-lockfile && pnpm verify`; no data or dependency restoration is needed |
+| T3 … T10 | — | filled in at each merge | — | — |
