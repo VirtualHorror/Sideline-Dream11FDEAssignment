@@ -46,6 +46,12 @@ describe("projectedPoints (shrinkage toward the role mean)", () => {
   it("fails loudly for a player the priors file does not cover", () => {
     expect(() => projectedPoints("0000000d", handPriors({}))).toThrow(/0000000d/);
   });
+
+  // `players` is a plain object, so a lookup by a name it inherits (toString, constructor) must
+  // still be "not covered", never a function treated as a priors entry.
+  it.each(["toString", "constructor"])("does not take the inherited name %s for a player", (id) => {
+    expect(() => projectedPoints(id, handPriors({}))).toThrow(`no priors for player ${id}`);
+  });
 });
 
 const MATCH_DATES = { "1298150": "2022-10-23", "1415755": "2024-06-29" } as const;
