@@ -323,7 +323,12 @@ describe("resolveQuestRule semantics", () => {
   // dots on legal balls 1 and 5 (raw file), so after ball 3 there is 1 dot and 3 balls to come.
   // "At most 4 dots" can no longer fail (1 + 3 = 4); "at most 3" still can.
   it("settles an at-most dots bet the ball it becomes certain, not before", () => {
-    const window = { type: "dots_in_window", innings: 2, fromLegalBall: 1, toLegalBall: 6 } as const;
+    const window = {
+      type: "dots_in_window",
+      innings: 2,
+      fromLegalBall: 1,
+      toLegalBall: 6,
+    } as const;
     expect(resolveQuestRule(rule({ ...window, op: "lte", value: 4 }), through(2, 3))).toBe("won");
     expect(resolveQuestRule(rule({ ...window, op: "lte", value: 3 }), through(2, 3))).toBe(
       "pending",
