@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
+  collapseDetector,
+  type DeliveryEvent,
   enumerateSwaps,
   foldEvents,
   joinSeq,
   lineupDetector,
+  type MatchEvent,
   type MomentTrigger,
+  type Persona,
   type PlayingXIEvent,
   validateSquad,
+  type Wicket,
 } from "../src/index.ts";
 import { loadMatch, loadPriors } from "./helpers/data.ts";
 import { contextFor, firings, personaOf, replay, timelineOf } from "./helpers/replay.ts";
@@ -215,5 +220,222 @@ describe("lineup detector (phase 1: toss to lock)", () => {
       reason: "squad_all_playing",
     });
     expect(verdictFor("f1-convert")).toEqual({ outcome: "deterministic", reason: "no_squad" });
+  });
+});
+
+/** A copy of the timeline with `wicket` added to the delivery at `seq` (the reducer accepts it). */
+function withWicket(events: readonly MatchEvent[], seq: number, wicket: Wicket): MatchEvent[] {
+  return events.map((event) =>
+    event.seq === seq && event.kind === "delivery" ? { ...event, wickets: [wicket] } : event,
+  );
+}
+
+/** A pre-match persona with the given squad and armbands (the collapse detector reads only these). */
+function armbandPersona(
+  id: "1298150" | "1415755",
+  playerIds: string[],
+  captainId: string,
+  viceCaptainId: string,
+): Persona {
+  return {
+    ...personaOf(id, id === "1298150" ? "babar-believer" : "captain-rohit"),
+    joinAt: { kind: "pre_match" },
+    squad: { playerIds, captainId, viceCaptainId },
+  };
+}
+
+const BABAR_SQUAD = ["8a75e999", "2f26ac1a", "1777c020", "9c9af282", "24bb1c2f", "9de62878"].concat(
+  ["ba607b88", "dbe50b21", "244048f6", "2e81a32d", "919a3be2"],
+);
+/** babar-believer's squad with Iftikhar (29e253dd) in place of the benched Fakhar (1777c020). */
+const IFTIKHAR_SQUAD = BABAR_SQUAD.map((id) => (id === "1777c020" ? "29e253dd" : id));
+
+describe("collapse detector (phase 2: early collapse)", () => {
+  it("babar-believer: one bailout at innings-1 1.1 (Babar, C, 0 off 1), then quest_active at 3.6", () => {
+    const steps = replay("1298150", personaOf("1298150", "babar-believer"), [collapseDetector]);
+    const fired = firings(steps, "collapse");
+    expect(
+      fired.map((f) => [
+        f.event.kind === "delivery" && f.event.innings,
+        f.event.kind === "delivery" && f.event.label,
+        f.verdict.outcome,
+        f.verdict.reason,
+      ]),
+    ).toEqual([
+      [1, "1.1", "ai_trigger", "armband_out_cheaply"],
+      [1, "3.6", "suppressed", "quest_active"],
+    ]);
+    const trigger = triggerOf(fired[0]?.verdict ?? { outcome: "none" }, "bailout");
+    expect(trigger.key).toBe("bailout:1298150:1298150:0018:C");
+    expect(trigger.scope).toBe("shared");
+    const facts = trigger.facts;
+    expect(facts.armband).toBe("C");
+    expect(facts.dismissal).toMatchObject({
+      runs: 0,
+      balls: 1,
+      kind: "lbw",
+      scorecard: "Babar Azam lbw b Arshdeep Singh 0 (1)",
+      description: "1.1 Arshdeep to Babar, OUT, lbw",
+    });
+    expect(facts.dismissal.batter.playerId).toBe("8a75e999");
+    expect(facts.dismissal.bowler?.playerId).toBe("244048f6");
+    // Babar fell to the 7th legal ball: the quest covers the next 18, balls 8 to 25.
+    expect(facts.questWindow).toEqual({
+      innings: 1,
+      fromLegalBall: 8,
+      toLegalBall: 25,
+      fromLabel: "1.2",
+      toLabel: "4.1",
+    });
+    expect(facts.atCrease.map((b) => [b.playerId, b.runs, b.balls])).toEqual([["2f26ac1a", 0, 6]]);
+    expect(facts.bowler).toMatchObject({
+      playerId: "244048f6",
+      overs: "0.1",
+      runsConceded: 0,
+      wickets: 1,
+    });
+    expect(facts.situation).toMatchObject({ score: "1/1", overs: "1.1", target: null });
+    expect(facts.grounded).toEqual([
+      { id: "dismissal", text: "Babar Azam lbw b Arshdeep Singh 0 (1)" },
+      { id: "bowler_figures", text: "Arshdeep Singh has 1 wicket for 0 runs in 0.1 overs" },
+      { id: "partnership", text: "Mohammad Rizwan and Babar Azam added 1 run off 7 balls" },
+      { id: "situation", text: "PAK are 1/1 after 1.1 overs" },
+    ]);
+    // The suppressed dismissal is Rizwan, the vice-captain, for 4 off 12.
+    const suppressed = fired[1];
+    const event = suppressed?.event as DeliveryEvent;
+    expect(event.wickets.map((w) => w.playerOut)).toEqual(["2f26ac1a"]);
+    const state = foldEvents("1298150", timelineOf("1298150"), event.seq);
+    const line = state.innings[0]?.batters.find((b) => b.playerId === "2f26ac1a");
+    expect([line?.runs, line?.balls]).toEqual([4, 12]);
+  });
+
+  it("projects the squad before and after the captain's duck", () => {
+    const steps = replay("1298150", personaOf("1298150", "babar-believer"), [collapseDetector]);
+    const facts = triggerOf(
+      firings(steps, "collapse")[0]?.verdict ?? { outcome: "none" },
+      "bailout",
+    ).facts;
+    const priors = loadPriors("1298150");
+    const projected = (id: string) => priors.players[id]?.projected ?? Number.NaN;
+    // Hand sum: every pick's projection, Babar (C) twice and Rizwan (VC) one and a half times.
+    const before = BABAR_SQUAD.reduce(
+      (sum, id) => sum + projected(id) * (id === "8a75e999" ? 2 : id === "2f26ac1a" ? 1.5 : 1),
+      0,
+    );
+    // PLAN 2.7: Babar has 2 points after his golden duck (4 for the XI, -2 for the duck).
+    expect(facts.projection.dismissedPoints).toBe(2);
+    expect(facts.projection.dismissedProjected).toBe(projected("8a75e999"));
+    expect(facts.projection.multiplier).toBe(2);
+    expect(facts.projection.before).toBeCloseTo(before, 2);
+    expect(facts.projection.after).toBeCloseTo(before - 2 * projected("8a75e999") + 2 * 2, 2);
+  });
+
+  it("captain-rohit: bailout at innings-1 1.4 (Rohit, C, 9 off 5), quest_active for Pant at 1.6", () => {
+    const steps = replay("1415755", personaOf("1415755", "captain-rohit"), [collapseDetector]);
+    const fired = firings(steps, "collapse");
+    expect(
+      fired.map((f) => [f.event.kind === "delivery" && f.event.label, f.verdict.reason]),
+    ).toEqual([
+      ["1.4", "armband_out_cheaply"],
+      ["1.6", "quest_active"],
+    ]);
+    const facts = triggerOf(fired[0]?.verdict ?? { outcome: "none" }, "bailout").facts;
+    expect(facts.dismissal.batter.playerId).toBe("740742ef");
+    expect([facts.armband, facts.dismissal.runs, facts.dismissal.balls]).toEqual(["C", 9, 5]);
+    expect(facts.questWindow).toMatchObject({ fromLegalBall: 11, toLegalBall: 28 });
+    expect(facts.atCrease.map((b) => [b.shortName, b.runs, b.balls])).toEqual([["Kohli", 14, 5]]);
+    const pant = fired[1]?.event as DeliveryEvent;
+    expect(pant.wickets.map((w) => w.playerOut)).toEqual(["919a3be2"]);
+  });
+
+  it.each([
+    ["1298150", "late-from-work"],
+    ["1415755", "proteas-late"],
+  ] as const)("%s %s: no bailout after a late join (or for Klaasen's 52)", (id, personaId) => {
+    const steps = replay(id, personaOf(id, personaId), [collapseDetector]);
+    expect(firings(steps, "collapse")).toEqual([]);
+  });
+
+  // Babar (C) falls to ball 7, so the quest runs to ball 25. A vice-captain run out at the
+  // non-striker's end on ball 25 is inside it; on ball 26 it opens a second quest.
+  it.each([
+    [37, 25, "suppressed", "quest_active"],
+    [38, 26, "ai_trigger", "armband_out_cheaply"],
+  ] as const)("a VC run out at seq %i (ball %i) is %s", (seq, position, outcome, reason) => {
+    const events = timelineOf("1298150");
+    const at = events[seq] as DeliveryEvent;
+    expect(at.nonStriker).toBe("29e253dd");
+    const injected = withWicket(events, seq, {
+      kind: "run out",
+      playerOut: "29e253dd",
+      fielders: [at.bowler],
+      creditedToBowler: false,
+    });
+    const persona = armbandPersona("1298150", IFTIKHAR_SQUAD, "8a75e999", "29e253dd");
+    const fired = firings(
+      replay("1298150", persona, [collapseDetector], { events: injected }),
+      "collapse",
+    );
+    const verdict = fired.find((f) => f.event.seq === seq)?.verdict;
+    expect(verdict).toMatchObject({ outcome, reason });
+    const before = foldEvents("1298150", injected, seq - 1);
+    expect((before.innings[0]?.legalBalls ?? 0) + 1).toBe(position);
+  });
+
+  it.each([
+    [48, "ai_trigger", "armband_out_cheaply"],
+    [49, "deterministic", "not_early"],
+  ] as const)("a captain bowled at seq %i (balls 36 and 37) is %s", (seq, outcome, reason) => {
+    const events = timelineOf("1298150");
+    const at = events[seq] as DeliveryEvent;
+    expect(at.batter).toBe("29e253dd");
+    const injected = withWicket(events, seq, {
+      kind: "bowled",
+      playerOut: "29e253dd",
+      fielders: [],
+      creditedToBowler: true,
+    });
+    const persona = armbandPersona("1298150", IFTIKHAR_SQUAD, "29e253dd", "9de62878");
+    const steps = replay("1298150", persona, [collapseDetector], { events: injected });
+    const step = steps.find((s) => s.input.event.seq === seq);
+    expect(step?.verdicts[0]?.verdict).toMatchObject({ outcome, reason });
+  });
+
+  // Suryakumar is on exactly 10 after the chase's 4.5 and on 11 after 4.6.
+  it.each([
+    [167, "ai_trigger", "armband_out_cheaply"],
+    [168, "deterministic", "not_cheap"],
+  ] as const)("a captain out at seq %i (10 or 11 runs) is %s", (seq, outcome, reason) => {
+    const squad = personaOf("1298150", "late-from-work").squad?.playerIds ?? [];
+    const persona = armbandPersona("1298150", squad, "271f83cd", "ba607b88");
+    const events = timelineOf("1298150");
+    expect((events[seq] as DeliveryEvent).batter).toBe("271f83cd");
+    const injected = withWicket(events, seq, {
+      kind: "bowled",
+      playerOut: "271f83cd",
+      fielders: [],
+      creditedToBowler: true,
+    });
+    const steps = replay("1298150", persona, [collapseDetector], { events: injected });
+    const step = steps.find((s) => s.input.event.seq === seq);
+    expect(step?.verdicts[0]?.verdict).toMatchObject({ outcome, reason });
+  });
+
+  it("explains every deterministic verdict", () => {
+    const reasons = (persona: Persona) =>
+      new Set(
+        replay("1298150", persona, [collapseDetector]).flatMap((s) =>
+          s.verdicts.map((v) => v.verdict.reason),
+        ),
+      );
+    expect(reasons(personaOf("1298150", "f1-convert"))).toEqual(
+      new Set(["not_delivery", "no_squad"]),
+    );
+    // babar-believer sees Rizwan's dismissal suppressed, everyone else's ignored, and nothing
+    // else of note: Shadab (no armband) and the rest are "not_armband".
+    expect(reasons(personaOf("1298150", "babar-believer"))).toEqual(
+      new Set(["not_delivery", "no_wicket", "not_armband", "armband_out_cheaply", "quest_active"]),
+    );
   });
 });
