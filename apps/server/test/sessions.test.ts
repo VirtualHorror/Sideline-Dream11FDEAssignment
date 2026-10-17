@@ -1,4 +1,10 @@
-import { type Detector, foldEvents, type StreamMessage, situationOf } from "@sideline/engine";
+import {
+  type Detector,
+  foldEvents,
+  type StreamMessage,
+  situationOf,
+  tvTimeAt,
+} from "@sideline/engine";
 import { describe, expect, it } from "vitest";
 import { bundle } from "./helpers.ts";
 import { delivery, listen, playUntil, testRuntime } from "./runtime.ts";
@@ -145,7 +151,10 @@ describe("sessions (PLAN 5.2)", () => {
     rt.manager.tick();
     expect(session.clock().playing).toBe(false);
     expect(ofType(messages, "clock").at(-1)?.data.clock.playing).toBe(false);
-    expect(session.clock().stadiumT).toBe(Math.max(end.t, b.crowd.at(-1)?.t ?? 0));
+    // The stadium clock stops once the fan's TV, `delayMs` behind, has shown the end (BUG-004, D-063).
+    expect(session.clock().stadiumT).toBe(
+      Math.max(end.t, b.crowd.at(-1)?.t ?? 0) + session.clock().delayMs,
+    );
   });
 
   it("evicts a session that has been idle past its TTL, and keeps one with an open stream", () => {
@@ -298,10 +307,38 @@ describe("sessions: behaviour the t05-verified spot-check found unpinned", () =>
     rt.clock.advance(1_000);
     rt.manager.tick();
     expect(session.clock().playing).toBe(true);
-    rt.clock.advance(lastChat.t - end.t);
+    // The crowd's last line, then the fan's delay for their TV to show it (BUG-004, D-063).
+    rt.clock.advance(lastChat.t - end.t + session.clock().delayMs);
     rt.manager.tick();
     expect(session.clock().playing).toBe(false);
     const streamed = ofType(messages, "chat").flatMap((m) => m.data.messages);
     expect(streamed.at(-1)).toEqual(lastChat);
+  });
+});
+
+// BUG-004, found by the Task 6 UI: the clock stopped when the ground was done, so a fan whose TV runs
+// behind never saw the last balls or the result.
+describe("sessions: the end of the match reaches the fan's TV (BUG-004)", () => {
+  it("keeps the clock running until the fan's delayed TV has shown the match end", () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const end = events.at(-1);
+    const lastChat = b.crowd.at(-1);
+    if (!end || end.kind !== "match_end" || !lastChat) throw new Error("no match end or crowd");
+    // A feed further behind than the crowd's last reaction to the result (22 s here; 25 s for the
+    // babar-believer persona, where the Task 6 UI found it).
+    const delay = 30_000;
+    expect(delay).toBeGreaterThan(lastChat.t - end.t);
+    session.control({ action: "delay", ms: delay });
+    session.control({ action: "jump", target: { kind: "event", eventId: end.id } });
+    // Everything has happened at the ground, but the fan's TV has not shown the result yet.
+    rt.clock.advance(lastChat.t - end.t + 1_000);
+    rt.manager.tick();
+    expect(session.clock().playing).toBe(true);
+    expect(tvTimeAt(session.clock(), rt.clock.now())).toBeLessThan(end.t);
+    rt.clock.advance(delay);
+    rt.manager.tick();
+    expect(session.clock().playing).toBe(false);
+    expect(tvTimeAt(session.clock(), rt.clock.now())).toBe(lastChat.t);
   });
 });

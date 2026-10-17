@@ -709,3 +709,15 @@
   is "not found". The persona travels as `?persona=<id>`, so a match link without one shows the picker.
 - **Alternatives:** React Router or TanStack Router (a dependency and its supply chain for three routes,
   D-019's "no kit" spirit); hash routing (ugly shareable links for the demo round).
+
+### D-063 — The session clock stops when the fan's TV has shown the end (2026-10-17, T6, Claude; amends D-056)
+- **Context:** BUG-004. D-056 stopped a session's clock "at the end of the match and its crowd", at
+  stadium time; a fan whose TV runs further behind than the crowd's last reaction (25 s and 40 s
+  personas in 1298150) never saw the last balls or the result.
+- **Decision:** the stadium clock runs on to `endT + delayMs` and pauses there, so the fan's TV reaches
+  the end first; seeks and jumps still clamp to `endT`. Two Task 5 expectations that encoded the old
+  rule now add the fan's delay (named in BUG-004); the new test fails on the old code.
+- **Alternatives:** letting the browser run its TV clock past a paused server clock (the client would
+  invent time the server never had); stopping at `endT` and treating "paused at the end" as "show
+  everything" in the UI (a TV that jumps 25 s at the end, and every other consumer of the clock would
+  still be wrong).
