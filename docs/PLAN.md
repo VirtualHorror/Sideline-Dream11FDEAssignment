@@ -708,8 +708,9 @@ in the same session as Task 8 (D-069, D-075). 739 tests, 26 E2E (story mode end 
 hand mutants killed after two test gaps were pinned; the story plan checked on a holdout match. Beyond the PLAN's files:
 the engine's `buildStoryPlan` and the `StoryPlan` contract with `GET /api/matches/:matchId/story` (beats from personas
 and triggers, D-076), `GET /api/inspector/views`, `HeldCard`, `RowsTable`, `ChatComposer`, the landing's performance
-pass (D-077). Step 9.5's Lighthouse: accessibility 100 every run; performance ≥ 90 on quiet runs but 79-98 on this busy
-host (Task 10 measures again). Follow-ups: F09.
+pass (D-077). Step 9.5's Lighthouse: accessibility 100 every run; locally the performance score swung 79-98 on this busy host;
+on production after the deploy, phone 92 and desktop 90. Deployed (`deploy/update.sh t09-verified`); the public E2E
+passes (26). Follow-ups: F09.
 
 ---
 
@@ -725,6 +726,9 @@ host (Task 10 measures again). Follow-ups: F09.
   *Decided 2026-10-17 by D-072 (Nabhanyu): scrub the forbidden word from every old commit and commit message,
   keep the commit trail, re-point `t01-verified` to `t10-verified` at the rewritten commits, back up first, then
   push; the pushed history must be 100% clean.*
+- [ ] Submission zip (Nabhanyu's request, 2026-10-18): an archive of the repository at `t10-verified` from
+  `git archive` (tracked files only: no `.env`, no `node_modules`, no runtime database), with its sha256 noted in
+  `docs/SUBMISSION.md`.
 - [ ] README final pass; tag `t10-verified`.
 
 ## Stretch (only after Milestone B)

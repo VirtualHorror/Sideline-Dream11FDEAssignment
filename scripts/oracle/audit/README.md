@@ -14,6 +14,8 @@ with `python3 -I`; `dump_engine.ts` runs on Node 24 from the repo root.
 | `check_spec.py <dump-dir> <raw-dir> <fixtures-dir>` | Re-derives the PLAN Task 2 timeline rules and DOMAIN.md reducer rules from the raw file and checks every event and snapshot |
 | `survey.py <dir>` | Flags edge cases per match (mid-over bowler change, seven-ball over, DLS, substitutes, …) |
 | `mutate.py <scratch-copy>` | Mutation spot checks (TEST_CHECKLIST §2D); refuses the working repo or a dirty tree |
+| `holdout_data.py <raw.json> <scratch-dir>` | A copy of `data/` with one holdout match added: fixtures, a bench pick per team, a pre-match audit persona (the first strikers as captain and vice-captain) and a late joiner, priors at the role means (Tasks 8-9) |
+| `holdout_sessions.ts <scratch-dir>/data <id>` | Whole sessions over that match through the server's modules, scripted and keyless, every moment checked by independent rules; the inspector's counts; the story plan's beats. Prints `AUDIT OK` (exit 0) or the problems |
 
 ## Archive sweep (TEST_CHECKLIST §2B-C)
 
@@ -69,3 +71,19 @@ Baseline at `t02-verified`: `12 killed, 6 survived`. The survivors (second-XI of
 innings break, chase innings-end reason, duck role exemption, rounding before slab lookup) are test
 gaps closed by PLAN Task 3 step 3.0. The snippet table matches the `t02-verified` source; refresh
 it when auditing later code (a stale snippet prints `SKIP`).
+
+## Session-level holdout (TEST_CHECKLIST §2C, from the Tasks 8-9 audit)
+
+```bash
+W=$(mktemp -d)                                    # scratch, outside the repo
+curl -fsSL -o "$W/a.zip" https://cricsheet.org/downloads/icc_mens_t20_world_cup_male_json.zip
+mkdir "$W/raw" && python3 -I -c "import zipfile,sys; zipfile.ZipFile(sys.argv[1]).extract(sys.argv[2], sys.argv[3])" "$W/a.zip" 1512773.json "$W/raw"
+python3 -I scripts/oracle/audit/holdout_data.py "$W/raw/1512773.json" "$W"
+node scripts/oracle/audit/holdout_sessions.ts "$W/data" 1512773
+```
+
+Baseline (2026-10-18, `t09-verified`, the 2026 final India v New Zealand): `AUDIT OK`; scripted, the pre-match persona
+gets 1 lineup patch, 2 teasers and 12 room reads, no bailout (Samson made 89 and Seifert 52 in the raw file: neither
+cheap); the inspector counts 249 deliveries and 414 runs (the raw file's); the story's beats are lineup, catch-up,
+the climax and room read at 2:18.6 (the match-deciding ball), result. Pick another match the implementer never saw
+for the next audit.

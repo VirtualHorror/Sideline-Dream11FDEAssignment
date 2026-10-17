@@ -20,7 +20,7 @@ story and the inspector's views need (D-076), recording real replay rows (no cre
 - [x] **9.2** Inspector UI shows the generated SQL, rows and errors; rejected SQL shows the reason
 - [x] **9.3** Story director: the stop sequence derives from triggers; leaving the tour restores manual control
 - [x] **9.4** E2E: full story mode on desktop and 390 px; `/architecture` with the diagram, the live AI-usage table (non-zero after a story run) and the timeline; no console errors; a reduced-motion run
-- [x] **9.5** Polish: keyboard, focus order, polite `aria-live`, contrast, landing Lighthouse ≥ 90 (numbers recorded) *(accessibility 100 every run; performance ≥ 90 on quiet runs, 79-98 on this busy host: D-077, follow-up 1)*
+- [x] **9.5** Polish: keyboard, focus order, polite `aria-live`, contrast, landing Lighthouse ≥ 90 (numbers recorded) *(accessibility 100 every run; on production after the deploy, performance 92 on the phone preset and 90 on desktop; locally 79-98 on this busy host: D-077)*
 - [x] **9.6** `pnpm verify` + `pnpm test:e2e` green; docs
 
 ## Log (newest last)
@@ -78,12 +78,19 @@ pnpm test:e2e                                          26 passed (4.1m)
 Lighthouse 13.5.0, landing behind a local Caddy with zstd/gzip (D-077)
 phone:   performance 92, 92, 90 on quieter runs; 87-89 under load; accessibility 100; best practices 96
 desktop: performance 98, 89, 88 on quieter runs; 79-86 under load; accessibility 100; best practices 96
+
+deploy/update.sh t09-verified          update: deployed 6cdcb06 (t09-verified) at https://3-108-67-100.sslip.io/
+production's stream (late-from-work)   "aiMode":"replay" in hello and telemetry (the key has no credit: D-071)
+PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e      26 passed (3.8m)
+Lighthouse on https://3-108-67-100.sslip.io/ (production's Caddy)
+phone:   performance 92, accessibility 100, best practices 96 (FCP 2.1 s, LCP 2.3 s, TBT 230 ms, CLS 0)
+desktop: performance 90, accessibility 100, best practices 96 (FCP 0.4 s, LCP 0.5 s, TBT 260 ms, CLS 0.007)
 ```
 
 ## Follow-ups (out of scope, noted for later)
-1. Lighthouse's performance score swings about ten points on this shared host; measure on a quiet machine or with
-   PageSpeed Insights against the public URL (an external service: ask the owner), and prerender the landing's HTML
-   if the phone score stays under 90 (D-077).
+1. Lighthouse's performance score swings about ten points on this shared host (production measured 92 and 90 after
+   the deploy); Task 10 measures again, and prerendering the landing's HTML is the next step if a phone run falls
+   under 90 (D-077).
 2. On a phone the story's stop card can sit just below the fold (the room read under the 18.6 card); the overlay
    could scroll the card into view after moving focus to "Continue".
 3. Fan picks in quests and polls live in the card's state for the session; a reload forgets them.
