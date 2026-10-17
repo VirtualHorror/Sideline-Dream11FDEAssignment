@@ -6,7 +6,7 @@
 - **Task:** 9 in `docs/PLAN.md`
 - **Branch:** `task/08-09-skills-frontend` (one branch with Task 8, D-069; Task 8 merged first, D-075)
 - **Owner / session:** Claude (Codex unavailable), 2026-10-17/18, one session with Task 8 at Nabhanyu's request
-- **Status:** in progress
+- **Status:** audited and merged (`t09-verified`)
 
 ## Scope
 The complete product: a card for every moment kind (the lineup ledger, the comeback quest with its shareable
@@ -16,12 +16,12 @@ control plane, the guided story mode, and the `/architecture` polish (the theses
 story and the inspector's views need (D-076), recording real replay rows (no credit on the key, D-067).
 
 ## Plan steps
-- [ ] **9.1** Card components render their payloads and provenance; quest predictions update to won/lost as events arrive
-- [ ] **9.2** Inspector UI shows the generated SQL, rows and errors; rejected SQL shows the reason
-- [ ] **9.3** Story director: the stop sequence derives from triggers; leaving the tour restores manual control
-- [ ] **9.4** E2E: full story mode on desktop and 390 px; `/architecture` with the diagram, the live AI-usage table (non-zero after a story run) and the timeline; no console errors; a reduced-motion run
-- [ ] **9.5** Polish: keyboard, focus order, polite `aria-live`, contrast, landing Lighthouse ≥ 90 (numbers recorded)
-- [ ] **9.6** `pnpm verify` + `pnpm test:e2e` green; docs
+- [x] **9.1** Card components render their payloads and provenance; quest predictions update to won/lost as events arrive
+- [x] **9.2** Inspector UI shows the generated SQL, rows and errors; rejected SQL shows the reason
+- [x] **9.3** Story director: the stop sequence derives from triggers; leaving the tour restores manual control
+- [x] **9.4** E2E: full story mode on desktop and 390 px; `/architecture` with the diagram, the live AI-usage table (non-zero after a story run) and the timeline; no console errors; a reduced-motion run
+- [x] **9.5** Polish: keyboard, focus order, polite `aria-live`, contrast, landing Lighthouse ≥ 90 (numbers recorded) *(accessibility 100 every run; performance ≥ 90 on quiet runs, 79-98 on this busy host: D-077, follow-up 1)*
+- [x] **9.6** `pnpm verify` + `pnpm test:e2e` green; docs
 
 ## Log (newest last)
 - **9.1 cards.** One component per kind, each with its own shape (DESIGN_SYSTEM §7) and each held on the TV clock by
@@ -63,6 +63,22 @@ story and the inspector's views need (D-076), recording real replay rows (no cre
 D-076 (story mode and the Task 9 surfaces), D-077 (the landing's performance pass and its measurement).
 
 ## Verification (paste real output)
+```
+pnpm verify (task/08-09-skills-frontend at 5ae7eff)
+packages/engine typecheck: Done / apps/web typecheck: Done / apps/server typecheck: Done
+Checked 270 files in 867ms. No fixes applied.
+ Test Files  59 passed (59)
+      Tests  739 passed (739)
+check-no-hardcode: OK (162 source files, 209 terms; 343 tracked files, no forbidden words)
+verify-data: OK (2 matches)
+✓ built in 828ms
+
+pnpm test:e2e                                          26 passed (4.1m)
+
+Lighthouse 13.5.0, landing behind a local Caddy with zstd/gzip (D-077)
+phone:   performance 92, 92, 90 on quieter runs; 87-89 under load; accessibility 100; best practices 96
+desktop: performance 98, 89, 88 on quieter runs; 79-86 under load; accessibility 100; best practices 96
+```
 
 ## Follow-ups (out of scope, noted for later)
 1. Lighthouse's performance score swings about ten points on this shared host; measure on a quiet machine or with
@@ -73,3 +89,24 @@ D-076 (story mode and the Task 9 surfaces), D-077 (the landing's performance pas
 3. Fan picks in quests and polls live in the card's state for the session; a reload forgets them.
 
 ## Audit notes (filled by the auditor)
+Self-audit (Claude implemented Task 9; Codex unavailable), 2026-10-18, CLAUDE.md protocol and TEST_CHECKLIST §2:
+- **A. Anti-hardcoding:** `check:hardcode` caught one real finding during the audit: the chat composer's placeholder
+  named a player ("Kohli"); now neutral. No `hardcode-ok`; the diff since `t08-verified` has no golden numbers and no
+  comparison with a label, seq, over or id; story beats come from `buildStoryPlan` (personas and triggers).
+- **B. Engine vs oracle:** no change to the timeline, reducer or scoring since the Task 8 audit (IDENTICAL on both
+  matches and the holdout 1512773).
+- **C. Holdout:** the story plan on 1512773 with the audit personas follows that match's own triggers: the lineup
+  patch (the invented bench pick), no bailout (Samson 89, Seifert 52: none cheap), the late joiner's jump to 14 overs
+  of the chase, the match-deciding ball at 2:18.6 and its room read, the result.
+- **D. Test quality:** literals from the raw file (quest outcomes) and the real plan. Hand mutants (the long loop
+  skipped at the owner's request): 10 of the Task 9 code; 8 killed at once, 2 survivors were test gaps (where the
+  climax lands without a late joiner; the chat merge's reorder, which the test never exercised), both now pinned and
+  killed: 10 of 10.
+- **E. Docs:** F09, D-076, D-077, Flow §17, Architecture §3 and §9, DESIGN_SYSTEM statuses, VISUAL_REFERENCES as built,
+  TEST_CHECKLIST (E2E 26, the Lighthouse row), ROLLBACK, the register, README, PLAN.
+- **F. Security:** no key-shaped string in the bundle; the inspector UI only talks to the sandboxed route; CSP and
+  headers unchanged; no new dependency (Lighthouse ran from a scratch directory).
+- **G. UI:** screenshots reviewed at 1440 and 390 px in both themes (the landing with the reworked floodlight, the
+  story's bailout and room-read stops); keyboard: native controls, focus to "Continue" at each stop; contrast fixed
+  for "Backed"; `aria-live` polite on the feed, the story line and the inspector.
+Accepted: `t09-verified`.

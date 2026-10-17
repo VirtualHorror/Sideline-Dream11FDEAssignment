@@ -14,12 +14,12 @@
 
 ## 1. Every change, every task (must all pass)
 
-| # | Command | Expected (baseline after Task 8) |
+| # | Command | Expected (baseline after Task 9) |
 | --- | --- | --- |
 | 1 | `pnpm typecheck` | `packages/engine typecheck: Done`, `apps/server typecheck: Done`, `apps/web typecheck: Done`, then no output from root `tsc`; exit 0 |
 | 2 | `pnpm lint` | `Checked N files in …ms. No fixes applied.` and no `×` or `!` diagnostics; exit 0 |
-| 3 | `pnpm test` | `Test Files  55 passed (55)` and `Tests  705 passed (705)`; no failed, no skipped |
-| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (145 source files, 209 terms; 307 tracked files, no forbidden words)` (counts grow with code/data; the second pass fails on the AI proxy's name in any tracked file, D-068) |
+| 3 | `pnpm test` | `Test Files  59 passed (59)` and `Tests  739 passed (739)`; no failed, no skipped |
+| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (162 source files, 209 terms; 343 tracked files, no forbidden words)` (counts grow with code/data; the second pass fails on the AI proxy's name in any tracked file, D-068) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
 | 7 | `pnpm test:e2e` (any UI-visible change) | `26 passed` (desktop + mobile: every route, the climax flow with a held then revealed teaser, tabular numerals, reduced motion; Task 9: the whole story mode with its seven stops and `/architecture`'s live table after it, leaving the tour under reduced motion); about 4.5 min. The local server is always keyless (`SIDELINE_AI_PROVIDER=none`) |
@@ -160,3 +160,4 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 | T6 Frontend I | 2026-10-17 | pass | pass (222 files) | 47 files / 569 tests | OK (131 files, 209 terms) | OK (2 matches) | 805 ms | 22 passed |
 | T7 Deploy | 2026-10-17 | pass | pass (229 files) | 50 files / 599 tests | OK (131 files, 209 terms; 299 tracked files, no forbidden words) | OK (2 matches) | 1.02 s | 22 passed locally; 22 passed against https://3-108-67-100.sslip.io |
 | T8 AI skills II | 2026-10-17 | pass | pass (248 files) | 55 files / 705 tests | OK (145 files, 209 terms; 320 tracked files, no forbidden words) | OK (2 matches) | 1.03 s | 22 passed locally (deployed with Task 9) |
+| T9 Frontend II | 2026-10-18 | pass | pass (270 files) | 59 files / 739 tests | OK (162 files, 209 terms; 343 tracked files, no forbidden words) | OK (2 matches) | 828 ms | 26 passed locally; public run after the deploy: see F09 and HANDOFF10 |

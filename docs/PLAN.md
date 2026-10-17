@@ -81,7 +81,7 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Claude (Codex unavailable) | `task/06-frontend-core` | ✅ done, tagged `t06-verified` |
 | 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Claude (Codex unavailable) + Nabhanyu | `task/07-deploy` | ✅ done, tagged `t07-verified` (recording waits for a key with credit) |
 | 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | Claude (Codex unavailable), with Task 9 (D-069) | `task/08-09-skills-frontend` | ✅ done, tagged `t08-verified` |
-| 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | next session, with Task 8 (D-069) | `task/08-09-skills-frontend` | ⬜ |
+| 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | Claude (Codex unavailable), with Task 8 (D-069) | `task/08-09-skills-frontend` | ✅ done, tagged `t09-verified` |
 | 10 | Final audit, holdout match, security review, submission note, demo script, GitHub push (D-069) | Claude | `main` | ⬜ |
 
 ---
@@ -696,12 +696,20 @@ explains the engineering.
   otherwise "Download card".
 
 **Steps** (failing test → implement → pass)
-- [ ] **9.1** Card components render their payloads and provenance; quest predictions update to won/lost as events arrive (resolver).
-- [ ] **9.2** Inspector UI shows the generated SQL, rows and errors; rejected SQL shows the reason.
-- [ ] **9.3** Story director: a test drives the director with a fake session and asserts the stop sequence derives from triggers; leaving the tour restores manual control.
-- [ ] **9.4** E2E: full story mode on desktop and 390 px; `/architecture` shows the diagram, the live AI-usage table (non-zero after a story run) and the plan timeline; no console errors; reduced-motion run.
-- [ ] **9.5** Polish: keyboard pass, focus order, `aria-live` for new moments (polite), contrast check, landing Lighthouse ≥ 90 for performance and accessibility (record the numbers).
-- [ ] **9.6** `pnpm verify` + `pnpm test:e2e` green; docs (F09 etc.).
+- [x] **9.1** Card components render their payloads and provenance; quest predictions update to won/lost as events arrive (resolver).
+- [x] **9.2** Inspector UI shows the generated SQL, rows and errors; rejected SQL shows the reason.
+- [x] **9.3** Story director: a test drives the director with a fake session and asserts the stop sequence derives from triggers; leaving the tour restores manual control.
+- [x] **9.4** E2E: full story mode on desktop and 390 px; `/architecture` shows the diagram, the live AI-usage table (non-zero after a story run) and the plan timeline; no console errors; reduced-motion run.
+- [x] **9.5** Polish: keyboard pass, focus order, `aria-live` for new moments (polite), contrast check, landing Lighthouse ≥ 90 for performance and accessibility (record the numbers).
+- [x] **9.6** `pnpm verify` + `pnpm test:e2e` green; docs (F09 etc.).
+
+**Audit result (2026-10-18, Claude): accepted, `t09-verified`.** Implemented by Claude (Codex unavailable), a self-audit,
+in the same session as Task 8 (D-069, D-075). 739 tests, 26 E2E (story mode end to end on desktop and 390 px); 10 of 10
+hand mutants killed after two test gaps were pinned; the story plan checked on a holdout match. Beyond the PLAN's files:
+the engine's `buildStoryPlan` and the `StoryPlan` contract with `GET /api/matches/:matchId/story` (beats from personas
+and triggers, D-076), `GET /api/inspector/views`, `HeldCard`, `RowsTable`, `ChatComposer`, the landing's performance
+pass (D-077). Step 9.5's Lighthouse: accessibility 100 every run; performance ≥ 90 on quiet runs but 79-98 on this busy
+host (Task 10 measures again). Follow-ups: F09.
 
 ---
 
