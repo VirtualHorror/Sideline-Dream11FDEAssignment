@@ -166,6 +166,8 @@ describe("sessions (PLAN 5.2)", () => {
     expect(bad.failed()).toBe(true);
     expect(bad.clock().playing).toBe(false);
     expect(ofType(badMessages, "error").map((m) => m.data.code)).toEqual(["session_failed"]);
+    // A browser that reconnects later is told too, right after its snapshot.
+    expect(listen(bad).map((m) => m.type)).toEqual(["hello", "snapshot", "error"]);
     expect(ofType(goodMessages, "events").length).toBeGreaterThan(0);
   });
 

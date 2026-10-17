@@ -51,6 +51,11 @@ export const CATCH_UP_MIN_MISSED_BALLS = 12;
 const TELEMETRY_EVERY_MS = 5_000;
 /** Commentary lines the explainer sees from the fan's screen. */
 const RECENT_LINES = 6;
+/** What a stopped session tells its streams (now, and on every reconnect). */
+const FAILED = {
+  code: "session_failed",
+  message: "This session hit an internal error and was paused.",
+};
 
 /** A control the session cannot carry out (an unknown jump target): the route answers 400. */
 export class ControlError extends Error {
@@ -401,6 +406,7 @@ export function createSession(
         }),
       );
       listener(message("snapshot", snapshotData()));
+      if (failedFlag) listener(message("error", FAILED));
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
@@ -417,10 +423,7 @@ export function createSession(
       failedFlag = true;
       console.error(`[sideline] session ${id} stopped`, error);
       clock = { ...rebased(), playing: false };
-      emit("error", {
-        code: "session_failed",
-        message: "This session hit an internal error and was paused.",
-      });
+      emit("error", FAILED);
     },
   };
 }
