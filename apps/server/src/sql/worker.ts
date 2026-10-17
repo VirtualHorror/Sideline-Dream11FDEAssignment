@@ -1,15 +1,15 @@
 /**
- * The SQL sandbox's worker thread (PLAN 8.4): it builds a throwaway in-memory database from the
- * documented views it is handed, makes the connection read-only (`PRAGMA query_only`), installs an
- * authorizer that allows only reads of those tables and a few plain functions (no PRAGMA, ATTACH,
- * writes or recursive CTEs, whatever the text says), runs the one query wrapped in a row LIMIT and
- * posts the rows back. sql/sandbox.ts starts it and terminates it at the timeout.
+ * The SQL sandbox's worker process (PLAN 8.4, D-074, D-078): it builds a throwaway in-memory database
+ * from the documented views it is handed, makes the connection read-only (`PRAGMA query_only`),
+ * installs an authorizer that allows only reads of those tables and a few plain functions (no PRAGMA,
+ * ATTACH, writes or recursive CTEs, whatever the text says), runs the one query wrapped in a row LIMIT
+ * and sends the rows back. sql/sandbox.ts forks it for each query and kills it once it has answered
+ * or at the timeout.
  *
- * Runs as its own module in a worker thread, so it imports only Node's own modules. Table and column
- * names come from sql/views.ts, never from the query.
+ * Runs as its own process, so it imports only Node's own modules. Table and column names come from
+ * sql/views.ts, never from the query.
  */
 import { constants, DatabaseSync } from "node:sqlite";
-import { parentPort, workerData } from "node:worker_threads";
 
 export interface WorkerTable {
   name: string;
@@ -93,4 +93,8 @@ function run({ tables, sql, maxRows }: WorkerInput): WorkerOutput {
   }
 }
 
-parentPort?.postMessage(run(workerData as WorkerInput));
+// One query per process. The listener stays, so the process waits for the sandbox's kill after its
+// answer instead of exiting first (the sandbox reads an exit before an answer as a crash).
+process.on("message", (input) => {
+  process.send?.(run(input as WorkerInput));
+});

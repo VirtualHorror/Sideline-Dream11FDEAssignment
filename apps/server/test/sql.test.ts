@@ -5,6 +5,7 @@
  * (reads of those tables and a few plain functions only), wrapped in a 200-row LIMIT and killed after
  * 2 s. Stat-back's copy holds only the deliveries the fan's TV has shown.
  */
+import { readdirSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { runSandboxed, SANDBOX_TIMEOUT_MS } from "../src/sql/sandbox.ts";
 import { validateSql } from "../src/sql/validate.ts";
@@ -15,6 +16,29 @@ import { delivery } from "./runtime.ts";
 const b = bundle("1298150");
 const everything = statBackTables(b, Number.POSITIVE_INFINITY);
 const deliveries = b.events.filter((e) => e.kind === "delivery");
+
+/** CPU time (user + system, ms) of a process, all its threads: /proc/<pid>/stat fields 14-15, in 10 ms ticks. */
+function cpuMs(pid: string): number {
+  const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+  const fields = stat.slice(stat.lastIndexOf(")") + 2).split(" ");
+  return (Number(fields[11]) + Number(fields[12])) * 10;
+}
+
+/** CPU time of this test process and of every process it started that is still there. */
+function processTreeCpuMs(): number {
+  let total = cpuMs("self");
+  for (const task of readdirSync("/proc/self/task")) {
+    const children = readFileSync(`/proc/self/task/${task}/children`, "utf8").split(" ");
+    for (const child of children.filter(Boolean)) {
+      try {
+        total += cpuMs(child);
+      } catch {
+        // it ended between the listing and the read
+      }
+    }
+  }
+  return total;
+}
 
 describe("validateSql (PLAN 8.4)", () => {
   it.each([
@@ -92,6 +116,25 @@ describe("the SQL sandbox (PLAN 8.4, Review focus 5)", () => {
     expect(took).toBeGreaterThanOrEqual(SANDBOX_TIMEOUT_MS);
     expect(took).toBeLessThan(SANDBOX_TIMEOUT_MS + 2_000);
   }, 10_000);
+
+  // The Task 10 security review found the kill only stopped the waiting: a worker thread blocked in
+  // SQLite's native loop ignores terminate() and kept a core busy for as long as the join ran. Linux
+  // only, since it reads /proc (this test process and the processes it started).
+  it.runIf(process.platform === "linux")(
+    "leaves nothing computing once a query is killed",
+    async () => {
+      const out = await runSandboxed(
+        "SELECT count(*) FROM visible_deliveries a, visible_deliveries b, visible_deliveries c, visible_deliveries d",
+        everything,
+      );
+      expect(out.status).toBe("timeout");
+      const before = processTreeCpuMs();
+      await new Promise((resolve) => setTimeout(resolve, 1_000));
+      // A query still running burns about the whole second; an idle process, a few milliseconds.
+      expect(processTreeCpuMs() - before).toBeLessThan(500);
+    },
+    10_000,
+  );
 
   it.each([
     ["DELETE FROM visible_deliveries", "refused", "only SELECT or WITH queries are allowed"],
