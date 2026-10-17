@@ -1,0 +1,53 @@
+# Sideline's Node server (PLAN Task 7, D-025, D-066). Written by deploy/install.sh to
+# /etc/systemd/system/sideline.service with the placeholders filled in: edit this template and
+# re-run install.sh rather than editing the installed copy. Caddy (TLS on :443) proxies to it.
+[Unit]
+Description=Sideline: AI second-screen companion for live cricket (Node server)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@APP_USER@
+Group=@APP_GROUP@
+# The deploy checkout (a clone of the repository at the deployed commit), never the working copy
+# a developer edits and rebuilds.
+WorkingDirectory=@DEPLOY_DIR@
+Environment=PATH=@APP_HOME@/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=NODE_ENV=production HOST=127.0.0.1 PORT=@PORT@
+# The AI keys and settings, generated from .env (root-only, mode 600). Settings in this file
+# override the Environment= lines, so install.sh writes the three production values into it too.
+EnvironmentFile=@ENV_FILE@
+ExecStart=@NODE_BIN@ apps/server/src/index.ts
+# SIGTERM closes the open streams and the database, then exits (apps/server/src/index.ts).
+KillSignal=SIGTERM
+TimeoutStopSec=20
+Restart=on-failure
+RestartSec=2
+
+# The server reads the checkout and writes only its SQLite database (data/runtime).
+UMask=0077
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=@DEPLOY_DIR@/data/runtime
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+# AF_NETLINK: glibc's getaddrinfo asks the kernel which address families are configured, and the
+# AI provider's host name must resolve.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

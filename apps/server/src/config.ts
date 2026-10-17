@@ -69,6 +69,9 @@ const EnvSchema = z.object({
   SIDELINE_SESSION_AI_CAP: positiveInt.default(80),
 });
 
+/** Every variable the server reads: deploy/install.sh copies only these from .env (D-066). */
+export const SERVER_ENV_NAMES: readonly string[] = Object.keys(EnvSchema.shape);
+
 type EnvInput = Record<string, string | undefined>;
 
 function modelsFor(

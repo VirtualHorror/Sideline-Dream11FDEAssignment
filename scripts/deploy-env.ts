@@ -1,0 +1,46 @@
+/**
+ * Prints the production environment file for deploy/install.sh (PLAN Task 7, D-066): the file on
+ * stdout, a report of variable names (never values) on stderr.
+ *
+ * Usage: node scripts/deploy-env.ts [--env-file <path>] [--keyless]
+ *   --env-file   the .env to read (default: this repository's .env; no file means a keyless install)
+ *   --keyless    leave the AI keys out and set SIDELINE_AI_PROVIDER=none: recorded AI and labelled
+ *                fallbacks only, never a paid call
+ *
+ * The .env is parsed with Node's own parser, the one `--env-file` uses for `pnpm dev`, so production
+ * reads what development reads. Exit 1 (naming the variable, never its value) when a setting cannot
+ * be written or the server would refuse it at boot.
+ */
+import { existsSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { parseArgs, parseEnv } from "node:util";
+import { renderProductionEnv } from "./lib/deploy-env.ts";
+
+const repoRoot = resolve(import.meta.dirname, "..");
+const { values: args } = parseArgs({
+  options: {
+    "env-file": { type: "string" },
+    keyless: { type: "boolean", default: false },
+  },
+});
+const envFile = args["env-file"] ?? join(repoRoot, ".env");
+
+try {
+  const parsed = existsSync(envFile) ? parseEnv(readFileSync(envFile, "utf8")) : {};
+  const source = Object.fromEntries(
+    Object.entries(parsed).filter((entry): entry is [string, string] => entry[1] !== undefined),
+  );
+  const out = renderProductionEnv(source, { repoRoot, keyless: args.keyless });
+  process.stdout.write(out.text);
+  const list = (names: string[]) => (names.length > 0 ? names.join(", ") : "none");
+  console.error(`deploy-env: from ${existsSync(envFile) ? envFile : "no .env (keyless)"}`);
+  console.error(`deploy-env: forced ${list(out.forced)}`);
+  console.error(`deploy-env: copied ${list(out.copied)}`);
+  console.error(`deploy-env: not copied ${list(out.skipped)}`);
+  console.error(
+    `deploy-env: the server will run with provider ${out.summary.aiProvider}, models ${out.summary.aiModelFast ?? "none"} / ${out.summary.aiModelSmart ?? "none"}, endpoint ${out.summary.aiEndpointHost ?? "none"}`,
+  );
+} catch (error) {
+  console.error(`deploy-env: ${(error as Error).message}`);
+  process.exit(1);
+}
