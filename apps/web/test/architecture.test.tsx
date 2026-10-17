@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import architectureText from "../../../docs/Architecture.md?raw";
 import decisionsText from "../../../docs/Decisions.md?raw";
 import planText from "../../../docs/PLAN.md?raw";
+import { AiUsageTable } from "../src/architecture/AiUsageTable.tsx";
 import { renderMarkdown } from "../src/lib/markdown.ts";
 import { Architecture } from "../src/pages/Architecture.tsx";
 
@@ -83,5 +84,84 @@ describe("markdown rendering (D-061)", () => {
     expect(link?.getAttribute("rel")).toBe("noreferrer");
     expect(container.querySelectorAll("a")).toHaveLength(1);
     expect(container.textContent).toContain("F05");
+  });
+});
+
+describe("/architecture polish (PLAN 9.4, D-034)", () => {
+  it("draws the pipeline as one image with a text alternative", () => {
+    render(<Architecture loadTelemetry={() => new Promise(() => {})} />);
+    const diagram = screen.getAllByRole("img", { name: /How a delivery travels through Sideline/ });
+    expect(diagram.length).toBeGreaterThan(0);
+    expect(diagram[0]?.textContent).toContain("Entropy gate");
+  });
+
+  it("fills the 'when we don't call AI' table from live global telemetry, never from constants", async () => {
+    const snapshot = {
+      scope: "global" as const,
+      counters: {
+        eventsTotal: 266,
+        eventsDeterministic: 229,
+        gateTriggers: 37,
+        aiCallsLive: 3,
+        aiCacheHits: 5,
+        aiFallbacks: 29,
+        tokensIn: 3000,
+        tokensOut: 300,
+        costUsd: 0.021,
+      },
+      latencyMs: { p50: 0, p95: 0 },
+      recentDecisions: [],
+      recentCalls: [],
+      projection: {
+        concurrentViewers: 1,
+        eventsPerMatch: 266,
+        naiveLlmCalls: 0,
+        sidelineLlmCalls: 0,
+        savedPct: 0,
+        formula: "",
+      },
+    };
+    render(<AiUsageTable load={async () => snapshot} />);
+    const table = await screen.findByRole("table", {
+      name: "When Sideline does not call AI, live",
+    });
+    const row = (name: RegExp) => within(table).getByRole("row", { name });
+    expect(row(/Handled by rules/).textContent).toContain("229 of 266");
+    expect(row(/Raised to the AI gateway/).textContent).toContain("37");
+    expect(row(/live model call/).textContent).toContain("3");
+    expect(row(/cache or a recording/).textContent).toContain("5");
+    expect(row(/labelled fallback/).textContent).toContain("29");
+  });
+
+  it("says so when the live numbers cannot be fetched", async () => {
+    render(<AiUsageTable load={() => Promise.reject(new Error("offline"))} />);
+    expect(
+      await screen.findByText("The live numbers did not load. Reload to try again."),
+    ).toBeTruthy();
+  });
+
+  it("lays the PLAN checklist out as a timeline, every task with its status as the file has it", () => {
+    const rows = planText
+      .slice(planText.indexOf("## Checklist"))
+      .split("\n")
+      .filter((line) => /^\|\s*\d+\s*\|/.test(line))
+      .map((line) => line.split("|").map((cell) => cell.trim()));
+    render(<Architecture loadTelemetry={() => new Promise(() => {})} />);
+    const items = within(screen.getByRole("list", { name: "Build plan" })).getAllByRole("listitem");
+    expect(items).toHaveLength(rows.length);
+    rows.forEach((cells, index) => {
+      const item = items[index] as HTMLElement;
+      expect(item.textContent).toContain((cells[2] ?? "").split(":")[0]);
+      expect(item.getAttribute("data-status")).toBe(cells[5]?.startsWith("✅") ? "done" : "open");
+    });
+  });
+
+  it("shows the three design theses and the credits from the docs", () => {
+    render(<Architecture loadTelemetry={() => new Promise(() => {})} />);
+    const theses = screen.getByRole("region", { name: "Three design theses" });
+    expect(within(theses).getAllByRole("listitem")).toHaveLength(3);
+    expect(theses.textContent).toContain("LLM calls scale with match moments, not with fans.");
+    const credits = screen.getByRole("region", { name: "Credits and licences" });
+    expect(credits.textContent).toContain("Open Data Commons Attribution License 1.0");
   });
 });

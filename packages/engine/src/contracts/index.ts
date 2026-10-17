@@ -9,4 +9,5 @@ export * from "./primitives.ts";
 export * from "./rules.ts";
 export * from "./session.ts";
 export type * from "./state.ts";
+export * from "./story.ts";
 export * from "./telemetry.ts";

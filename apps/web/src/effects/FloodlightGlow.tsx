@@ -1,7 +1,9 @@
 /**
  * FloodlightGlow (Effect A, CSS): the floodlit sky rising from the bottom of the landing hero and the
  * TV screen. Four blurred blobs drift and cycle blue → cyan → violet → pink (styles/effects.css),
- * masked into a cone; a faint beam falls from the top. Meaning: the stadium lights.
+ * masked into a cone; a faint beam falls from the top. Meaning: the stadium lights. Each blob is four
+ * fixed-colour tints that cross-fade, and the blobs drift with `translate`: both run on the
+ * compositor, so the ambient light costs the page's main thread nothing per frame (Task 9.5).
  *
  * Callers: pages/Landing.tsx (ambient) and broadcast/TvPane.tsx (low ambient plus outbursts). The
  * outburst (`burstRef.current.burst(colour, strength)`) flares the cone towards a colour and settles
@@ -18,6 +20,9 @@ export interface FloodlightHandle {
 }
 
 const EASE_OUT = "cubic-bezier(0.16, 1, 0.3, 1)";
+const BLOBS = [1, 2, 3, 4] as const;
+/** The cycle's colours, in order (styles/effects.css gives each its colour and its turn). */
+const TINTS = ["blue", "cyan", "violet", "pink"] as const;
 const RISE_MS = 350;
 const SETTLE_MS = 1600;
 
@@ -83,10 +88,13 @@ export function FloodlightGlow({
     >
       <div className="floodlight__beam" />
       <div ref={coneRef} className="floodlight__cone">
-        <span className="floodlight__blob floodlight__blob--1" />
-        <span className="floodlight__blob floodlight__blob--2" />
-        <span className="floodlight__blob floodlight__blob--3" />
-        <span className="floodlight__blob floodlight__blob--4" />
+        {BLOBS.map((blob) => (
+          <span key={blob} className={`floodlight__blob floodlight__blob--${blob}`}>
+            {TINTS.map((tint) => (
+              <span key={tint} className={`floodlight__tint floodlight__tint--${tint}`} />
+            ))}
+          </span>
+        ))}
       </div>
       <div className="floodlight__pulse" />
     </div>

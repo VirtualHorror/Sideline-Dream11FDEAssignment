@@ -140,6 +140,10 @@ describe("pnpm ai:record (PLAN 7.2)", () => {
       "catchup:1415755:2:0-17:football",
       // The E2E's jump: late-from-work from 14 to 18 overs of the chase (Task 6).
       "catchup:1298150:2:14-18:casual",
+      // Story mode (Task 9): captain-rohit, casual, jumps to where the analyst joins; the phase
+      // rail's jump to 15 overs of the chase records the same reel, so the story needs no walk of
+      // its own (its other jump, to 2:18.5 in 2022, is late-from-work's 14-18 reel above).
+      "catchup:1415755:2:0-15:casual",
     ]) {
       expect(keys).toContain(key);
     }

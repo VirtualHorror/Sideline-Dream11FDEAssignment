@@ -21,9 +21,12 @@ const dateText = (iso: string) =>
 export function PersonaPicker({
   matches,
   onStart,
+  onStory,
 }: {
   matches: readonly MatchListing[];
   onStart(matchId: string, personaId: string): void;
+  /** The guided story of the chosen match (story mode, Task 9); absent, no story button. */
+  onStory?(matchId: string): void;
 }) {
   const groupName = useId();
   const matchName = useId();
@@ -90,9 +93,20 @@ export function PersonaPicker({
         <p className="picker__where">
           {match.title}, {match.stage}. {match.venue}, {dateText(match.date)}.
         </p>
-        <button type="submit" className="button button--primary button--large">
-          Start watching
-        </button>
+        <div className="picker__buttons">
+          <button type="submit" className="button button--primary button--large">
+            Start watching
+          </button>
+          {onStory ? (
+            <button
+              type="button"
+              className="button button--large"
+              onClick={() => onStory(match.id)}
+            >
+              Watch the story
+            </button>
+          ) : null}
+        </div>
       </div>
     </form>
   );

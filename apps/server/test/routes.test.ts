@@ -3,10 +3,12 @@ import {
   ClockStateSchema,
   FantasyRulesSchema,
   InspectorResultSchema,
+  InspectorViewSchema,
   MatchSummarySchema,
   MomentSchema,
   PlayerSchema,
   SessionCreateResponseSchema,
+  StoryPlanSchema,
   type StreamMessage,
   TelemetrySnapshotSchema,
   tvTimeAt,
@@ -498,5 +500,33 @@ describe("POST /api/sessions/:id/inspector (PLAN 8.5, Review focus 5)", () => {
     expect((await t.post(`/api/sessions/${id}/inspector`, { sql: "SELECT 3 AS n" })).status).toBe(
       429,
     );
+  });
+});
+
+describe("GET /api/matches/:matchId/story and /api/inspector/views (PLAN 9.3, 9.2)", () => {
+  it("serves the story's beats, built from the match's personas and triggers", async () => {
+    const t = testApp();
+    const res = await t.call("/api/matches/1298150/story");
+    expect(res.status).toBe(200);
+    const story = StoryPlanSchema.parse((await json(res)).story);
+    expect(story.personaId).toBe("babar-believer");
+    expect(story.beats.map((b) => b.kind)).toEqual([
+      "lineup",
+      "bailout",
+      "catch_up",
+      "climax",
+      "room_read",
+      "result",
+    ]);
+    expect((await t.call("/api/matches/9999999/story")).status).toBe(404);
+  });
+
+  it("lists the views the inspector may read, without a session id anywhere", async () => {
+    const t = testApp();
+    const res = await t.call("/api/inspector/views");
+    expect(res.status).toBe(200);
+    const views = InspectorViewSchema.array().parse((await json(res)).views);
+    expect(views.map((v) => v.view)).toEqual(["visible_deliveries", "players", "ai_calls"]);
+    expect(JSON.stringify(views)).not.toContain("session_id");
   });
 });

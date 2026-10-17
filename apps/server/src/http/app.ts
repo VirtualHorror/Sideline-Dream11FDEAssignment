@@ -13,6 +13,8 @@
  *   POST /api/sessions/:id/lineup-intent a fan's lineup request → lineup patch     (Task 8)
  *   POST /api/sessions/:id/chat         the fan's chat line, stat-back on request  (Task 8)
  *   POST /api/sessions/:id/inspector    a question or SQL → the sandbox's result   (Task 8)
+ *   GET  /api/inspector/views           the views the inspector may read          (Task 9)
+ *   GET  /api/matches/:matchId/story    the guided story's beats                  (Task 9)
  *   GET  /api/telemetry                 the control plane's snapshot              (Task 5)
  *   GET  /*                             built web app (apps/web/dist) + SPA fallback (Task 1)
  * The session routes exist only when a runtime is passed (the health and static tests run without).

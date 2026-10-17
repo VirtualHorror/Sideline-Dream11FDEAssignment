@@ -5,15 +5,18 @@
  * timeout or SQLite's error is a result too, never a 500 (Review focus 5).
  *
  * Rate-limited per address first (429 with Retry-After): each query may burn up to 2 s of CPU.
+ * GET /api/inspector/views lists the documented views (sql/views.ts) for the control plane's editor.
  */
 import { InspectorRequestSchema } from "@sideline/engine";
 import type { Hono } from "hono";
+import { INSPECTOR_VIEWS, viewsDoc } from "../../sql/views.ts";
 import type { AppRuntime } from "../app.ts";
 import { jsonError, readJson } from "../middleware/body.ts";
 import { ASK_BURST, clientIp, createRateLimiter } from "../middleware/rateLimit.ts";
 
 export function registerInspectorRoutes(app: Hono, runtime: AppRuntime, now: () => number): void {
   const limiter = createRateLimiter({ perMinute: runtime.askPerMinute, burst: ASK_BURST, now });
+  app.get("/api/inspector/views", (c) => c.json({ views: viewsDoc(INSPECTOR_VIEWS) }));
   app.post("/api/sessions/:id/inspector", async (c) => {
     const allowed = limiter.take((runtime.clientIp ?? clientIp)(c));
     if (!allowed.ok) {

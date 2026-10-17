@@ -144,9 +144,10 @@ reference).
 | PlaybackControls, DelayControl, PhaseRail | built T6 | phase rail is a real sequence, so numbered steps are fine there; buttons show the fan's choice at once |
 | MomentCard variants: CatchUpReel, ExplainerCard, SpoilerCard | built T6 | each kind gets its own shape: the held ticket with two veiled zones, the reel of slides, the Q&A |
 | PersonaPicker | built T6 | radio cards: label, blurb, stream delay, lens |
-| SquadDiffLedger, BailoutQuestCard, BanterCard, RoomReadPods, TakeCard | Task 9 | |
+| SquadDiffLedger, BailoutQuestCard, BanterCard, RoomReadPods, TakeCard | built T9 | a ledger, a quest ticket with yes-or-no calls and a night-sky share card, pods as one bar of shares with real chat lines, a verdict stamp with the SQL behind it; each held on the TV clock with nothing of it in the DOM |
 | ControlPlaneDrawer (counters, gate log, traces, projection) | built T6 | rows about a ball the TV has not shown are held |
-| InspectorQuery | Task 9 | |
+| InspectorQuery | built T9 | in the control plane: the question, the model's SQL in an editable box, the rows, every refusal or error in plain words |
+| StoryOverlay, ChatComposer | built T9 | the tour's one-line callout with Continue and Leave the tour; the fan's own line, posted or checked |
 | ProvenanceChip (Live AI / Cached / Replayed / Fallback / Rules) | built T6 | on every moment card and trace; each provenance has its own mark; "Replayed AI" has no date yet (the moment does not carry the recording date) |
 
 ## 8. Writing

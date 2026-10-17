@@ -122,7 +122,7 @@ chip; a disclaimer line below: "Slackbot is AI and can make mistakes."
 - DPR capped at 2; target 60 fps on a mid-range phone; WebGL contexts created lazily and released
   on unmount.
 
-## As built (Task 6): where the code departs from or refines this spec
+## As built (Task 6, Task 9.5): where the code departs from or refines this spec
 
 Checked in Chrome and in headless Chrome screenshots at 1440 and 390 px in both themes (F06 log).
 
@@ -133,6 +133,12 @@ Checked in Chrome and in headless Chrome screenshots at 1440 and 390 px in both 
   blobs run up to 4.8 s ahead in the 14 s cycle, so a new colour enters from one side. The outburst
   animates the cone (scale, brightness) and a registered `--fl-burst` number that mixes the blob colours
   towards the burst colour; without the Web Animations API (jsdom) it only records `data-burst`.
+  *Task 9.5:* the colour cycle no longer animates a custom property (a main-thread repaint of four 48 px
+  blurs every frame: over a second of blocking time in Lighthouse's phone run). Each blob is four
+  fixed-colour tints that cross-fade with `opacity` (fading in over 6% of the cycle, holding a quarter,
+  fading as the next fades in, stepped twenty times a second) and the blob drifts with `translate`: both
+  compositor work. Same colours, order, phases and 14 s cycle; reduced motion shows each blob in the colour
+  it starts in. The landing's wordmark makes its WebGL context when a pointer first enters it.
 - **Which moments burst** (`src/broadcast/outburst.ts`): a delivery with a spoiler teaser (the gate's
   big-ball rule: leverage at or above the threshold, or the deciding ball) and the result. A six that the
   gate did not flag (1298150's 18.5, BUG-003) stays calm. Colours: a six is

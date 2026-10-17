@@ -17,6 +17,7 @@
  *   gate/       the entropy gate that runs them on every event         (Task 4)
  *   quests/     prediction rules resolved from real deliveries         (Task 4)
  *   crowd/      seeded synthetic watch-along chat                       (Task 4)
+ *   story/      the guided story's beats, from personas and triggers   (Task 9)
  *   buffer/, clock.ts  TV clock and per-fan delay buffer (spoiler shield) (Task 4)
  */
 export * from "./buffer/delay.ts";
@@ -46,5 +47,6 @@ export * from "./models/logistic.ts";
 export * from "./models/priors.ts";
 export * from "./models/winprob.ts";
 export * from "./quests/resolve.ts";
+export * from "./story/plan.ts";
 export * from "./util/hash.ts";
 export * from "./util/prng.ts";
