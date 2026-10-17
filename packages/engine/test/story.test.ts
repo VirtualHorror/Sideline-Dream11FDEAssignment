@@ -146,5 +146,10 @@ describe("buildStoryPlan (PLAN 9.3)", () => {
       "room_read",
       "result",
     ]);
+    // Still the chase's death overs: the first innings' big balls at 15.5 and later do not count.
+    const climax = plan?.beats.find((b) => b.kind === "climax");
+    expect(climax?.kind === "climax" && climax.eventId).toBe(
+      deliveryAt(timelineOf("1298150"), 2, "18.6").id,
+    );
   });
 });

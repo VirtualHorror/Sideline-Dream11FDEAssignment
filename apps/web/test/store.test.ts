@@ -219,10 +219,11 @@ describe("the fan's own chat lines (Task 9, D-073)", () => {
   it("are kept in time order among the crowd's, once, whether they come over the stream or the POST", () => {
     const at = join.t;
     const state = feed([hello(), snapshot(at)]);
-    // The fan typed on their TV's clock, 15 s behind the ground: earlier than the crowd's last lines.
+    // The fan typed on their TV's clock, behind the ground: earlier than the crowd's last three lines.
+    const lastThree = crowd.filter((m) => m.t <= at).slice(-3);
     const own = {
       id: "you-1",
-      t: at - 15_000,
+      t: (lastThree[0]?.t ?? at) - 1,
       handle: "You",
       affinity: "neutral" as const,
       text: "Come on",
@@ -237,10 +238,8 @@ describe("the fan's own chat lines (Task 9, D-073)", () => {
     expect(streamed.chat).toHaveLength(state.chat.length + 1);
     const times = streamed.chat.map((m) => m.t);
     expect(times).toEqual([...times].sort((a, b) => a - b));
-    // Crowd lines from the last 15 s come after it.
+    // The crowd's last three lines come after it.
     const index = streamed.chat.findIndex((m) => m.id === "you-1");
-    expect(streamed.chat.slice(index + 1).length).toBe(
-      crowd.filter((m) => m.t > own.t && m.t <= at).length,
-    );
+    expect(streamed.chat.slice(index + 1).map((m) => m.id)).toEqual(lastThree.map((m) => m.id));
   });
 });
