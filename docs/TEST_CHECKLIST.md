@@ -33,10 +33,10 @@
 | 15 | Deploy dry runs (Task 7+): `deploy/install.sh --dry-run`, `deploy/update.sh --dry-run [ref]` | every step and file listed, the env report naming variables only (`deploy-env: copied OPENAI_API_KEY, …`), ending `dry run: nothing was changed`; `scripts/test/deploy.test.ts` proves no host-changing command runs |
 | 16 | `pnpm ai:record` (Task 7+; without `--yes` nothing is sent) | `ai-record: plan: 91 moments need a provider call (48 teasers, 19 catch-up reels, 2 bailouts, 22 room reads); 0 already recorded in …/data/ai-replay` (Task 8: bailouts and room reads are recorded; lineup patches are personal and never asked for). With `--yes` it spends money: ask Nabhanyu first (Constraint 26) |
 | 17 | `deploy/update.sh <ref>` (the auditor, after a merge; as the developer, no password) | `update: health: http://127.0.0.1:8780/api/health` and each site's health body with `"aiEndpoint":"openai-compatible"`, then `update: deployed <sha> (<ref>) at https://3-108-67-100.sslip.io/` |
-| 18 | `PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e` (Task 7+) | `22 passed` against production (with a key that fails, the climax card shows `Fallback: AI unavailable`) |
+| 18 | `PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e` (Task 7+) | `26 passed` against production (Task 9) (with a key that fails, the climax card shows `Fallback: AI unavailable`) |
 | 19 | Public origin (Task 7+): `curl -sI https://<host>/`; `curl -sI http://<host>/`; a session's `curl -sN https://<host>/api/sessions/<id>/stream` | `HTTP/2 200` with the CSP, `x-frame-options: DENY`, `nosniff`, `strict-transport-security`; `308` to https; the stream's first byte in well under a second with `event: hello` and `event: snapshot` |
 
-| 20 | Landing Lighthouse (Task 9+): `pnpm build`, `PORT=8791 HOST=127.0.0.1 SIDELINE_AI_PROVIDER=none node apps/server/src/index.ts`, a local `caddy run` with the production site block's `encode zstd gzip` in front of it (port 8792), then from a scratch directory `npx --yes lighthouse@13.5.0 http://127.0.0.1:8792/ --chrome-flags="--headless=new --no-sandbox" --only-categories=performance,accessibility,best-practices [--preset=desktop]` | accessibility 100 and best practices 96 every run; performance varies with this host's load (2026-10-18: phone 87-92, desktop 79-98, D-077). Run three times and report the spread; the target is ≥ 90 |
+| 20 | Landing Lighthouse (Task 9+): `pnpm build`, `PORT=8791 HOST=127.0.0.1 SIDELINE_AI_PROVIDER=none node apps/server/src/index.ts`, a local `caddy run` with the production site block's `encode zstd gzip` in front of it (port 8792), then from a scratch directory `npx --yes lighthouse@13.5.0 http://127.0.0.1:8792/ --chrome-flags="--headless=new --no-sandbox" --only-categories=performance,accessibility,best-practices [--preset=desktop]` | accessibility 100 and best practices 96 every run; performance varies with this host's load (2026-10-18: phone 87-92, desktop 79-98, D-077). Run three times and report the spread; the target is ≥ 90. Against production (`npx --yes lighthouse@13.5.0 https://3-108-67-100.sslip.io/ …`, no local servers needed): phone 92, desktop 90 after the `t09-verified` deploy |
 
 `pnpm verify` runs rows 1-6 in order and stops at the first failure.
 
@@ -81,6 +81,11 @@ audit-only priors, then drive the server modules with the scripted provider: the
 keys must equal an independent `createGate` replay, no teaser prompt may contain the outcome, the
 late joiner's catch-up prompt must carry the raw file's situation, telemetry must equal the gate's
 counters, and keyless every teaser must be a fallback that passes `spoilerLint` (Task 5 audit: 1298158).
+From Task 8 on, `scripts/oracle/audit/holdout_data.py` builds that scratch copy (plus a bench pick per team, so
+the lineup patch fires) and `holdout_sessions.ts` plays every persona's whole session, scripted and keyless,
+checking lineup patches, bailout rules and room reads by rules of its own, the inspector's counts against the
+raw file, and the story plan's beats (commands and baseline: `scripts/oracle/audit/README.md`, "Session-level
+holdout"; Tasks 8-9 audit: 1512773).
 From Task 3 on, rebuild `data/models` from the recorded zip (row 11) and plot or print a holdout
 match's win-probability trajectory: it should start near the first-innings base rate, move with
 wickets and boundaries, and end at 1 for the winner.
@@ -160,4 +165,4 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 | T6 Frontend I | 2026-10-17 | pass | pass (222 files) | 47 files / 569 tests | OK (131 files, 209 terms) | OK (2 matches) | 805 ms | 22 passed |
 | T7 Deploy | 2026-10-17 | pass | pass (229 files) | 50 files / 599 tests | OK (131 files, 209 terms; 299 tracked files, no forbidden words) | OK (2 matches) | 1.02 s | 22 passed locally; 22 passed against https://3-108-67-100.sslip.io |
 | T8 AI skills II | 2026-10-17 | pass | pass (248 files) | 55 files / 705 tests | OK (145 files, 209 terms; 320 tracked files, no forbidden words) | OK (2 matches) | 1.03 s | 22 passed locally (deployed with Task 9) |
-| T9 Frontend II | 2026-10-18 | pass | pass (270 files) | 59 files / 739 tests | OK (162 files, 209 terms; 343 tracked files, no forbidden words) | OK (2 matches) | 828 ms | 26 passed locally; public run after the deploy: see F09 and HANDOFF10 |
+| T9 Frontend II | 2026-10-18 | pass | pass (270 files) | 59 files / 739 tests | OK (162 files, 209 terms; 343 tracked files, no forbidden words) | OK (2 matches) | 828 ms | 26 passed locally; 26 passed against https://3-108-67-100.sslip.io |

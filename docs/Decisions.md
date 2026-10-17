@@ -992,6 +992,9 @@
   2.3 s, layout shift 0.007), desktop 79-98; accessibility 100 and best practices 96 in every run (the 4 points: a
   content-security-policy note in Chrome's Issues panel with no detail; no console error). The PLAN's "≥ 90" is met
   on a quiet run of each form factor, not reliably on this busy host; Task 10 measures again (F09 follow-up 1).
+  *After the deploy (2026-10-18, `t09-verified`, production's own Caddy, load average 5-6):* phone performance 92
+  (first paint 2.1 s, blocking 230 ms, layout shift 0), desktop 90 (0.4 s, 260 ms, 0.007), accessibility 100 and best
+  practices 96 on both.
 - **Alternatives:** dropping the floodlight's animation on GPU-less browsers (it would also hide it from the headless
   visual review); prerendering the landing's HTML (a build step and duplicated markup, for about a second of
   simulated first paint on a slow phone).
