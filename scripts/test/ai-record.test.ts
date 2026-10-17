@@ -17,8 +17,10 @@ import { buildRuntime } from "../../apps/server/src/runtime.ts";
 import {
   applyEvent,
   createMatchState,
+  type Detector,
   type MatchEvent,
   nudgeDetector,
+  roomDetector,
 } from "../../packages/engine/src/index.ts";
 import {
   handClock,
@@ -33,8 +35,8 @@ const repoRoot = resolve(import.meta.dirname, "..", "..");
 const config = loadConfig({ SIDELINE_AI_PROVIDER: "none" }, repoRoot);
 const bundles = loadMatchBundles(join(repoRoot, "data"));
 
-/** Every teaser key of a full replay, straight from the engine's nudge detector (not the recorder). */
-function teaserKeys(matchId: string): string[] {
+/** Every key one detector asks for on a full replay, straight from the engine (not the recorder). */
+function detectorKeys(matchId: string, detector: Detector): string[] {
   const bundle = bundles.get(matchId);
   const persona = bundle?.personas[0];
   if (!bundle || !persona) throw new Error(`no bundle for ${matchId}`);
@@ -51,17 +53,20 @@ function teaserKeys(matchId: string): string[] {
   for (const event of bundle.events) {
     const before = structuredClone(state);
     applyEvent(state, event);
-    const verdict = nudgeDetector.evaluate({
+    const verdict = detector.evaluate({
       before,
       after: state,
       event,
       events: bundle.events,
       ctx,
+      chat: bundle.crowd,
     });
     if (verdict.outcome === "ai_trigger") keys.push(verdict.trigger.key);
   }
-  return keys;
+  // The gate asks once per key: a room read's over-end repeats a spike's key in the same over.
+  return [...new Set(keys)];
 }
+const teaserKeys = (matchId: string) => detectorKeys(matchId, nudgeDetector);
 
 let dir: string;
 let run: RecordRun;
@@ -107,7 +112,23 @@ describe("pnpm ai:record (PLAN 7.2)", () => {
     expect(recorded("nudge:1298150:")).toHaveLength(23);
     expect(recorded("nudge:1415755:")).toHaveLength(25);
     expect(lines.filter((l) => l.key.startsWith("explain:"))).toEqual([]);
-    expect(lines.every((l) => /^(nudge|catchup):/.test(l.key))).toBe(true);
+    // Task 8 added the shared bailouts and room reads; personal moments (lineup patches, questions,
+    // stat-backs) are never recorded.
+    expect(lines.every((l) => /^(nudge|catchup|bailout|room):/.test(l.key))).toBe(true);
+  });
+
+  it("records each cohort's bailout and every room read, and never asks for a personal lineup patch", () => {
+    const keys = lines.map((l) => l.key);
+    // PLAN 4.4: Babar at 1.1 of 1298150 and Rohit at 1.4 of 1415755, both captains.
+    expect(keys.filter((k) => k.startsWith("bailout:")).sort()).toEqual([
+      "bailout:1298150:1298150:0018:C",
+      "bailout:1415755:1415755:0017:C",
+    ]);
+    const rooms = (id: string) => keys.filter((k) => k.startsWith(`room:${id}:`)).sort();
+    expect(rooms("1298150")).toEqual(detectorKeys("1298150", roomDetector).sort());
+    expect(rooms("1415755")).toEqual(detectorKeys("1415755", roomDetector).sort());
+    expect([rooms("1298150").length, rooms("1415755").length]).toEqual([12, 10]);
+    expect(keys.filter((k) => k.startsWith("lineup:"))).toEqual([]);
   });
 
   it("records each late joiner's catch-up and the room's jumps, in the persona's own lens", () => {

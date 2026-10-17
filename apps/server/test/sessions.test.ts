@@ -250,7 +250,7 @@ describe("sessions (PLAN 5.2)", () => {
 // Task 6 step 6.0, the independent spot-check of t05-verified (D-059): each of these failed on a hand
 // mutant that every Task 5 test let through, and passes on the code as merged.
 describe("sessions: behaviour the t05-verified spot-check found unpinned", () => {
-  it("streams the teasers again, once each, when play passes them after a jump back (Review focus 1)", async () => {
+  it("streams the moments again, once each, when play passes them after a jump back (Review focus 1)", async () => {
     const rt = testRuntime();
     const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
     const messages = listen(session);
@@ -261,10 +261,18 @@ describe("sessions: behaviour the t05-verified spot-check found unpinned", () =>
     expect(teasers.map((m) => m.createdAt)).toEqual([delivery(events, 2, "18.6").t, nineteenOne.t]);
 
     session.control({ action: "jump", target: { kind: "over", innings: 2, afterOvers: 18 } });
+    const jumpedTo = session.stadiumNow();
     const afterJump = messages.length;
     await playUntil(rt, session, nineteenOne.t);
     const replayed = ofType(messages.slice(afterJump), "moment").map((m) => m.data.moment.id);
-    expect(replayed).toEqual(teasers.map((m) => m.id));
+    // Both teasers and, since Task 8, the room read after 18.6: each passed again, each sent once.
+    const passed = session.moments().filter((m) => m.createdAt > jumpedTo);
+    expect(passed.map((m) => m.kind).sort()).toEqual([
+      "room_read",
+      "spoiler_nudge",
+      "spoiler_nudge",
+    ]);
+    expect(replayed).toEqual(passed.map((m) => m.id));
   });
 
   it("never streams an event or a chat line before the stadium clock reaches it", () => {

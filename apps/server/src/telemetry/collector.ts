@@ -179,7 +179,8 @@ export function createTelemetry(deps: {
         pushBounded(bucket.latencies, trace.latencyMs, LATENCY_WINDOW);
       }
       if (trace.cache === "hit") c.aiCacheHits += 1;
-      if (trace.outcome !== "ok") c.aiFallbacks += 1;
+      // A repaired answer is the model's, minus what a rule dropped: not a fallback.
+      if (trace.outcome !== "ok" && trace.outcome !== "repaired") c.aiFallbacks += 1;
       c.tokensIn += trace.tokensIn;
       c.tokensOut += trace.tokensOut;
       c.costUsd += trace.costUsd;

@@ -14,8 +14,103 @@ import { createSessionManager, type Session } from "../src/sessions/manager.ts";
 import { createTelemetry, createTraceSink } from "../src/telemetry/collector.ts";
 import { bundles, DATA_DIR, fakeClock } from "./helpers.ts";
 
-/** A valid answer for every Task 5 skill, so the happy path is the default. */
+/** The JSON inside a prompt's <facts> tag (the scripted answers below pick legal ids from it). */
+export function promptFacts<T>(user: string): T {
+  const json = user.match(/<facts>\n([\s\S]*?)\n<\/facts>/)?.[1];
+  if (!json) throw new Error("no <facts> in the prompt");
+  return JSON.parse(json) as T;
+}
+
+interface LineupPromptFacts {
+  squad: { id: string; armband: string | null; playing: boolean }[];
+  notPlaying: { id: string; swapOptions: { inId: string }[] }[];
+}
+
+/** A legal lineup answer: each benched pick's first option, the armbands kept or passed on. */
+export function legalLineupAnswer(user: string) {
+  const facts = promptFacts<LineupPromptFacts>(user);
+  const swaps = facts.notPlaying.flatMap((p) => {
+    const option = p.swapOptions[0];
+    return option ? [{ outId: p.id, inId: option.inId, rationale: "Plays today." }] : [];
+  });
+  const swapIn = (id: string) => swaps.find((s) => s.outId === id)?.inId ?? id;
+  const armband = (mark: string) => swapIn(facts.squad.find((p) => p.armband === mark)?.id ?? "");
+  return {
+    swaps,
+    captainId: armband("C"),
+    viceCaptainId: armband("VC"),
+    captainRationale: "In form.",
+    viceCaptainRationale: "Bats high.",
+    conditionsRead: "Scripted read of the conditions.",
+  };
+}
+
+/** A legal comeback quest: a wicket in the facts' quest window and trivia on the dismissal. */
+export function legalBailoutAnswer(user: string) {
+  const { questWindow: qw } = promptFacts<{
+    questWindow: { innings: number; fromLegalBall: number; toLegalBall: number };
+  }>(user);
+  const rule = {
+    type: "wicket_in_window",
+    innings: qw.innings,
+    over: null,
+    fromLegalBall: qw.fromLegalBall,
+    toLegalBall: qw.toLegalBall,
+    boundary: null,
+    op: null,
+    value: null,
+    playerId: null,
+    byLegalBall: null,
+  };
+  return {
+    title: "Scripted comeback quest",
+    predictions: [
+      {
+        prompt: "Another wicket in the window?",
+        options: [
+          { id: "yes", label: "Yes" },
+          { id: "no", label: "No" },
+        ],
+        rule,
+      },
+    ],
+    trivia: [
+      { question: "How did it happen?", options: ["a", "b"], answerIndex: 0, factId: "dismissal" },
+    ],
+    banter: {
+      tone: "wholesome",
+      headline: "Scripted",
+      body: "Scripted body.",
+      shareText: "Scripted.",
+    },
+  };
+}
+
+/** A legal room read: one pod citing the window's first message, the whole room. */
+export function legalRoomAnswer(user: string) {
+  const chat = JSON.parse(user.match(/<chat>\n([\s\S]*?)\n<\/chat>/)?.[1] ?? "[]") as {
+    id: string;
+  }[];
+  return {
+    mood: { label: "Scripted", emoji: "💬" },
+    pods: [
+      {
+        title: "Everyone",
+        stance: "Scripted stance",
+        sharePct: 100,
+        sampleMessageIds: chat.slice(0, 1).map((m) => m.id),
+      },
+    ],
+    hotTake: null,
+    poll: null,
+  };
+}
+
+/** A valid answer for every skill, so the happy path is the default. */
 export const validScript: Script = (req) => {
+  if (req.skill === "room_read") return legalRoomAnswer(req.user);
+  if (req.skill === "lineup_patch") return legalLineupAnswer(req.user);
+  if (req.skill === "bailout") return legalBailoutAnswer(req.user);
   if (req.skill === "spoiler_nudge") return { nudge: "Everything rides on the next delivery." };
   if (req.skill === "catch_up") {
     return {

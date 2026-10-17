@@ -351,16 +351,20 @@ export function createGateway(deps: GatewayDeps): Gateway {
       answering = true;
       usage = { tokensIn: result.tokensIn, tokensOut: result.tokensOut };
       served = result.model;
-      // 5. Validation and 6. the guard: the model proposes, deterministic rules dispose.
+      // 5. Validation, the skill's repair and 6. the guard: the model proposes, rules dispose.
       const parsed = skill.outputSchema.safeParse(result.output);
       if (!parsed.success)
         return called("error", `invalid output: ${describeIssues(parsed.error)}`);
-      const verdict = skill.guard(parsed.data, facts);
+      const repaired = skill.repair?.(parsed.data, facts) ?? { output: parsed.data, dropped: [] };
+      const verdict = skill.guard(repaired.output, facts);
       if (!verdict.ok) return called("fallback", `guard: ${verdict.reason}`);
       // 7. Only a validated, guarded answer is cached for the next fan.
-      deps.cache.putLive(key, skill.promptVersion, model, parsed.data);
-      const live = called("ok", null);
-      return { ...live, output: parsed.data, provenance: "live" };
+      deps.cache.putLive(key, skill.promptVersion, model, repaired.output);
+      const live =
+        repaired.dropped.length > 0
+          ? called("repaired", repaired.dropped.map((item) => `dropped ${item}`).join("; "))
+          : called("ok", null);
+      return { ...live, output: repaired.output, provenance: "live" };
     } catch (error) {
       if (controller.signal.aborted) return called("timeout", `no answer within ${timeoutMs} ms`);
       if (error instanceof ProviderRefusalError) {

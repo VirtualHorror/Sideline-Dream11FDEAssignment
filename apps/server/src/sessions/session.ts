@@ -30,6 +30,9 @@ import {
   type JumpTarget,
   joinSeq,
   type Lens,
+  type LineupFacts,
+  lineupDetector,
+  lineupKey,
   type MatchEvent,
   type Moment,
   type MomentTrigger,
@@ -56,6 +59,16 @@ const FAILED = {
   code: "session_failed",
   message: "This session hit an internal error and was paused.",
 };
+
+/** Why a fan's lineup request cannot be answered now: the route answers 409 with the code. */
+export class LineupIntentError extends Error {
+  readonly code: "no_squad" | "not_yet" | "all_playing" | "locked";
+  constructor(code: LineupIntentError["code"], message: string) {
+    super(message);
+    this.name = "LineupIntentError";
+    this.code = code;
+  }
+}
 
 /** A control the session cannot carry out (an unknown jump target): the route answers 400. */
 export class ControlError extends Error {
@@ -93,6 +106,11 @@ export interface Session {
   tick(): void;
   control(request: ControlRequest): ClockState;
   ask(question: string, lens?: Lens): Promise<Moment>;
+  /**
+   * A fan's request for a different lineup patch ("rebalance for rain"): allowed once the XIs are out
+   * at the ground and until the fan's TV shows the first ball, when fantasy teams lock (DOMAIN §3).
+   */
+  lineupIntent(text: string): Promise<Moment>;
   /** Subscribes to the stream: the listener first receives `hello` and a `snapshot`. */
   connect(listener: (message: StreamMessage) => void): () => void;
   /** Resolves when the AI work started so far has finished (tests, shutdown). */
@@ -220,8 +238,53 @@ export function createSession(
     }
   }
 
+  /**
+   * The lineup facts the XIs produced for this fan, recomputed with the lineup detector from the
+   * events released so far (a jump may have skipped the XI event past the gate): the facts, "all
+   * playing" when no pick sits out, or null before both XIs are out. Fixed once known.
+   */
+  let lineup: LineupFacts | "all_playing" | null = null;
+  function lineupSoFar(): LineupFacts | "all_playing" | null {
+    if (lineup !== null) return lineup;
+    for (let i = 0; i < cursor; i += 1) {
+      const event = events[i];
+      if (event?.kind !== "playing_xi") continue;
+      const before = foldEvents(matchId, events, i - 1);
+      const after = foldEvents(matchId, events, i);
+      const verdict = lineupDetector.evaluate({ before, after, event, events, ctx });
+      if (verdict.outcome === "ai_trigger" && verdict.trigger.kind === "lineup_patch") {
+        lineup = verdict.trigger.facts;
+      } else if (verdict.reason === "squad_all_playing") {
+        lineup = "all_playing";
+      }
+      if (lineup !== null) return lineup;
+    }
+    return null;
+  }
+
   function onTrigger(trigger: MomentTrigger, event: MatchEvent, releasedAt: number): void {
-    if (trigger.kind !== "spoiler_nudge") return; // lineup, bailout, room: skills arrive in Task 8
+    if (trigger.kind === "lineup_patch") {
+      track(
+        deps.orchestrator.lineupPatch({
+          sessionId: id,
+          key: trigger.key,
+          facts: trigger.facts,
+          intent: null,
+          createdAt: event.t,
+          revealAt: event.t,
+        }),
+      );
+      return;
+    }
+    if (trigger.kind === "bailout") {
+      track(deps.orchestrator.bailout({ sessionId: id, trigger, ballT: event.t }));
+      return;
+    }
+    if (trigger.kind === "room_read") {
+      track(deps.orchestrator.roomRead({ sessionId: id, trigger, ballT: event.t }));
+      return;
+    }
+    if (trigger.kind !== "spoiler_nudge") return; // catch-ups come from the session, not the gate
     // Wall ms until the fan's TV reaches the nudge time (ball − 6 s): their delay, less the lead
     // and how far the stadium clock already is past the ball, at this speed.
     const budgetMs = Math.max(
@@ -402,6 +465,33 @@ export function createSession(
           recent,
         },
         at: stadiumNow(),
+      });
+      deliver(moment);
+      return moment;
+    },
+
+    async lineupIntent(text) {
+      touch();
+      const squad = persona.squad;
+      if (!squad) throw new LineupIntentError("no_squad", "This fan has no fantasy team to patch.");
+      const firstBall = events.find(isDelivery);
+      if (firstBall && firstBall.t <= tvTimeAt(clock, deps.now())) {
+        throw new LineupIntentError("locked", "Teams locked at the first ball on your TV.");
+      }
+      const facts = lineupSoFar();
+      if (facts === null) {
+        throw new LineupIntentError("not_yet", "The playing XIs are not out yet.");
+      }
+      if (facts === "all_playing") {
+        throw new LineupIntentError("all_playing", "Every pick in this team is playing.");
+      }
+      const moment = await deps.orchestrator.lineupPatch({
+        sessionId: id,
+        key: lineupKey(matchId, squad, text),
+        facts,
+        intent: text,
+        createdAt: stadiumNow(),
+        revealAt: null,
       });
       deliver(moment);
       return moment;

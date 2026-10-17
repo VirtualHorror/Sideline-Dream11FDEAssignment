@@ -2,26 +2,31 @@
  * The orchestrator: turns the engine's triggers, a late joiner's catch-up and a fan's question into
  * moments, through the AI gateway, and stamps each with its spoiler-safe timing.
  *
- * Callers: sessions/session.ts (teasers from gate triggers, catch-up reels on joining or skipping
- * ahead, questions from POST /ask). Lineup patches, bailouts and room reads have no skill until
- * Task 8: the session keeps their gate decisions and never sends them here. Moment timing (PLAN
- * Task 5): a teaser reveals at its ball and may show from six seconds before it, but only if it was
- * ready before the fan's TV got there (Review focus 3); a catch-up reel reveals when the TV reaches
- * the point the fan joined at (it covers balls still in the fan's delay); an answer shows at once.
+ * Callers: sessions/session.ts (teasers, lineup patches, bailouts and room reads from gate triggers;
+ * catch-up reels on joining or skipping ahead; questions from POST /ask; a fan's lineup request).
+ * Moment timing (PLAN Task 5): a teaser reveals at its ball and may show from six seconds before it,
+ * but only if it was ready before the fan's TV got there (Review focus 3); a catch-up reel reveals
+ * when the TV reaches the point the fan joined at (it covers balls still in the fan's delay); a
+ * lineup patch, a bailout and a room read reveal when the TV shows what triggered them (the XIs, the
+ * wicket, the over's last ball); an answer to the fan shows at once.
  */
 import { randomUUID } from "node:crypto";
 import {
   type CatchUpFacts,
   catchUpKey,
   type Lens,
+  type LineupFacts,
   type Moment,
   MomentSchema,
   type MomentTrigger,
 } from "@sideline/engine";
 import type { Gateway } from "../ai/gateway.ts";
+import { bailoutSkill, bailoutSkillFacts } from "../ai/skills/bailout.ts";
 import { catchUpSkill, catchUpSkillFacts } from "../ai/skills/catchUp.ts";
 import { type ExplainerContext, explain, explainerKey } from "../ai/skills/explainer.ts";
 import type { TeamName } from "../ai/skills/format.ts";
+import { lineupSkill } from "../ai/skills/lineupPatch.ts";
+import { roomReadSkill } from "../ai/skills/roomRead.ts";
 import { teaserSkill } from "../ai/skills/spoilerNudge.ts";
 import type { MatchBundle } from "../data/bundle.ts";
 import type { Glossary } from "../data/glossary.ts";
@@ -31,6 +36,8 @@ import type { Telemetry } from "../telemetry/collector.ts";
 export const NUDGE_LEAD_MS = 6_000;
 
 export type NudgeTrigger = Extract<MomentTrigger, { kind: "spoiler_nudge" }>;
+export type BailoutTrigger = Extract<MomentTrigger, { kind: "bailout" }>;
+export type RoomTrigger = Extract<MomentTrigger, { kind: "room_read" }>;
 
 export interface Orchestrator {
   teaser(input: {
@@ -44,6 +51,19 @@ export interface Orchestrator {
     tvNow: () => number;
   }): Promise<Moment>;
   catchUp(input: { sessionId: string; facts: CatchUpFacts; at: number }): Promise<Moment>;
+  /** The room's debates over the last five minutes; revealed with the ball that closed the over. */
+  roomRead(input: { sessionId: string; trigger: RoomTrigger; ballT: number }): Promise<Moment>;
+  /** A comeback quest for the cohort whose armband just fell; revealed with the wicket. */
+  bailout(input: { sessionId: string; trigger: BailoutTrigger; ballT: number }): Promise<Moment>;
+  /** The XIs' patch (intent null, revealed when the TV shows the XIs) or a fan's request (at once). */
+  lineupPatch(input: {
+    sessionId: string;
+    key: string;
+    facts: LineupFacts;
+    intent: string | null;
+    createdAt: number;
+    revealAt: number | null;
+  }): Promise<Moment>;
   ask(input: {
     sessionId: string;
     matchId: string;
@@ -121,6 +141,82 @@ export function createOrchestrator(deps: {
         provenance: result.provenance,
         traceId: result.trace.id,
         scope: "shared",
+        payload: result.payload,
+      });
+    },
+
+    async roomRead({ sessionId, trigger, ballT }) {
+      const result = await deps.gateway.run(
+        roomReadSkill,
+        trigger.key,
+        { room: trigger.facts, teams: teamsOf(trigger.facts.matchId) },
+        { sessionId },
+      );
+      return MomentSchema.parse({
+        id: newId(),
+        key: trigger.key,
+        kind: "room_read",
+        phase: "climax",
+        createdAt: ballT,
+        revealAt: ballT,
+        nudgeAt: null,
+        provenance: result.provenance,
+        traceId: result.trace.id,
+        scope: "shared",
+        payload: result.payload,
+      });
+    },
+
+    async bailout({ sessionId, trigger, ballT }) {
+      const result = await deps.gateway.run(
+        bailoutSkill,
+        trigger.key,
+        bailoutSkillFacts(trigger.facts, teamsOf(trigger.facts.matchId)),
+        { sessionId },
+      );
+      return MomentSchema.parse({
+        id: newId(),
+        key: trigger.key,
+        kind: "bailout",
+        phase: "early_collapse",
+        createdAt: ballT,
+        revealAt: ballT,
+        nudgeAt: null,
+        provenance: result.provenance,
+        traceId: result.trace.id,
+        scope: "shared",
+        payload: result.payload,
+      });
+    },
+
+    async lineupPatch({ sessionId, key, facts, intent, createdAt, revealAt }) {
+      const bundle = deps.bundles.get(facts.matchId);
+      if (!bundle) throw new Error(`no bundle for match ${facts.matchId}`);
+      // The XIs' own patch is counted by the gate (a personal trigger); a fan's request is a new one.
+      if (intent !== null) deps.telemetry.recordKey(sessionId, key, "session");
+      const result = await deps.gateway.run(
+        lineupSkill,
+        key,
+        {
+          lineup: facts,
+          teams: teamsOf(facts.matchId),
+          intent,
+          players: bundle.players,
+          team: bundle.rules.team,
+        },
+        { sessionId },
+      );
+      return MomentSchema.parse({
+        id: newId(),
+        key,
+        kind: "lineup_patch",
+        phase: "toss_to_lock",
+        createdAt,
+        revealAt,
+        nudgeAt: null,
+        provenance: result.provenance,
+        traceId: result.trace.id,
+        scope: "session",
         payload: result.payload,
       });
     },
