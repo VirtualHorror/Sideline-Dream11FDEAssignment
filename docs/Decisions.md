@@ -656,3 +656,29 @@
 - **Engine:** `situationOf` is exported (the explainer's facts); no contract changed except D-053.
 - **Smoke:** `pnpm ai:smoke` uses an in-memory database, so its call never lands in the app's traces or
   daily budget.
+
+### D-059 — Spot-check of `t05-verified`: accepted, four test gaps pinned in Task 6 (2026-10-17, before T6, Claude)
+- **Context:** Task 5 was implemented and audited by the same agent; Nabhanyu asked for an independent
+  check in a fresh session before Task 6 (F06 log). Verify, E2E, the oracle diff, `mutate.py` (18/18) and
+  a keyless live run of the API the UI will consume all agree with the Task 5 record. 17 of 21 fresh hand
+  mutants of the server code were killed.
+- **Decision:** the four survivors are test gaps, not defects, so `t05-verified` stands and the gaps are
+  closed with tests on the Task 6 branch (no server source change): a jump back then playing forward
+  streams the held teasers again, once each (Review focus 1); no event or chat line is streamed before the
+  stadium clock reaches it; the clock keeps running after the match ends until the crowd's last reaction;
+  `/ask` on a session an internal error stopped answers 409 `session_failed`. Each new test fails on its
+  mutant and passes on the merged code.
+
+### D-060 — The match room reads players, rules and the model from `GET /api/matches/:matchId` (2026-10-17, T6, Claude)
+- **Context:** PLAN Task 6 has the browser call `describeDelivery`, `winProbability` and (for the catch-up's
+  squad impact, F05 follow-up 1) `fantasyPoints`/`squadPoints`, which need the players, the win-probability
+  model and the fantasy rules. Task 5's API sends none of them: `/api/matches` lists summaries and
+  personas, and `hello` carries the summary and the fan's persona.
+- **Decision:** one read-only route, `GET /api/matches/:matchId` → `{ match, players, rules, winprob }`
+  straight from the match bundle (404 JSON for an unknown id), validated in the browser with the engine's
+  own schemas (`MatchSummarySchema`, `PlayerSchema`, `FantasyRulesSchema`, `WinProbModelSchema`). It is
+  public match data and model weights; personas stay out (the stream's `hello` brings the session's).
+  No contract changes: the response is composed of existing schemas.
+- **Alternatives:** adding the fields to `hello` (a contract change, and the same 40 KB resent on every
+  reconnect); importing `data/` into the web bundle at build time (match data baked into the client, a
+  rebuild per match, and every match shipped to every fan).

@@ -1,10 +1,15 @@
 import {
   ClockStateSchema,
+  FantasyRulesSchema,
+  MatchSummarySchema,
   MomentSchema,
+  PlayerSchema,
   SessionCreateResponseSchema,
   TelemetrySnapshotSchema,
+  WinProbModelSchema,
 } from "@sideline/engine";
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 import { testApp } from "./http.ts";
 
 const json = async (res: Response) => (await res.json()) as Record<string, unknown>;
@@ -34,6 +39,34 @@ describe("GET /api/matches (PLAN 5.7)", () => {
         expect(Object.keys(persona).sort()).toEqual(["blurb", "delayMs", "id", "label", "lens"]);
       }
     }
+  });
+});
+
+// Task 6: the match room folds events, names players and draws win probability in the browser, so
+// it needs the bundle's players, rules and model (D-060). Personas stay out: `hello` brings the fan's.
+describe("GET /api/matches/:matchId (Task 6)", () => {
+  it("serves the summary, both full squads, the fantasy rules and the win-probability model", async () => {
+    const t = testApp();
+    const res = await t.call("/api/matches/1298150");
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as Record<string, unknown>;
+    expect(Object.keys(body).sort()).toEqual(["match", "players", "rules", "winprob"]);
+    expect(MatchSummarySchema.parse(body.match)).toMatchObject({
+      id: "1298150",
+      title: "Pakistan vs India",
+      date: "2022-10-23",
+    });
+    const players = z.array(PlayerSchema).parse(body.players);
+    expect(players).toHaveLength(30);
+    expect(players.find((p) => p.id === "ba607b88")?.shortName).toBe("Kohli");
+    expect(FantasyRulesSchema.parse(body.rules).team.captainMultiplier).toBe(2);
+    expect(WinProbModelSchema.parse(body.winprob).leverage.nudgeThreshold).toBeCloseTo(0.18437, 5);
+  });
+
+  it("answers an unknown match with a JSON 404", async () => {
+    const res = await testApp().call("/api/matches/1234567");
+    expect(res.status).toBe(404);
+    expect(await json(res)).toEqual({ error: { code: "not_found", message: "No match 1234567" } });
   });
 });
 
