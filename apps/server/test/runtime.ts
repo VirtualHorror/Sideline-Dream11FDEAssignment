@@ -72,7 +72,18 @@ export function testRuntime(
     maxSessions: opts.maxSessions,
     detectors: opts.detectors,
   });
-  return { clock, db, traces, telemetry, provider, gateway, glossary, orchestrator, manager };
+  return {
+    clock,
+    db,
+    bundles: all,
+    traces,
+    telemetry,
+    provider,
+    gateway,
+    glossary,
+    orchestrator,
+    manager,
+  };
 }
 
 /** Collects a session's stream messages. */
