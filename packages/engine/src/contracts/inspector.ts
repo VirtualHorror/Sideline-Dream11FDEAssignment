@@ -38,3 +38,12 @@ export const InspectorResultSchema = z.object({
   truncated: z.boolean(),
 });
 export type InspectorResult = z.infer<typeof InspectorResultSchema>;
+
+/** One documented view the inspector may read (GET /api/inspector/views), for the control plane. */
+export const InspectorViewSchema = z.object({
+  view: z.string(),
+  about: z.string(),
+  /** "name TYPE: what it holds", one per column. */
+  columns: z.array(z.string()),
+});
+export type InspectorView = z.infer<typeof InspectorViewSchema>;
