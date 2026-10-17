@@ -869,3 +869,72 @@
   the scrubbed word.
 - **Alternatives:** pushing the history as is (the word would be public in old commits); a fresh single-commit
   history (loses the audited trail and the tags' meaning).
+
+### D-073 — The inspector and the fan's chat line as built (2026-10-17, T8, Claude)
+- **Inspector:** `POST /api/sessions/:id/inspector` takes `{ question }` (the inspector skill, `fast`/`low`, writes
+  one query) or `{ sql }` (the operator writes it), a new contract (`InspectorRequest`, `InspectorResult` in
+  `contracts/inspector.ts`). Either way the query runs in the sandbox (D-074) over `visible_deliveries` (what this
+  fan's TV has shown), `players` and `ai_calls`, and the result carries the SQL, the rows (at most 200) or the
+  refusal, timeout or SQLite error with its reason, never a 500. The model's SQL is not guarded before the sandbox,
+  so a refused query is shown with its reason (PLAN 9.2). `ai_calls` here has no `session_id` (a session id controls
+  a session), no `moment_key` and no `detail` (they can name a ball this fan's TV has not shown). The SQL's key is
+  the question's hash (`inspect:<hash>`), shared; the rows are the session's. Inspector questions are not moments
+  and not in the scale projection (an operator's tool), but their calls are traced and counted.
+- **Why the operator's own SQL:** production has no working key (D-067), so without it the inspector could never
+  show a row there; and the sandbox, not the model, is the security boundary, so the operator's SQL takes the very
+  path a model's does (Review focus 5 is tested through it).
+- **Chat:** `POST /api/sessions/:id/chat { text, statBack? }` posts the fan's line stamped on their TV clock (shown at
+  once; a stadium stamp would hold their own words back by their delay), to their own stream and snapshots only (the
+  room read never reads it, D-045), hidden by a jump back to before it and sent again when play passes it, like a
+  moment. With `statBack: true` the line is also a take checked against the match (D-075).
+- **Limits:** lineup-intent, chat and inspector each take a token from their own per-address bucket (the ask rate,
+  12 a minute, burst 4) before reading the body, so refused bodies count too.
+- **Alternatives:** the inspector over the server's live database with a column deny list (one missed column leaks a
+  session id or the future); a guard that refuses bad SQL before the sandbox (the UI could not show what was refused);
+  questions only (a dead key means a dead inspector).
+
+### D-074 — The SQL sandbox as built (2026-10-17, T8, Claude)
+- **Decision:** `sql/validate.ts` checks the text: one statement (a trailing semicolon is fine), starting SELECT or
+  WITH, no comments, at most 2000 characters, none of the PLAN's words (ATTACH, PRAGMA, INSERT, UPDATE, DELETE, DROP,
+  ALTER, CREATE, REPLACE, VACUUM, RECURSIVE, load_extension) nor DETACH, REINDEX, ANALYZE or transaction control; a word
+  inside a string literal is refused too. `sql/sandbox.ts` then starts a fresh worker thread (`sql/worker.ts`, 64 MB
+  heap) that builds an in-memory database from the views it is handed (`sql/views.ts`: rows copied per query, so a
+  query can never read past them), sets `PRAGMA query_only = ON`, installs SQLite's authorizer (SELECT, reads of those
+  tables and 23 plain functions such as count, sum, round and coalesce; everything else denied), runs
+  `SELECT * FROM (\n<sql>\n) LIMIT 200` and posts the rows back; the worker is terminated if it has not answered after
+  2 s. Two queries may run at once; a third is "busy". `node:sqlite`'s `setAuthorizer` (Node 24.22) made the PLAN's
+  "read-only connection" an allow-list: SQLite runs a self-referencing CTE without the RECURSIVE keyword, and the
+  authorizer stops it where the word list cannot.
+- **Views:** `visible_deliveries` (25 documented columns, from the bundle's events with the engine's leverage and win
+  probability, cut at the fan's TV time), `players`, and for the inspector `ai_calls` (D-073). The same definitions
+  feed the prompts, the worker and the UI.
+- **Alternatives:** a read-only connection to the server's own database file (tests run on `:memory:`, the base
+  tables would hold the future and session ids, and WAL readers interact with the writer); a SQL parser to whitelist
+  identifiers (a dependency and still weaker than the authorizer); running the query on the main thread with a timeout
+  (a synchronous query cannot be interrupted).
+
+### D-075 — Task 8's skills as built: repair, yes-or-no rules, shared facts, the recorder (2026-10-17, T8, Claude)
+- **Repair before guard:** skills may define `repair(out, facts)`, run after zod and before the guard; the lineup
+  patch's drops a swap that is not one of the detector's listed swaps, repeats a benched pick or a replacement, or
+  breaks a squad rule once the swaps before it are in. The trace's outcome is `repaired` (already in the contract)
+  with what was dropped; it is a live answer, so telemetry no longer counts it as a fallback. The guard then needs a
+  legal swap left, a valid squad and two different armbands on members of an XI.
+- **Lineup requests:** `lineupKey(match, squad, intent)` hashes the request (normalised like a question) into the
+  intent slot; allowed from the second XI until the fan's TV shows the first ball (DOMAIN §3: teams lock then); 409
+  otherwise (`not_yet`, `no_squad`, `all_playing`, `locked`).
+- **Rules the engine settles:** bailout predictions and room-read polls are yes-or-no: exactly two options, the first
+  if the rule comes true; the model writes a rule as one flat object with nulls (`questRules.ts`) that must parse as a
+  `QuestRule`, inside the quest window and after the wicket (bailout) or about balls still to come (poll), and not be
+  decided already. Rewards are 100 simulated DreamBucks per correct call (a game parameter, not a statistic).
+- **Shared facts:** the bailout's squad projection is split off before the prompt (`bailoutSkillFacts`), as the
+  catch-up's squad impact is; the room read's facts never hold the fan's own lines.
+- **Stat-back:** two calls on one personal key (`statback:<match>:<TV seq>:<hash>`): the query (the sandbox is its
+  guard) and the verdict, whose guard accepts only numbers that appear in the rows (as is, rounded to 0-2 places, or a
+  share of 1 as a percentage) or in the take. Every failure is a labelled card that says what happened.
+- **Recorder:** bailouts and room reads are shared, so `pnpm ai:record` records them (91 planned calls); its sessions
+  run without the lineup detector, so it never pays for a personal patch it would not record.
+- **Order of the session (owner, this session; amends D-069):** Task 8 is audited, merged and tagged `t08-verified` on
+  its own before Task 9, still on the one branch `task/08-09-skills-frontend`; Task 9 merges again for `t09-verified`.
+- **Alternatives:** an all-or-nothing lineup guard (one bad swap would discard a good patch, against PLAN 8.1);
+  multi-option predictions (one rule can only say yes or no); a discriminated union in the model's schema (strict
+  structured-output modes handle unions unevenly).

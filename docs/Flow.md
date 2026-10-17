@@ -158,7 +158,7 @@ metadata. `applyEvent` mutates a state one event at a time; `foldEvents` creates
 seeking and replay. Over summaries retain both team runs and bowler-conceded runs so maiden
 classification follows the extras rules exactly.
 
-## 7. Session lifecycle and tick loop — BUILT (T5; end of match T6)
+## 7. Session lifecycle and tick loop — BUILT (T5; end of match T6; Task 8 skills and the fan's chat T8)
 
 ```
 POST /api/sessions {matchId, personaId, delayMs?, lens?}                  http/routes/sessions.ts
@@ -191,22 +191,26 @@ one global ticker, every 100 ms: manager.tick()                            sessi
       telemetry.recordGate(id, decisions, triggers)                       telemetry/collector.ts
       spoiler_nudge trigger → budgetMs = max(0, (t − 6 s + delay − now) / speed)
                             → orchestrator.teaser (§8, async)
-      lineup_patch / bailout / room_read → decision kept, no model (skills in Task 8)
-    → "events" batch; crowd messages ≤ now → "chat" batch; produced moments now due → "moment"
+      lineup_patch → orchestrator.lineupPatch (intent null, revealAt = the XI event)        (§8)
+      bailout      → orchestrator.bailout (revealAt = the wicket)                          (§8)
+      room_read    → orchestrator.roomRead (revealAt = the ball that closed the over)      (§8)
+    → "events" batch; crowd messages ≤ now and the fan's own lines not yet sent → "chat" batch;
+      produced moments now due → "moment"
     → events and crowd exhausted and now ≥ end + delayMs → pause the clock, "clock";
-      streams open → "telemetry" every 5 s
+      streams open → "telemetry" every 5 s, with the gateway's aiMode now (D-071)
 
 POST /api/sessions/:id/control                                             http/routes/control.ts
   play | pause | speed | delay → clock re-anchored at now (delay: no refold, the buffer is client-side)
   lens → future catch-ups and answers
   seek t | jump {start | toss | over (seqAfterOvers) | event id} → moveTo(t):
-     clamp → cursors by time → state = foldEvents(≤ t) → sent marks cleared
+     clamp → cursors by time → state = foldEvents(≤ t) → sent marks cleared (moments and the fan's
+     own lines alike: a jump back hides them, play passes them again once)
      → skipped ≥ 12 legal balls never seen (beyond the furthest point seen) → startCatchUp
      → "snapshot" (moments with createdAt > t stay hidden until the clock passes them again)
 AI work resolves → deliver(moment): kept; sent now if its time has come (else when it does)
 ```
 
-## 8. AI gateway call — BUILT (T5)
+## 8. AI gateway call — BUILT (T5; Task 8 skills, repair and the mode T8)
 
 ```
 orchestrator.teaser({trigger, ballT, budgetMs, tvNow})                   orchestrator/orchestrator.ts
@@ -218,6 +222,17 @@ orchestrator.catchUp({facts, at})
   → key catchUpKey(match, innings, fromOver, toOver, lens); telemetry.recordKey(shared)
   → gateway.run(catchUpSkill, key, catchUpSkillFacts(facts) /* squadImpact dropped */)
   → moment: createdAt = revealAt = at (shown when the fan's TV reaches the join point)
+orchestrator.lineupPatch({key, facts, intent, createdAt, revealAt})          ai/skills/lineupPatch.ts
+  → gateway.run(lineupSkill, lineup:<match>:<squad hash>:<intent hash | none>, {facts, team names,
+    intent, both squads, team rules}); a fan's request also recordKey(personal)
+  → moment lineup_patch, scope session: the XIs' patch reveals with the XI event, a request at once
+orchestrator.bailout({trigger, ballT})                                        ai/skills/bailout.ts
+  → gateway.run(bailoutSkill, bailout:<match>:<eventId>:<C|VC>, bailoutSkillFacts(facts)
+    /* projection split off: payload only, never the prompt */) → moment bailout, shared, at the wicket
+orchestrator.roomRead({trigger, ballT})                                       ai/skills/roomRead.ts
+  → gateway.run(roomReadSkill, room:<match>:<innings>:<over>, {room facts, team names})
+    (the chat escaped inside <chat>) → moment room_read, shared, at the ball that closed the over
+orchestrator.statBack / orchestrator.inspect                                  (§16)
 
 gateway.run(skill, key, facts, {deadlineMs?, sessionId?})                ai/gateway.ts
   ├─ in-flight map by (promptVersion, key): a second run awaits the first, then writes its own trace
@@ -232,11 +247,17 @@ gateway.run(skill, key, facts, {deadlineMs?, sessionId?})                ai/gate
   │     abort → "timeout" | ProviderRefusalError → "refused" | ProviderOutputError → "error"
   │     | other → "error" (class, status and the body's error code; never its message)
   ├─ costOf(served model, reported usage) → budget.charge                    ai/pricing.ts
+  ├─ any answer at all → the provider is answering; a provider error → it is not (mode, D-071)
   ├─ skill.outputSchema.safeParse → invalid → "error"
+  ├─ skill.repair?(output, facts) → drops what a rule forbids on its own (an illegal lineup swap)
   ├─ skill.guard(output, facts) → rejected → "fallback" ("guard: …")   ai/guards/{spoilerLint,citations}.ts
-  ├─ ok → cache.putLive → payload = skill.toPayload(output, facts), provenance "live"
+  ├─ ok → cache.putLive → payload = skill.toPayload(output, facts), provenance "live"; outcome
+  │     "repaired" (with what was dropped) if the repair dropped anything, else "ok"
   └─ else payload = skill.fallback(facts) (labelled, provenance "fallback"; never cached)
-  every run: one AICallTrace → traces.record → ai_calls row + telemetry listener; gateway counters
+  every run: one AICallTrace → traces.record → ai_calls row (with `called`) + telemetry listener;
+  gateway counters
+gateway.mode() = "live" while a provider is configured, the budget holds and its last call did not end
+  in a provider error, else "replay"; at boot it starts from traces.lastProviderAnswer() (D-071)
 ```
 
 The scripted provider (`ai/providers/scripted.ts`) stands in for a model in every test; nothing in
@@ -448,4 +469,45 @@ pnpm ai:record [--yes] [--fresh] [--out <dir>] [--provider scripted]          sc
        → replayable rows: live answers + earlier rows, one per key, still valid, recorded skills only
        → <dir>/<matchId>.jsonl (sorted, written through a temporary file) → report calls, tokens, cost, missing
 server boot (§1): loadReplayRows(data/ai-replay) → ai_cache source 'replay' → answers any model, with no key
+```
+
+## 16. A fan's lineup request, chat line, take and inspector query — BUILT (T8)
+
+```
+POST /api/sessions/:id/lineup-intent {text 1-280}                          http/routes/lineup.ts
+  → per-address token bucket (429 + Retry-After) → readJson (400, 413) → session.lineupIntent(text)
+       no squad → 409 no_squad; the fan's TV has shown the first ball → 409 locked
+       lineupSoFar(): the lineup detector on the released XI event (recomputed, so a skipped XI
+       still counts) → null → 409 not_yet | "all_playing" → 409 all_playing
+       → orchestrator.lineupPatch({key: lineupKey(match, squad, text), facts, intent: text,
+         createdAt: now, revealAt: null}) (§8) → deliver → {moment}
+
+POST /api/sessions/:id/chat {text 1-280, statBack?}                         http/routes/chat.ts
+  → bucket → readJson → session.chat(text, statBack)
+       message {id you-<n>, t = the fan's TV time, handle "You", fromYou, synthetic false}
+       → kept with the session's own lines → "chat" to its stream (snapshots carry it once due)
+       statBack → orchestrator.statBack({take, tvT, tvSeq, situation on the TV})
+         → runStatBack                                                     ai/skills/statBack.ts
+              gateway.run(statBackQuerySkill, statback:<match>:<tvSeq>:<hash>, {take, teams, situation})
+              → no SQL (fallback) → labelled "could not check" card
+              → runSandboxed(sql, statBackTables(bundle, tvT))   (below) → not ok → labelled card with
+                the SQL and the reason
+              → gateway.run(statBackVerdictSkill, same key, {take, sql, columns, rows ≤ 50})
+                guard: every number in statLine is in the rows or the take
+         → moment take_card, scope session, revealAt null → deliver → {message, moment}
+
+POST /api/sessions/:id/inspector {question} | {sql}                       http/routes/inspector.ts
+  → bucket → readJson(InspectorRequestSchema) → session.inspect → orchestrator.inspect
+       tables = inspectorTables(bundle, tvT, db): visible_deliveries ≤ tvT, players, ai_calls (no
+       session id, key or detail; last 5,000 rows)                                  sql/views.ts
+       question → gateway.run(inspectorSkill, inspect:<hash>, {question}) → no SQL → status no_query
+       → runSandboxed(sql, tables) → {result: InspectorResult}
+
+runSandboxed(sql, tables)                                                   sql/sandbox.ts
+  validateSql: one statement, SELECT/WITH, deny list, no comments, ≤ 2000 chars → refused + reason
+  two already running → busy
+  new Worker(sql/worker.ts, {tables, sql, maxRows 200}): in-memory database built from the tables →
+    PRAGMA query_only → setAuthorizer (SELECT, reads of those tables, 23 plain functions) →
+    SELECT * FROM (<sql>) LIMIT 200 → rows posted back
+  not answered after 2 s → worker.terminate → timeout
 ```

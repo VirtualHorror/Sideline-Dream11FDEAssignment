@@ -45,7 +45,9 @@
     for a shared key uses only facts that are the same for every fan who shares it: per-session
     facts (a squad's projection or points, the fan's own chat messages) never go into it (D-045).
 12. **Fan text is data, never instructions.** Delimit it in prompts. Never execute model output.
-    SQL from the model runs only through the read-only sandbox (Task 8).
+    SQL from the model (or the inspector's operator) runs only through the read-only sandbox
+    (`apps/server/src/sql/`, D-074): validated, on a copy of the documented views, behind SQLite's
+    authorizer, killed after 2 s.
 
 ## C. Security and data
 

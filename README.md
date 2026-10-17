@@ -22,7 +22,7 @@ once `sudo deploy/install.sh` has run with it) and
 <https://3-108-67-100.sslip.io/> (always): one EC2 host, Caddy with automatic HTTPS, the server under
 systemd (`deploy/README.md`).
 
-> Status: Tasks 1-7 complete and audited (Milestone A: the public link): foundation; cricket core (Cricsheet timeline, match
+> Status: Tasks 1-8 complete and audited (Milestone A, the public link, at Task 7): foundation; cricket core (Cricsheet timeline, match
 > reducer, fantasy scoring, engine report); models (win probability, leverage and player priors
 > trained on 3,093 real men's T20Is, rebuilt byte for byte by one script); the moments engine (TV
 > clock and delay buffer, the four phase detectors, the entropy gate that keeps 233 of 266 events
@@ -35,8 +35,10 @@ systemd (`deploy/README.md`).
 > floodlight outburst; catch-up reels; questions; a simulated watch-along chat), a control plane that
 > shows every decision and what it cost, and `/architecture`; and the deployment: Caddy and a
 > sandboxed systemd unit on this host, one-command install and redeploy, a replay recorder for keyless
-> demos, and the browser tests run against the live site. See `docs/PLAN.md` for the build sequence
-> and status.
+> demos, and the browser tests run against the live site; and the rest of the AI (Task 8): lineup patches for
+> benched picks, comeback quests after a captain's cheap dismissal that the engine settles from real deliveries,
+> room reads of the watch-along chat, stat-backs of a fan's take, and an inspector, both over a read-only SQL
+> sandbox. See `docs/PLAN.md` for the build sequence and status.
 
 ## Quick start
 
