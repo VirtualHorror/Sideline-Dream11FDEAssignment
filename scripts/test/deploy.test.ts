@@ -109,11 +109,17 @@ describe("deploy scripts (PLAN 7.1)", () => {
     expect(statSync(script).mode & 0o111).toBe(0o111);
   });
 
+  // Each dry run gets a deploy checkout and an environment file of its own (--dir, --env-file), so
+  // neither this host's /srv/sideline (a clone of whichever copy production deploys from) nor a
+  // working copy's .env (a fresh clone has none) decides the outcome.
   it("install.sh --dry-run prints every step and changes nothing", () => {
+    const target = join(dir, "deploy-checkout");
     const out = runScript(install, [
       "--dry-run",
       "--site",
       SITE,
+      "--dir",
+      target,
       "--env-file",
       join(dir, "fixture.env"),
     ]);
@@ -121,8 +127,9 @@ describe("deploy scripts (PLAN 7.1)", () => {
     expect(out.status, text).toBe(0);
     expect(readFileSync(log, "utf8")).toBe("");
     expect(text).toContain(`install: site https://${SITE}/ and https://${DOMAIN}/  ref main`);
-    expect(text).toMatch(/would run: git (clone|-C \/srv\/sideline fetch)/);
-    expect(text).toContain("would run: pnpm --dir /srv/sideline build");
+    expect(existsSync(target)).toBe(false);
+    expect(text).toContain(`would run: git clone --quiet ${repo} ${target}`);
+    expect(text).toContain(`would run: pnpm --dir ${target} build`);
     expect(text).toMatch(
       /would run: env DEBIAN_FRONTEND=noninteractive apt-get install|caddy is installed: 2\./,
     );
@@ -136,7 +143,8 @@ describe("deploy scripts (PLAN 7.1)", () => {
     expect(text).toContain("deploy-env: not copied SOME_OTHER_TOKEN");
     expect(text).toMatch(/would write \/etc\/sideline\/sideline\.env \(mode 600\)/);
     expect(text).toContain("install:     ExecStart=");
-    expect(text).toContain("install:     WorkingDirectory=/srv/sideline");
+    expect(text).toContain(`install:     WorkingDirectory=${target}`);
+    expect(text).toContain(`install:     ReadWritePaths=${target}/data/runtime`);
     expect(text).toMatch(/(would write|unchanged) \/etc\/systemd\/system\/sideline\.service/);
     expect(text).toMatch(/(would write|unchanged) \/etc\/sudoers\.d\/sideline/);
     expect(text).toContain("would run: /usr/bin/systemctl restart sideline");
@@ -157,7 +165,18 @@ describe("deploy scripts (PLAN 7.1)", () => {
   });
 
   it("install.sh --domain '' serves the sslip.io name alone", () => {
-    const out = runScript(install, ["--dry-run", "--site", SITE, "--domain", ""]);
+    const target = join(dir, "deploy-checkout");
+    const out = runScript(install, [
+      "--dry-run",
+      "--site",
+      SITE,
+      "--dir",
+      target,
+      "--env-file",
+      join(dir, "fixture.env"),
+      "--domain",
+      "",
+    ]);
     expect(out.status, out.stderr).toBe(0);
     expect(out.stdout).toContain(`install: site https://${SITE}/  ref main`);
     expect(out.stdout).toContain(`install:     ${SITE} {`);

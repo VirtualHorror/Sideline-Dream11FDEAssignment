@@ -64,6 +64,19 @@ AI smoke and the replay recording (the proxy's account has no credit).
   time (350-950 ms) while this host's load average was 7-8: the remote desktop session (gnome-shell, Chrome Remote
   Desktop, Xorg) used about a core and the server itself was idle. D-077's note holds: measure on a quiet host.
 
+## After the tag
+- **A fresh clone on this host failed two deploy tests.** `pnpm verify` in the public copy (a clone of `t10-verified`
+  whose history is scrubbed) failed `install.sh --dry-run prints every step and changes nothing` and `install.sh
+  --domain '' serves the sslip.io name alone`: `update: error: /srv/sideline is not a deploy checkout of
+  …/Sideline-Dream11FDEAssignment (origin: …)`. The install dry runs planned against this host's real `/srv/sideline`,
+  whose `origin` is the working copy, so they passed only in that copy or on a host without `/srv/sideline` (any
+  reviewer's clone). Behind it, the second test also read the working copy's `.env` (it passed no `--env-file`), so it
+  would fail in every fresh clone, on any host (`…/Sideline-Dream11FDEAssignment/.env: not found`). Fixed test first in
+  a commit after the tag, which stays where it was (Constraint 21): the tests now give each install dry run its own
+  deploy checkout, with a new `install.sh --dir <path>` (default `/srv/sideline`, as `update.sh --dir` already had;
+  they failed first with `unknown option --dir`), and the test's own environment file. The same commit goes to the
+  public copy as a patch (D-078), where `pnpm verify` then passes.
+
 ## What worked / what did not
 - Worked: measuring a stopped query's CPU found what the 2 s test could not (it checked when the answer came, not
   whether the work stopped); a trial scrub on a throwaway clone, checked tree by tree, before touching the real one.

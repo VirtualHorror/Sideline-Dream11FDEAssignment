@@ -47,7 +47,8 @@ D-078); production never deploys from it.
 `install.sh` is idempotent: run it again whenever `.env`, the Caddyfile template or the unit
 template changes. Options: `--keyless` (no AI keys in production: recorded AI and labelled fallbacks
 only, never a paid call), `--ref <ref>` (default `main`), `--site <host>` (default from the EC2
-metadata service), `--env-file <path>` (default `.env`).
+metadata service), `--env-file <path>` (default `.env`), `--dir <path>` (the deploy checkout, default
+`/srv/sideline`; the tests give each dry run its own).
 
 ## What `install.sh` puts on the host
 

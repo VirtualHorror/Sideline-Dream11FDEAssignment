@@ -11,6 +11,7 @@
 #            --domain <host>    the owner's domain, served too (default sideline.nabhanyubm.tech;
 #                               --domain '' serves the sslip.io name only)
 #            --env-file <path>  where the AI settings come from (default: this repository's .env)
+#            --dir <path>       the deploy checkout (default /srv/sideline; the tests use their own)
 #
 # In order: the deploy checkout /srv/sideline (a clone of this repository at the ref, built by
 # deploy/update.sh as the developer, so work in this checkout never touches the public site);
@@ -66,13 +67,14 @@ while (($# > 0)); do
   case $1 in
     --dry-run) DRY_RUN=1 ;;
     --keyless) KEYLESS=1 ;;
-    --ref | --site | --domain | --env-file)
+    --ref | --site | --domain | --env-file | --dir)
       [[ $# -ge 2 ]] || die "$1 needs a value"
       case $1 in
         --ref) REF=$2 ;;
         --site) SITE=$2 ;;
         --domain) DOMAIN=$2 ;;
         --env-file) SOURCE_ENV=$2 ;;
+        --dir) DEPLOY_DIR=$2 ;;
       esac
       shift
       ;;
