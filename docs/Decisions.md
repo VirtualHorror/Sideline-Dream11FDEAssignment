@@ -1015,7 +1015,8 @@
   clone at `~/Downloads/Sideline-Dream11FDEAssignment`, with nothing untracked in it, whose history is scrubbed of the
   forbidden word as D-072 says (every commit, author, date and merge kept; the ten tags re-pointed); it alone is pushed
   to GitHub. This replaces D-072's "point the working copy at the scrubbed history": the working copy keeps its own
-  history and is never pushed.
+  history and is never pushed. The two histories share no hashes, so a later change travels as a patch
+  (`git format-patch` in one copy, `git am` in the other), checked with `pnpm verify` in both.
 - **Not run (Nabhanyu):** the live AI smoke and the replay recording (PLAN 7.3 and Task 10): the proxy's account still
   has no credit, so both are skipped and recorded as skipped (F10); production keeps the key and goes live by itself
   once the account has credit (D-071).

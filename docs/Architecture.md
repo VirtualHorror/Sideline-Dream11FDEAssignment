@@ -277,7 +277,8 @@ viewer, saved about 99.6%; with no personal moments the saving shows as 99.99999
   then runs in a child process with an empty environment on an in-memory copy of the documented views, with
   `query_only` and SQLite's authorizer (reads of those tables and plain functions only), as
   `SELECT * FROM (<sql>) LIMIT 200`, and the process is killed after 2 s; two at a time. A process, because a
-  thread blocked in SQLite's native loop ignores `terminate()` and kept computing after its timeout (BUG-005). Stat-back's copy holds only what the fan's TV has shown; the inspector's
+  thread blocked in SQLite's native loop ignores `terminate()` and kept computing after its timeout (BUG-005).
+  Stat-back's copy holds only what the fan's TV has shown; the inspector's
   `ai_calls` has no session ids, moment keys or details (D-073). Fan text (requests, takes, questions, chat) sits
   escaped inside its own tag in every prompt.
 - Supply chain: exact-ish pins + lockfile; pnpm `minimumReleaseAge` 14 days; install scripts
