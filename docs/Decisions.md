@@ -998,3 +998,32 @@
 - **Alternatives:** dropping the floodlight's animation on GPU-less browsers (it would also hide it from the headless
   visual review); prerendering the landing's HTML (a build step and duplicated markup, for about a second of
   simulated first paint on a slow phone).
+
+### D-078 — Task 10 as built: the sandbox's query in a killed process, two copies of the repository, the submission (T10, Claude; the copies: Nabhanyu; amends D-074, and D-072's last step)
+- **The sandbox (the final security review, BUG-005):** a worker thread inside SQLite's native query loop does not
+  stop for `worker.terminate()`, so the 2 s timeout answered while the query went on using a core until SQLite
+  finished (960 ms of CPU in the second after the answer, in the test), its slot freed, and the process could not
+  exit. Anyone can send such SQL through the inspector. Now `sql/sandbox.ts` forks `sql/worker.ts` as a child process
+  per query, with an empty environment (the server's keys are never inside it), V8's heap capped at 64 MB as before
+  and structured-clone IPC, and kills it with `SIGKILL` after its answer or at 2 s; a query settles, and its slot
+  frees, only when the process has exited. Cost: about 120 ms per query to start a process (measured), against
+  seconds for a model call. Test: "leaves nothing computing once a query is killed" (`sql.test.ts`) reads the CPU
+  of the test process and its children in `/proc` (Linux only, like the deployment).
+- **Two copies of the repository (Nabhanyu):** the working copy, with `.env`, its unrewritten history and the deploy
+  checkout's `origin`, moves to `~/Downloads/SidelineProd-Dream11FDEAssignment` (`/srv/sideline`'s `origin` is
+  re-pointed there, since `deploy/update.sh` deploys only from its own repository). The public repository is a fresh
+  clone at `~/Downloads/Sideline-Dream11FDEAssignment`, with nothing untracked in it, whose history is scrubbed of the
+  forbidden word as D-072 says (every commit, author, date and merge kept; the ten tags re-pointed); it alone is pushed
+  to GitHub. This replaces D-072's "point the working copy at the scrubbed history": the working copy keeps its own
+  history and is never pushed.
+- **Not run (Nabhanyu):** the live AI smoke and the replay recording (PLAN 7.3 and Task 10): the proxy's account still
+  has no credit, so both are skipped and recorded as skipped (F10); production keeps the key and goes live by itself
+  once the account has credit (D-071).
+- **The zip and the push follow the tag:** the zip is `git archive` of `t10-verified` from the public repository
+  (tracked files only), its sha256 beside it in a `.sha256` file, since a file inside an archive cannot hold the
+  archive's own hash; `docs/SUBMISSION.md` gives the command. A tagged tree cannot record its own push either: the
+  PLAN's push item stays open in it.
+- **Alternatives:** (sandbox) SQLite's progress handler or interrupt (`node:sqlite` exposes neither), a limit on joins
+  in the validator (a CTE repeats a table without naming it again), a smaller row limit (a `count(*)` reads every row
+  anyway); (copies) rewriting the working copy too (the deploy checkout and every local branch would follow it for no
+  gain, and the unrewritten history never leaves this host).

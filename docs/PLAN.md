@@ -82,7 +82,7 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Claude (Codex unavailable) + Nabhanyu | `task/07-deploy` | ✅ done, tagged `t07-verified` (recording waits for a key with credit) |
 | 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | Claude (Codex unavailable), with Task 9 (D-069) | `task/08-09-skills-frontend` | ✅ done, tagged `t08-verified` |
 | 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | Claude (Codex unavailable), with Task 8 (D-069) | `task/08-09-skills-frontend` | ✅ done, tagged `t09-verified` |
-| 10 | Final audit, holdout match, security review, submission note, demo script, GitHub push (D-069) | Claude | `main` | ⬜ |
+| 10 | Final audit, holdout match, security review, submission note, demo script, GitHub push (D-069) | Claude | `main` | ✅ done, tagged `t10-verified` (the live AI smoke waits for a key with credit; the zip and the push follow the tag, D-078) |
 
 ---
 
@@ -648,7 +648,8 @@ model's proposals safe to show.
   `SELECT` against documented views; the sandbox validates (single statement, starts with
   `SELECT`/`WITH`, no `ATTACH|PRAGMA|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|REPLACE|VACUUM|RECURSIVE|load_extension`),
   wraps it as `SELECT * FROM (<sql>) LIMIT 200`, runs it on a read-only `node:sqlite` connection
-  in a worker thread killed after 2 s. Stat-back only sees deliveries with `t ≤` the fan's TV time
+  in a worker thread killed after 2 s *(a child process since Task 10: a thread's terminate cannot stop SQLite's
+  native loop, BUG-005, D-078)*. Stat-back only sees deliveries with `t ≤` the fan's TV time
   (a CTE `visible_deliveries`), so it cannot leak the future. The model's final answer must quote
   numbers that appear in the returned rows (guard).
 
@@ -716,11 +717,12 @@ passes (26). Follow-ups: F09.
 
 ## Task 10: Final audit and submission (Claude)
 
-- [ ] Full audit protocol (TEST_CHECKLIST §2) across the whole repo, including a holdout match end to end.
-- [ ] `/security-review` of the full diff since `t01-verified`; fix or document findings.
-- [ ] Redeploy, public E2E, live AI smoke.
-- [ ] `docs/SUBMISSION.md`: the ≤ 200-word note (fan problem, how Sideline helps, AI tools used) in Nabhanyu's voice, plus the link.
-- [ ] `docs/DEMO_SCRIPT.md`: a 5-minute walkthrough and likely questions with answers (when not to call AI, scale, cost, failure modes, what's next).
+- [x] Full audit protocol (TEST_CHECKLIST §2) across the whole repo, including a holdout match end to end.
+- [x] `/security-review` of the full diff since `t01-verified`; fix or document findings.
+- [ ] Redeploy, public E2E, live AI smoke. *(Redeploy and public E2E done on both names; the live AI smoke skipped at
+  Nabhanyu's call: the proxy's account still has no credit, D-078.)*
+- [x] `docs/SUBMISSION.md`: the ≤ 200-word note (fan problem, how Sideline helps, AI tools used) in Nabhanyu's voice, plus the link.
+- [x] `docs/DEMO_SCRIPT.md`: a 5-minute walkthrough and likely questions with answers (when not to call AI, scale, cost, failure modes, what's next).
 - [ ] Push to GitHub (D-069): Nabhanyu provides the remote; first decide on the history that still holds the AI
   proxy's name (D-068: push as is, or a fresh history), then push `main` and the tags.
   *Decided 2026-10-17 by D-072 (Nabhanyu): scrub the forbidden word from every old commit and commit message,
@@ -729,7 +731,17 @@ passes (26). Follow-ups: F09.
 - [ ] Submission zip (Nabhanyu's request, 2026-10-18): an archive of the repository at `t10-verified` from
   `git archive` (tracked files only: no `.env`, no `node_modules`, no runtime database), with its sha256 noted in
   `docs/SUBMISSION.md`.
-- [ ] README final pass; tag `t10-verified`.
+  *The push and the zip are made from the tag, after it, so the tagged tree cannot record them; the zip's sha256 sits
+  beside it, since an archive cannot hold its own hash (D-078).*
+- [x] README final pass; tag `t10-verified`.
+
+**Audit result (Claude): accepted, `t10-verified`.** The final audit of the whole repository, by Claude, who also
+implemented Tasks 3-9 (so partly a self-audit; Codex implemented Task 2). Engine vs oracle identical on both matches
+and on a holdout no code had seen (1512772, the 2026 semi-final, India v England), whose whole sessions printed
+`AUDIT OK`; the archive sweep unchanged (199 identical, 31 documented rejections, 0 spec mismatches); the standing
+mutants 18 of 18 killed. The security review found that the SQL sandbox's 2 s stop left the query computing (BUG-005):
+fixed test first, the query now runs in a child process that is killed (D-078). Submission note, demo script, README.
+Not run: the live AI smoke and the replay recording (no credit). Follow-ups: F10.
 
 ## Stretch (only after Milestone B)
 

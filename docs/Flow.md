@@ -443,7 +443,8 @@ sudo deploy/install.sh [--keyless] [--ref <ref>] [--domain <host>]       (once, 
        → health: http://127.0.0.1:8780/api/health (required), https://<sslip>/ (required), https://<domain>/ (warns)
 
 deploy/update.sh [ref]          (as the developer; default main; --dry-run, --no-restart, --dir)
-  ref → commit in this repository → /srv/sideline: refuse local edits → git fetch origin (branches, tags)
+  ref → commit in this repository → /srv/sideline: refuse an origin other than this repository (from T10
+  ~/Downloads/SidelineProd-Dream11FDEAssignment, D-078) and local edits → git fetch origin (branches, tags)
   → checkout --detach <sha> → mkdir data/runtime → pnpm install --frozen-lockfile → pnpm build
   → sudo -n systemctl restart sideline → health on the Caddyfile's port, then each site name
 
@@ -471,7 +472,7 @@ pnpm ai:record [--yes] [--fresh] [--out <dir>] [--provider scripted]          sc
 server boot (§1): loadReplayRows(data/ai-replay) → ai_cache source 'replay' → answers any model, with no key
 ```
 
-## 16. A fan's lineup request, chat line, take and inspector query — BUILT (T8)
+## 16. A fan's lineup request, chat line, take and inspector query — BUILT (T8; the sandbox's process T10)
 
 ```
 POST /api/sessions/:id/lineup-intent {text 1-280}                          http/routes/lineup.ts
@@ -506,10 +507,11 @@ POST /api/sessions/:id/inspector {question} | {sql}                       http/r
 runSandboxed(sql, tables)                                                   sql/sandbox.ts
   validateSql: one statement, SELECT/WITH, deny list, no comments, ≤ 2000 chars → refused + reason
   two already running → busy
-  new Worker(sql/worker.ts, {tables, sql, maxRows 200}): in-memory database built from the tables →
-    PRAGMA query_only → setAuthorizer (SELECT, reads of those tables, 23 plain functions) →
-    SELECT * FROM (<sql>) LIMIT 200 → rows posted back
-  not answered after 2 s → worker.terminate → timeout
+  fork(sql/worker.ts, empty environment, 64 MB heap) → send {tables, sql, maxRows 200} (T10, D-078):
+    in-memory database built from the tables → PRAGMA query_only → setAuthorizer (SELECT, reads of
+    those tables, 23 plain functions) → SELECT * FROM (<sql>) LIMIT 200 → rows sent back
+  answered → SIGKILL → rows | not answered after 2 s → SIGKILL → timeout
+  settles (and frees its slot) only once the process has exited: nothing of the query runs on (BUG-005)
 ```
 
 ## 17. Story mode, the Task 9 cards and `/architecture` — BUILT (T9)
