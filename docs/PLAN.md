@@ -78,7 +78,7 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 3 | Models: T20I archive pipeline, win probability, leverage, player priors | Claude (Codex unavailable) | `task/03-models` | ✅ done, tagged `t03-verified` |
 | 4 | Moments engine: clock, delay buffer, detectors, gate, quests, crowd, commentary | Claude (Codex unavailable) | `task/04-moments-engine` | ✅ done, tagged `t04-verified` |
 | 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Claude (Codex unavailable) | `task/05-server-ai` | ✅ done, tagged `t05-verified` |
-| 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Codex | `task/06-frontend-core` | ⬜ |
+| 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Claude (Codex unavailable) | `task/06-frontend-core` | ✅ done, tagged `t06-verified` |
 | 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Codex + Nabhanyu | `task/07-deploy` | ⬜ |
 | 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | Codex | `task/08-ai-skills-2` | ⬜ |
 | 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | Codex | `task/09-frontend-complete` | ⬜ |
@@ -547,17 +547,25 @@ at 390 px (code blocks scroll horizontally inside their own box, never the page)
 prose: if the page needs a sentence the docs lack, add it to the docs.
 
 **Steps** (failing test → implement → pass)
-- [ ] **6.1** Store and TV clock: a test feeds `hello`, `snapshot`, `events`, `moment`, `clock` messages and asserts the TV state at a given `tvT` equals `foldEvents` of events with `t ≤ tvT`; a new `snapshot` replaces state (Review focus 1).
-- [ ] **6.2** `SpoilerCard`: with fake time, the card is veiled (`DitherVeil` intensity 1, no outcome text in the DOM) before `nudgeAt`, shows the teaser between `nudgeAt` and `revealAt`, and the reveal (with the outcome) after `revealAt`.
-- [ ] **6.3** Effects: each effect renders its CSS fallback when `WebGL2RenderingContext` is missing and when `prefers-reduced-motion: reduce` matches (Review focus 4); `GlowInput` exposes its state via `data-state`.
-- [ ] **6.4** Broadcast pieces: `InningsDotMatrix` renders 120 legal-ball cells per innings plus extras markers, with the six/four/wicket classes on the right cells for 1298150 innings 2 over 18; `Scorebug` uses tabular numerals.
-- [ ] **6.5** Control plane: renders counters, gate decisions with reasons, traces with provenance and an expandable JSON payload, and the projection formula.
-- [ ] **6.6** E2E `e2e/match-room.spec.ts`: from `/` pick a persona → match room loads with no console errors; jump to "after 18 overs of the chase" at 16x with a 25 s delay → a spoiler card appears veiled, then reveals; control plane shows non-zero deterministic events; desktop and 390 px; screenshots in both themes.
-- [ ] **6.6b** `/architecture`: a unit test renders the page and finds the first `##` heading of `docs/Architecture.md` and the PLAN checklist row for Task 2 (both read from the real files, so the test fails if the page stops reflecting the docs); markdown containing `<script>` renders as text, not an element; the smoke E2E covers `/architecture` on desktop and 390 px.
-- [ ] **6.7** `pnpm verify` + `pnpm test:e2e` green; docs (F06, Flow, Architecture, DESIGN_SYSTEM component statuses, TEST_CHECKLIST, ROLLBACK).
+- [x] **6.1** Store and TV clock: a test feeds `hello`, `snapshot`, `events`, `moment`, `clock` messages and asserts the TV state at a given `tvT` equals `foldEvents` of events with `t ≤ tvT`; a new `snapshot` replaces state (Review focus 1).
+- [x] **6.2** `SpoilerCard`: with fake time, the card is veiled (`DitherVeil` intensity 1, no outcome text in the DOM) before `nudgeAt`, shows the teaser between `nudgeAt` and `revealAt`, and the reveal (with the outcome) after `revealAt`.
+- [x] **6.3** Effects: each effect renders its CSS fallback when `WebGL2RenderingContext` is missing and when `prefers-reduced-motion: reduce` matches (Review focus 4); `GlowInput` exposes its state via `data-state`.
+- [x] **6.4** Broadcast pieces: `InningsDotMatrix` renders 120 legal-ball cells per innings plus extras markers, with the six/four/wicket classes on the right cells for 1298150 innings 2 over 18; `Scorebug` uses tabular numerals.
+- [x] **6.5** Control plane: renders counters, gate decisions with reasons, traces with provenance and an expandable JSON payload, and the projection formula.
+- [x] **6.6** E2E `e2e/match-room.spec.ts`: from `/` pick a persona → match room loads with no console errors; jump to "after 18 overs of the chase" at 16x with a 25 s delay → a spoiler card appears veiled, then reveals; control plane shows non-zero deterministic events; desktop and 390 px; screenshots in both themes.
+- [x] **6.6b** `/architecture`: a unit test renders the page and finds the first `##` heading of `docs/Architecture.md` and the PLAN checklist row for Task 2 (both read from the real files, so the test fails if the page stops reflecting the docs); markdown containing `<script>` renders as text, not an element; the smoke E2E covers `/architecture` on desktop and 390 px.
+- [x] **6.7** `pnpm verify` + `pnpm test:e2e` green; docs (F06, Flow, Architecture, DESIGN_SYSTEM component statuses, TEST_CHECKLIST, ROLLBACK).
 
 **Audit hooks:** visual review of screenshots against the references; keyboard-only pass; reduced
 motion; Lighthouse spot check; confirm no outcome text exists in the DOM while a card is held.
+
+**Audit result (2026-10-17, Claude): accepted, `t06-verified`.** Implemented by Claude because Codex was
+unavailable, so this is a self-audit, after an independent spot-check of `t05-verified` in the same fresh
+session (four Task 5 test gaps pinned, D-059). 569 tests, 22 E2E; 28 hand mutants of the web code, all
+killed once four gap tests landed. Driving the real UI found BUG-004 (Task 5's clock stopped before a
+delayed TV reached the result; fixed test first, D-063). Beyond the PLAN's files: `GET /api/matches/:matchId`
+(D-060), `markdown-it` 15.0.2 (D-061), a small router (D-062), and the helpers listed in F06. The match room
+as built: D-064. Lighthouse was not run (Task 9.5). Follow-ups: F06.
 
 ---
 

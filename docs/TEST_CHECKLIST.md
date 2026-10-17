@@ -18,7 +18,7 @@
 | --- | --- | --- |
 | 1 | `pnpm typecheck` | `packages/engine typecheck: Done`, `apps/server typecheck: Done`, `apps/web typecheck: Done`, then no output from root `tsc`; exit 0 |
 | 2 | `pnpm lint` | `Checked N files in …ms. No fixes applied.` and no `×` or `!` diagnostics; exit 0 |
-| 3 | `pnpm test` | `Test Files  47 passed (47)` and `Tests  565 passed (565)`; no failed, no skipped |
+| 3 | `pnpm test` | `Test Files  47 passed (47)` and `Tests  569 passed (569)`; no failed, no skipped |
 | 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (131 source files, 209 terms)` (counts grow with code/data) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
@@ -141,3 +141,4 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 | T3 Models | 2026-10-16 | pass | pass (89 files) | 18 files / 183 tests | OK (36 files, 209 terms) | OK (2 matches) | 270 ms | 8 passed |
 | T4 Moments engine | 2026-10-16 | pass | pass (113 files) | 25 files / 337 tests | OK (51 files, 209 terms) | OK (2 matches) | 641 ms | 8 passed |
 | T5 Server runtime + AI | 2026-10-17 | pass | pass (165 files) | 37 files / 492 tests | OK (86 files, 209 terms) | OK (2 matches) | 292 ms | 8 passed |
+| T6 Frontend I | 2026-10-17 | pass | pass (222 files) | 47 files / 569 tests | OK (131 files, 209 terms) | OK (2 matches) | 805 ms | 22 passed |
