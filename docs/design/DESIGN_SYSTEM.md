@@ -37,6 +37,12 @@ else stays calm, aligned and quiet.
 | `--wicket` | `#D7263D` | `#FF5468` | wickets (the scorer's red W) |
 | `--dot` | `#8A93AD` | `#4C5571` | dot balls |
 | `--team-a`, `--team-b` | from `context.json` at runtime | same | team identity, outbursts |
+| `--on-six`, `--on-four`, `--on-wicket` | `#0B1222` / `#FFFFFF` / `#FFFFFF` | `#080B14` (all three) | text on a filled six, four or wicket cell (AA) |
+| `--four-fill` | `#17699A` | `#69B9EC` | a filled four cell (the light `--four` is 4.4:1 against white text) |
+
+The TV screen is a night picture in both themes, the way a video player stays dark on a light page:
+the `.surface-night` class re-declares the dark values for everything drawn on it (scorebug, ghost
+text, floodlight at full strength). Built in Task 6.
 
 Rules: colour encodes cricket meaning (six, four, wicket, team), never decoration. Glow colours
 appear only in the floodlight and input halo. Text always meets WCAG AA in both themes.
@@ -110,6 +116,12 @@ Match room, phone (< 768 px): the companion is the primary view (it *is* a secon
 A compact scorebug pins to the top (with the TV delay), tabs switch Companion / TV / Control plane,
 and the composer pins to the bottom above the safe-area inset.
 
+As built (Task 6): the two-column room starts at 960 px (TV about 58%, companion 42%, the companion
+sticky with its own scroll); below 960 px the phone layout applies, the compact scorebug and the tabs
+sharing one opaque sticky block. The landing hero holds the wordmark, tagline and lede, with the
+floodlight rising from its bottom edge (as in the reference); the persona picker follows it as its own
+section, then the three "when Sideline uses AI" columns.
+
 Alignment: left-aligned content everywhere except the landing hero, which is centred (as in the
 reference).
 
@@ -127,13 +139,15 @@ reference).
 | --- | --- | --- |
 | Shell (header, main, footer) | built T1 | attribution footer on every route |
 | ThemeControl (Auto / Light / Dark) | built T1 | native radios, keyboard accessible |
-| FloodlightGlow, GhostText, DitherVeil, GlowInput | Task 6 | `VISUAL_REFERENCES.md` |
-| Scorebug, OverStrip, InningsDotMatrix, WinProbLine, CommentaryTicker | Task 6 | numbers tabular |
-| PlaybackControls, DelayControl, PhaseRail | Task 6 | phase rail is a real sequence, so numbered steps are fine there |
-| MomentCard variants: CatchUpReel, ExplainerCard, SpoilerCard | Task 6 | each kind gets its own shape |
+| FloodlightGlow, GhostText, DitherVeil, GlowInput | built T6 | `VISUAL_REFERENCES.md`; each starts on its CSS fallback and upgrades only with WebGL2, no reduced motion and a real context |
+| Scorebug, OverStrip, InningsDotMatrix, WinProbLine, Commentary | built T6 | numbers tabular; the matrix puts wides and no-balls as marks in the cell of the ball they preceded |
+| PlaybackControls, DelayControl, PhaseRail | built T6 | phase rail is a real sequence, so numbered steps are fine there; buttons show the fan's choice at once |
+| MomentCard variants: CatchUpReel, ExplainerCard, SpoilerCard | built T6 | each kind gets its own shape: the held ticket with two veiled zones, the reel of slides, the Q&A |
+| PersonaPicker | built T6 | radio cards: label, blurb, stream delay, lens |
 | SquadDiffLedger, BailoutQuestCard, BanterCard, RoomReadPods, TakeCard | Task 9 | |
-| ControlPlaneDrawer (counters, gate log, traces, projection), InspectorQuery | Tasks 6, 9 | |
-| ProvenanceChip (Live AI / Cached / Replayed / Fallback / Rules) | Task 6 | on every moment card |
+| ControlPlaneDrawer (counters, gate log, traces, projection) | built T6 | rows about a ball the TV has not shown are held |
+| InspectorQuery | Task 9 | |
+| ProvenanceChip (Live AI / Cached / Replayed / Fallback / Rules) | built T6 | on every moment card and trace; each provenance has its own mark; "Replayed AI" has no date yet (the moment does not carry the recording date) |
 
 ## 8. Writing
 

@@ -39,7 +39,7 @@ node apps/server/src/index.ts                       (`pnpm start`; `pnpm dev` ad
 SIGINT / SIGTERM → stop the ticker → closeAllConnections (SSE streams) → server.close → db.close → exit 0
 ```
 
-## 2. HTTP request — BUILT (T1, T5)
+## 2. HTTP request — BUILT (T1, T5, T6)
 
 ```
 request
@@ -48,6 +48,7 @@ request
        │                                 aiModelFast, aiModelSmart, aiEndpointHost (host only)}
        ├─ only with a runtime (src/index.ts; the T1 tests run without):        http/routes/*.ts
        │    ├─ GET  /api/matches                  bundles → summary + personas {id,label,blurb,lens,delayMs}
+       │    ├─ GET  /api/matches/:matchId         bundle → {match, players, rules, winprob} | 404 (T6, D-060)
        │    ├─ POST /api/sessions                 readJson(16 KB cap → 413; JSON/schema → 400)
        │    │      → manager.create → 201 {sessionId, streamUrl} | 404 unknown match/persona | 503 busy
        │    ├─ GET  /api/sessions/:id/stream      404 JSON unknown | SSE (§7)
@@ -65,27 +66,37 @@ request
 clientIp(c): the socket peer (getConnInfo); X-Forwarded-For only when the peer is loopback (Task 7's proxy)
 ```
 
-## 3. Web page load and theming — BUILT (T1)
+## 3. Web page load, theming and routes — BUILT (T1, T6)
 
 ```
-GET /  → index.html
+GET /, /match/:matchId, /architecture (any non-API path) → index.html (server SPA fallback, §2)
   ├─ <script src="/theme-init.js">  (blocking, in <head>)       apps/web/public/theme-init.js
   │     reads localStorage["sideline.theme"] (guarded) → "system"|"light"|"dark"
   │     resolves against prefers-color-scheme → sets <html data-theme> + data-theme-pref
   └─ <script type="module" src="/src/main.tsx">  (bundled by Vite into /assets/index-*.js)
         ├─ import @fontsource-variable/anek-latin/standard.css (self-hosted woff2, wght + wdth axes)
-        ├─ import ./styles/app.css → tailwind + tokens.css (all colours keyed off [data-theme])
+        ├─ import ./styles/app.css → tailwind + tokens.css (colours keyed off [data-theme]; the TV
+        │     screen's .surface-night keeps dark values in both themes) + effects.css
         └─ createRoot(#root).render(<App/>)                       apps/web/src/App.tsx
-              ├─ header: wordmark + <ThemeControl/>                apps/web/src/theme/ThemeControl.tsx
-              │     useState(readStoredPreference(safeLocalStorage()))   apps/web/src/theme/theme.ts
-              │     useEffect: applyTheme(pref); in "system" also subscribe to matchMedia changes
-              │     onChange → setPreference + writeStoredPreference (errors swallowed)
-              ├─ main: intro copy (Task 6 replaces with the landing hero)
-              └─ <AttributionFooter/>  (required line + Cricsheet credit)   apps/web/src/components/AttributionFooter.tsx
+              ├─ useRoute() → parseRoute(pathname) (useSyncExternalStore over popstate, D-062)
+              │                                                    apps/web/src/router.tsx
+              ├─ header: skip link, wordmark Link "/", "How Sideline is built" Link, <ThemeControl/>
+              ├─ main:
+              │    "/"              → <Landing/>      GET /api/matches → <PersonaPicker/>
+              │                       "Start watching" → navigate(/match/<id>?persona=<id>)
+              │    "/match/:id"     → <MatchRoom/>    (§9)  no or unknown persona → the picker
+              │    "/architecture"  → lazy <Architecture/> (its own chunk): docs/Architecture.md,
+              │                       the PLAN checklist and Decisions.md via ?raw, through
+              │                       lib/markdown.ts (markdown-it, html off → React elements, D-061)
+              │    anything else    → "That page isn't here"
+              └─ <AttributionFooter/>  (required line, Cricsheet credit, "How Sideline is built")
+Links: <Link> → history.pushState + a navigate event (modified clicks and new tabs left alone)
 ```
 
 Dev mode: `pnpm dev` runs Vite on :5173 (HMR) and the server on :8787; Vite proxies `/api` to the
-server (`apps/web/vite.config.ts`). Prod: the server serves `apps/web/dist`.
+server and may read the repo root for the `?raw` docs (`server.fs.allow`, default deny list kept;
+`apps/web/vite.config.ts`). Prod: the server serves `apps/web/dist`. Develop keyless with
+`SIDELINE_AI_PROVIDER=none pnpm dev` (a shell variable beats `.env`).
 
 ## 4. Data provenance and integrity — BUILT (T1)
 
@@ -146,7 +157,7 @@ metadata. `applyEvent` mutates a state one event at a time; `foldEvents` creates
 seeking and replay. Over summaries retain both team runs and bowler-conceded runs so maiden
 classification follows the extras rules exactly.
 
-## 7. Session lifecycle and tick loop — BUILT (T5)
+## 7. Session lifecycle and tick loop — BUILT (T5; end of match T6)
 
 ```
 POST /api/sessions {matchId, personaId, delayMs?, lens?}                  http/routes/sessions.ts
@@ -170,7 +181,9 @@ GET /api/sessions/:id/stream (SSE)                                          http
 one global ticker, every 100 ms: manager.tick()                            sessions/ticker.ts
   for each session: idle (no stream, nothing for 30 min) → evict + telemetry.forgetSession
                     else try session.tick() catch → session.fail (paused, "error" to its streams)
-  session.tick():  now = min(end, stadiumAt(clock, wall))                 engine/clock.ts
+  session.tick():  now = min(end + delayMs, stadiumAt(clock, wall))       engine/clock.ts
+                   (end = the last event or crowd line; the clock runs on by the fan's delay so
+                    their TV reaches the end too: BUG-004, D-063)
     while events[cursor].t ≤ now:
       before = structuredClone(state); applyEvent(state, event)           engine/cricket/reducer.ts
       gate.process({before, after, event, events, ctx(persona…), chat: crowd})   engine/gate/gate.ts (§11)
@@ -179,7 +192,8 @@ one global ticker, every 100 ms: manager.tick()                            sessi
                             → orchestrator.teaser (§8, async)
       lineup_patch / bailout / room_read → decision kept, no model (skills in Task 8)
     → "events" batch; crowd messages ≤ now → "chat" batch; produced moments now due → "moment"
-    → events and crowd exhausted → pause the clock, "clock"; streams open → "telemetry" every 5 s
+    → events and crowd exhausted and now ≥ end + delayMs → pause the clock, "clock";
+      streams open → "telemetry" every 5 s
 
 POST /api/sessions/:id/control                                             http/routes/control.ts
   play | pause | speed | delay → clock re-anchored at now (delay: no refold, the buffer is client-side)
@@ -228,17 +242,49 @@ The scripted provider (`ai/providers/scripted.ts`) stands in for a model in ever
 `pnpm test` needs a key or the network. `pnpm ai:smoke` (`scripts/ai-smoke.ts`) makes one real
 teaser call through the gateway with the configured provider and an in-memory database.
 
-## 9. Client delay buffer — logic BUILT (T4), UI PLANNED (Task 6)
+## 9. The match room on the fan's TV clock — BUILT (T4 logic, T6 UI)
 
 ```
-SSE events/chat/moments (stadium time) → store                                 (Task 6)
-rAF loop: tvT = tvTimeAt(clock, now)                                            engine/clock.ts
-            = max(0, stadiumAt(clock, now) − delayMs)
-            stadiumAt = playing ? stadiumT + max(0, now − wallAt)·speed : stadiumT
-  → releaseDue(items, tvT) → { released: t ≤ tvT, held }, input order kept     engine/buffer/delay.ts
-  → released events fold into the TV state (same engine reducer)
-  → momentVisibility(moment, tvT): hidden → teaser (nudgeAt ≤ tvT) → revealed (revealAt ≤ tvT)
-       null nudgeAt: hidden → revealed; null revealAt: revealed at once
+<MatchRoom matchId> (?persona=<id>)                               apps/web/src/pages/MatchRoom.tsx
+  ├─ GET /api/matches/:id (players, rules, model) + GET /api/matches (personas)   lib/api.ts (zod)
+  ├─ POST /api/sessions {matchId, personaId} → sessionId                (attempt++ restarts it)
+  └─ <Room>
+       ├─ useSessionStream(sessionId)                           stream/useSessionStream.ts
+       │    new EventSource(/api/sessions/:id/stream); per frame: JSON.parse → StreamMessageSchema
+       │    → store.dispatch (invalid frames dropped with a warning); a MessageEvent "error" is the
+       │    server's session_failed, a bare Event the browser's (reconnecting | closed)
+       │    store (stream/store.ts): hello → session, failure cleared; snapshot → clock, events,
+       │    moments, chat REPLACED, epoch + 1 (Review focus 1); events/chat appended if new;
+       │    moment upserted by id (POST /ask answers arrive twice); clock; telemetry; error
+       ├─ useTvView(matchId, clock, events)                     stream/tvClock.ts
+       │    tvT = tvTimeAt(clock, now), re-read every 100 ms while playing (and on visibilitychange)
+       │    released = releasedCount(events, tvT) (binary search); state = foldEvents(≤ released)
+       │    → TvContext (useTvState())
+       ├─ chat shown = chat[0, releasedCount(chat, tvT))        (the crowd waits for the TV too)
+       ├─ squad impact = squadPoints(fantasyPoints(TV state), persona squad)   (F05 follow-up 1)
+       ├─ desktop (≥ 960 px): bar (title, PhaseRail) │ TvPane │ companion │ ControlPlaneDrawer
+       │  phone: sticky compact Scorebug + tabs Companion / TV / Control plane, sticky composer
+       ├─ <TvPane>                                                broadcast/TvPane.tsx
+       │    Scorebug, OverStrip, InningsDotMatrix ×2, WinProbLine (winProbability per delivery),
+       │    Commentary (describeDelivery), PlaybackControls, DelayControl, all from the TV state
+       │    outbursts: released grew within the same epoch → outburstFor(each newly released event)
+       │      big ball = a spoiler_nudge moment exists for it (the gate's leverage rule, D-046),
+       │      or match_end → FloodlightGlow.burst(colour) + <GhostText mode="sweep"> headline 4.2 s
+       │      a snapshot (new epoch) resets the baseline and lights nothing       broadcast/outburst.ts
+       ├─ <MomentFeed> newest first, each card asks momentVisibility(moment, tvT):
+       │    SpoilerCard: hidden (DitherVeil 1 over empty bars: no teaser, no outcome in the DOM)
+       │      → teaser (nudge) → revealed (reveal, veil dissolves 900 ms); null nudgeAt: hidden → revealed
+       │    CatchUpReel: thinking pulse until revealAt (the join point), then slides + squad impact
+       │    ExplainerCard: question, answer, related terms (one tap asks again)
+       ├─ <Composer> GlowInput, suggestQuestion(TV state, last delivery) → POST /ask → upsert
+       │    429 → "try again in N s" (Retry-After); 409 → paused
+       ├─ <ControlPlaneDrawer> telemetry (every 5 s): counters, projection formula, gate decisions
+       │    with t ≤ tvT, traces only once their moment is revealed (a guard's detail can quote the
+       │    score after the ball)                                 controlplane/spoilerSafe.ts
+       └─ controls → POST /control → the answered clock dispatched at once, the stream's
+          clock/snapshot follows; buttons show the choice at once and drop the guess on failure
+engine pieces: tvTimeAt/stadiumAt (clock.ts), releaseDue/momentVisibility (buffer/delay.ts),
+  foldEvents, describeDelivery, winProbability, fantasyPoints, squadPoints
 ```
 
 ## 10. Model build and model reads — BUILT (T3)

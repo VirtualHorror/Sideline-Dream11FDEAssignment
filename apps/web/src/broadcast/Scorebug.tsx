@@ -75,11 +75,11 @@ export function Scorebug({
     );
   };
   const bowler = innings.bowlers.find((b) => b.playerId === live?.bowlerId);
+  // The chase equation while it is live: not once the target is reached (the innings ends 30 s later).
+  const needed = live?.runsRequired ?? null;
   const chase =
-    innings.target && live?.runsRequired !== null && live?.runsRequired !== undefined
-      ? innings.status === "complete"
-        ? null
-        : `Need ${live.runsRequired} off ${live.ballsRemaining}`
+    innings.target && needed !== null && needed > 0 && innings.status !== "complete"
+      ? `Need ${needed} off ${live?.ballsRemaining ?? 0}`
       : null;
   const breakLine =
     state.phase === "innings_break" ? `Innings break: target ${innings.runs + 1}` : null;

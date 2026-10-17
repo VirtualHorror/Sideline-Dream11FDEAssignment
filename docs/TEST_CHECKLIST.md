@@ -14,21 +14,23 @@
 
 ## 1. Every change, every task (must all pass)
 
-| # | Command | Expected (baseline after Task 5) |
+| # | Command | Expected (baseline after Task 6) |
 | --- | --- | --- |
 | 1 | `pnpm typecheck` | `packages/engine typecheck: Done`, `apps/server typecheck: Done`, `apps/web typecheck: Done`, then no output from root `tsc`; exit 0 |
 | 2 | `pnpm lint` | `Checked N files in …ms. No fixes applied.` and no `×` or `!` diagnostics; exit 0 |
-| 3 | `pnpm test` | `Test Files  37 passed (37)` and `Tests  492 passed (492)`; no failed, no skipped |
-| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (86 source files, 209 terms)` (counts grow with code/data) |
+| 3 | `pnpm test` | `Test Files  47 passed (47)` and `Tests  565 passed (565)`; no failed, no skipped |
+| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (131 source files, 209 terms)` (counts grow with code/data) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
-| 7 | `pnpm test:e2e` (any UI-visible change) | `8 passed` (desktop + mobile) |
+| 7 | `pnpm test:e2e` (any UI-visible change) | `22 passed` (desktop + mobile: every route, the climax flow with a held then revealed teaser, tabular numerals, reduced motion); about 1.5 min |
 | 8 | `grep -rnE "\.(skip\|only)\(" --include=*.ts --include=*.tsx packages apps scripts e2e` | no output |
 | 9 | `git status --short` | only files the task intended to change |
 | 10 | `node scripts/engine-report.ts <raw.json> --players <players.json> --rules <rules.json> --json` | JSON scorecard, fall-of-wicket ids and fantasy report; compare with the Python oracle on both fixtures |
 | 11 | `node scripts/build-models.ts --zip <saved t20s_male_json.zip>` (Task 3+, when `scripts/build-models.ts`, `scripts/lib/archive.ts`, the engine or `data/` change) | `build-models: … used (train …, test …)` and `wrote …`; then `git status --short data/models` prints nothing when the zip's sha256 equals the one in `data/models/README.md` (2026-10-16: `95305bc2…860a`, 3,093 used, threshold 0.18437). A new archive changes the files: review the diff |
 | 12 | `pnpm ai:smoke` (Task 5+, with a key in `.env`; spends a few thousand tokens and sends one ball's facts to the provider: ask Nabhanyu first) | `ai-smoke: provider …, endpoint <host>, model …`, `ai-smoke: outcome ok, provenance live, …, latency … ms, tokens … in / … out, cost $… (est.)`, `ai-smoke: spoilerLint ok`, `ai-smoke: OK`; with no provider (or `SIDELINE_AI_PROVIDER=none`): `ai-smoke: skipped (…)`. The key is never printed. 2026-10-17: `FAILED (error: provider error: PermissionDeniedError (403))`: the proxy account was out of credit (Nabhanyu); re-run when it is topped up |
 | 13 | Server by hand (Task 5+): `PORT=8788 node apps/server/src/index.ts` (no `--env-file`: keyless, aiMode `replay`), then `curl -s -X POST -H 'content-type: application/json' -d '{"matchId":"1298150","personaId":"late-from-work"}' :8788/api/sessions` and `curl -N :8788/api/sessions/<id>/stream` | the boot line with `aiMode: 'replay'`, `analyticsRows: 502`; the stream starts `event: hello`, `event: snapshot` (249 events and 2 catch-up reels after a jump to 18 overs), then `events`, `chat`, `telemetry` frames with `id:` rising by one; SIGTERM prints `shutting down` and frees the port |
+
+| 14 | Dev server by hand (Task 6+): `SIDELINE_AI_PROVIDER=none pnpm dev`, open `http://127.0.0.1:5173` | the server logs `aiProvider: 'none'`, `aiMode: 'replay'`; the landing page lists both matches; "Late from work" opens at 90/4 with its catch-up reel revealed once the 15 s feed reaches the join point; at 16x with a 25 s delay, a jump to after 18 overs of the chase shows the 18.6 card held under the veil, then revealed with the floodlight outburst and the "Six" headline on the TV; the scorebug ends on the result |
 
 `pnpm verify` runs rows 1-6 in order and stops at the first failure.
 
@@ -122,6 +124,13 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 - `pnpm test:e2e`, then look at `test-results/**/*.png` (desktop + 390 px, light + dark).
 - In Chrome: no console errors; keyboard-only pass (Tab order, visible focus); emulate
   `prefers-reduced-motion: reduce` and confirm effects stop or simplify; attribution visible.
+- Spoilers (Task 6+): while a card is held, nothing of its ball is in the DOM (search the page for the
+  reveal text and the score after the ball), and the control plane holds that ball's rows too.
+- Effects in WebGL: a browser without a GPU may have no WebGL2 (the Task 6 review's desktop Chrome had
+  none, so it showed the CSS fallbacks); headless Chrome through Playwright renders WebGL with SwiftShader.
+  Check that the landing wordmark fringes under the pointer, that a held card's veil dissolves on the
+  reveal, and that the TV headline sweeps (`data-render="webgl"` on `[data-effect]`). Playwright's
+  screenshots of WebGL canvases log "GPU stall due to ReadPixels" warnings: the readback's, not the app's.
 
 ## 3. Task log (actual results at merge)
 

@@ -721,3 +721,29 @@
   invent time the server never had); stopping at `endT` and treating "paused at the end" as "show
   everything" in the UI (a TV that jumps 25 s at the end, and every other consumer of the clock would
   still be wrong).
+
+### D-064 — The match room as built: TV clock, spectacle rules, held control plane, layout (2026-10-17, T6, Claude)
+- **TV clock:** the browser folds the stream's events to `tvTimeAt(clock, now)`, re-read every 100 ms
+  while playing (and on `visibilitychange`), not every animation frame: state changes only when the TV
+  passes an event, a chat line or a card's times, seconds apart even at 32x; the effects run their own
+  frame loops. A snapshot replaces everything and bumps an epoch that the fold and the outburst watcher
+  start again from (Review focus 1). The store applies the clock a control request answers with at once,
+  and the controls show the fan's choice before it arrives, dropping the guess on failure.
+- **Spectacle:** the floodlight outburst and the ghost-text headline fire only for events newly released
+  on the TV clock during play, and only for a ball with a spoiler teaser (the gate's big-ball rule) or the
+  result. Every six and wicket stays in the dot matrix and commentary; only the balls that swung the match
+  light the stadium ("spend boldness in one place", DESIGN_SYSTEM §1). A seek is not a moment.
+- **Spoiler safety beyond the cards:** a held card renders empty bars under the veil, never the hidden
+  text; the control plane shows a gate decision once the TV reaches its event and a trace once its moment
+  is revealed, because trace details can quote the outcome (a guard's "score after the ball").
+- **Layout:** two columns from 960 px (the design's desktop starts at 1200 and phone below 768; the
+  in-between is closer to a tablet in landscape, which the two columns serve), tabs below; the TV screen is
+  a night picture in both themes (`.surface-night`); the landing hero is the wordmark with the floodlight
+  rising from its bottom edge, and the picker follows it (the reference's composition; the sketch's picker
+  inside the hero buried the cone under the persona cards).
+- **Persona in the URL:** `/match/<id>?persona=<id>` creates the session in the room, so a link works on
+  its own and a reload starts a fresh session; without a persona the room shows that match's picker.
+- **Alternatives:** an animation-frame TV clock (60 renders a second for nothing); outbursts on every six
+  and wicket (a dozen spectacles a match, against the design's restraint); the control plane at stadium time
+  (a reviewer watching the drawer would be spoiled); a single responsive grid with CSS-only tabs (the tab
+  roles would be wrong on desktop and hidden panels would still mount the TV's effects).

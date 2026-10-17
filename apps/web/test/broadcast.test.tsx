@@ -95,6 +95,14 @@ describe("Scorebug (PLAN 6.4)", () => {
     expect(bug.textContent).toContain("74");
   });
 
+  it("drops the chase line once the target is reached, before the innings formally ends", () => {
+    const { container } = render(
+      <Scorebug state={through(2, "19.6")} teams={summary.teams} players={playersById} />,
+    );
+    expect(container.textContent).toContain("160/6");
+    expect(container.textContent).not.toContain("Need");
+  });
+
   it("states the result once the match is over", () => {
     render(<Scorebug state={fullMatch} teams={summary.teams} players={playersById} />);
     expect(screen.getByText("India won by 4 wickets")).toBeTruthy();
