@@ -70,8 +70,9 @@ export function GateLog({
                 </td>
               </tr>
             ) : (
-              rows.map((d, i) => (
-                <tr key={`${d.eventId}:${d.detector}:${i}`} data-outcome={d.outcome}>
+              rows.map((d) => (
+                // One verdict per detector per event (the gate's contract), so this pair is unique.
+                <tr key={`${d.eventId}:${d.detector}`} data-outcome={d.outcome}>
                   <td className="cp-num">{label(d.eventId)}</td>
                   <td>{d.detector}</td>
                   <td>{OUTCOMES[d.outcome]}</td>

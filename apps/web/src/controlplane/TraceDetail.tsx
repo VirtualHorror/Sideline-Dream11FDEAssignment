@@ -21,9 +21,9 @@ export function TraceDetail({ trace, payload }: { trace: AICallTrace; payload: u
         {open ? "Hide the JSON" : "Show the JSON"}
       </button>
       {open ? (
-        <pre id={id} className="trace-detail__json" aria-label="Trace JSON" tabIndex={0}>
-          {JSON.stringify({ trace, payload }, null, 2)}
-        </pre>
+        <section id={id} aria-label="Trace JSON">
+          <pre className="trace-detail__json">{JSON.stringify({ trace, payload }, null, 2)}</pre>
+        </section>
       ) : null}
     </div>
   );
