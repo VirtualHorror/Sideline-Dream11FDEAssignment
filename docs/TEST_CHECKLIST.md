@@ -22,7 +22,7 @@
 | 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (145 source files, 209 terms; 307 tracked files, no forbidden words)` (counts grow with code/data; the second pass fails on the AI proxy's name in any tracked file, D-068) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
-| 7 | `pnpm test:e2e` (any UI-visible change) | `22 passed` (desktop + mobile: every route, the climax flow with a held then revealed teaser, tabular numerals, reduced motion); about 1.5 min. The local server is always keyless (`SIDELINE_AI_PROVIDER=none`) |
+| 7 | `pnpm test:e2e` (any UI-visible change) | `26 passed` (desktop + mobile: every route, the climax flow with a held then revealed teaser, tabular numerals, reduced motion; Task 9: the whole story mode with its seven stops and `/architecture`'s live table after it, leaving the tour under reduced motion); about 4.5 min. The local server is always keyless (`SIDELINE_AI_PROVIDER=none`) |
 | 8 | `grep -rnE "\.(skip\|only)\(" --include=*.ts --include=*.tsx packages apps scripts e2e` | no output |
 | 9 | `git status --short` | only files the task intended to change |
 | 10 | `node scripts/engine-report.ts <raw.json> --players <players.json> --rules <rules.json> --json` | JSON scorecard, fall-of-wicket ids and fantasy report; compare with the Python oracle on both fixtures |
@@ -35,6 +35,8 @@
 | 17 | `deploy/update.sh <ref>` (the auditor, after a merge; as the developer, no password) | `update: health: http://127.0.0.1:8780/api/health` and each site's health body with `"aiEndpoint":"openai-compatible"`, then `update: deployed <sha> (<ref>) at https://3-108-67-100.sslip.io/` |
 | 18 | `PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e` (Task 7+) | `22 passed` against production (with a key that fails, the climax card shows `Fallback: AI unavailable`) |
 | 19 | Public origin (Task 7+): `curl -sI https://<host>/`; `curl -sI http://<host>/`; a session's `curl -sN https://<host>/api/sessions/<id>/stream` | `HTTP/2 200` with the CSP, `x-frame-options: DENY`, `nosniff`, `strict-transport-security`; `308` to https; the stream's first byte in well under a second with `event: hello` and `event: snapshot` |
+
+| 20 | Landing Lighthouse (Task 9+): `pnpm build`, `PORT=8791 HOST=127.0.0.1 SIDELINE_AI_PROVIDER=none node apps/server/src/index.ts`, a local `caddy run` with the production site block's `encode zstd gzip` in front of it (port 8792), then from a scratch directory `npx --yes lighthouse@13.5.0 http://127.0.0.1:8792/ --chrome-flags="--headless=new --no-sandbox" --only-categories=performance,accessibility,best-practices [--preset=desktop]` | accessibility 100 and best practices 96 every run; performance varies with this host's load (2026-10-18: phone 87-92, desktop 79-98, D-077). Run three times and report the spread; the target is ≥ 90 |
 
 `pnpm verify` runs rows 1-6 in order and stops at the first failure.
 

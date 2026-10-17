@@ -971,3 +971,27 @@
   are, so it would play minutes of death overs at 2x, or run fast and make a live teaser late); story beats in a data
   file (hand-picked moments, the opposite of beats from triggers); the diagram as a raster image (no theme colours, no
   text alternative); a separate route for the story (the room is the story; `story=1` keeps links shareable).
+
+### D-077 — The landing's performance pass, and how it was measured (2026-10-18, T9 step 9.5, Claude)
+- **Measured first:** Lighthouse 13.5.0 (published 2026-09-18, run with `npx` from a scratch directory, not a
+  dependency) on the landing page served the way production serves it (the built app behind a local Caddy with
+  the production site block's `encode zstd gzip`): accessibility 100, best practices 96, performance 50 on the
+  phone preset (1.2 s of blocking time) before the pass. Runs with reduced motion forced and with WebGL disabled
+  showed the cost was the floodlight's colour cycle, a registered custom property animated on the main thread
+  that repainted four 48 px blurs every frame (software raster in a GPU-less Chrome).
+- **Decision:** (1) each floodlight blob is four fixed-colour tints cross-faded with `opacity`, stepped twenty
+  times a second, and drifted with `translate`, all compositor work, with the same colours, order, phases and
+  cycle (VISUAL_REFERENCES "As built"); (2) the match room is loaded on demand like `/architecture`, so the
+  landing ships 358 kB of script instead of 442 kB (110 kB compressed); (3) the landing's wordmark makes its
+  WebGL context when a pointer first enters it, so a page nobody points at compiles no shader; (4) the start
+  section keeps the persona picker's height while the matches load (the arriving picker pushed the page down: a
+  layout shift of 0.12). A quarter-size floodlight scaled up, and stepping the drift, were tried and measured: no
+  gain, reverted.
+- **Result, honestly:** the same build scores differently from run to run on this host (a remote desktop and other
+  sessions keep its load average near 4 on 4 vCPUs): phone performance 87-92 (blocking 170-380 ms, first paint
+  2.3 s, layout shift 0.007), desktop 79-98; accessibility 100 and best practices 96 in every run (the 4 points: a
+  content-security-policy note in Chrome's Issues panel with no detail; no console error). The PLAN's "≥ 90" is met
+  on a quiet run of each form factor, not reliably on this busy host; Task 10 measures again (F09 follow-up 1).
+- **Alternatives:** dropping the floodlight's animation on GPU-less browsers (it would also hide it from the headless
+  visual review); prerendering the landing's HTML (a build step and duplicated markup, for about a second of
+  simulated first paint on a slow phone).
