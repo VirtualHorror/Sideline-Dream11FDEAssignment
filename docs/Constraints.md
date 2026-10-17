@@ -73,7 +73,8 @@
 
 21. **Work on `task/NN-<slug>`**, branched from `main`. Never merge into `main`, never move or
     delete tags, never rewrite history, never push. The auditor merges after verification. The one
-    push is Task 10's, to GitHub, with Nabhanyu (D-069).
+    push is Task 10's, to GitHub, with Nabhanyu (D-069); the history scrub and tag re-pointing just before
+    it (D-072, approved by Nabhanyu) is the one exception to the history and tag rules.
 22. **Docs are part of "done".** Every task updates: its feature file, `docs/Flow.md`,
     `docs/Architecture.md` status, `docs/Decisions.md`, `docs/TEST_CHECKLIST.md` (new commands and
     expected outputs), `docs/ROLLBACK.md` (task row), `docs/Bug_Feature.md` (register rows).

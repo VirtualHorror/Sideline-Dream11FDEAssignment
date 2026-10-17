@@ -5,7 +5,8 @@
 ## The model
 
 - `main` contains only audited work. Each audited task is merged with `--no-ff` and tagged
-  `tNN-verified` (e.g. `t01-verified`). Tags are never moved or deleted.
+  `tNN-verified` (e.g. `t01-verified`). Tags are never moved or deleted, except once: Task 10's
+  owner-approved history scrub before the GitHub push re-points them at the rewritten commits (D-072).
 - Implementers work on `task/NN-<slug>` branches; nothing reaches `main` without an audit.
 - There is no remote. Nothing is pushed unless Nabhanyu asks.
 

@@ -814,7 +814,8 @@
   `aiEndpointHost`. A custom host is configuration, not something to publish.
 - **Domain:** `sideline.nabhanyubm.xyz` (an A record to the Elastic IP) is served next to the sslip.io name;
   `install.sh --domain` changes or drops it. The domain is checked but never required: the sslip.io name must
-  answer, the domain only warns, and Caddy gets its certificate once the name resolves here.
+  answer, the domain only warns, and Caddy gets its certificate once the name resolves here. *Amended by D-070:
+  the owner's domain is `sideline.nabhanyubm.tech`.*
 
 ### D-069 — Tasks 8 and 9 in one session; Task 10 pushes to GitHub (2026-10-17, after T7, Nabhanyu)
 - **Decision:** the next fresh session implements Task 8 (AI skills II) and Task 9 (frontend II) together in one
@@ -823,3 +824,30 @@
   the auditor verifies before merging and tags `t08-verified` and `t09-verified` on the merge commit.
 - **Open for Task 10:** old commits contain the proxy's name (D-068); pushing them needs the owner's decision
   (push as is, or a fresh history), recorded then.
+
+### D-070 — The owner's domain is `sideline.nabhanyubm.tech` (2026-10-17, T8-9, Nabhanyu; amends D-068)
+- **Context:** D-068 named `sideline.nabhanyubm.xyz`, which never resolved (NXDOMAIN at the `.xyz` registry).
+  Nabhanyu confirmed the final name at the start of the Task 8-9 session, overriding every earlier spelling.
+- **Decision:** `deploy/install.sh` serves `sideline.nabhanyubm.tech` by default next to the sslip.io name;
+  `scripts/test/deploy.test.ts`, the deploy README, the README, Architecture and the PLAN name it. Checked at
+  the time: `dig +short A sideline.nabhanyubm.tech @1.1.1.1` prints `3.108.67.100` (Cloudflare's name servers,
+  DNS only), while the installed Caddyfile still lists only the sslip.io name, so the HTTPS handshake for the
+  domain fails until Nabhanyu runs `sudo deploy/install.sh` once (Constraint 25: the Caddyfile changes only
+  through that script). Historical records (HANDOFF9, the F07 log, D-068's own text) keep the old spelling, with
+  a pointer here where they are still read.
+- **Alternatives:** keeping `.xyz` as the default (it does not exist); making the domain required (the
+  sslip.io name must keep working on its own, D-068).
+
+### D-072 — Task 10 may scrub the forbidden word from git history and re-point the tags (2026-10-17, T8-9, Nabhanyu; for Task 10, amends D-023 and D-068)
+- **Context:** D-068 removed the AI proxy's name from every tracked file but left old commits holding it, and
+  D-069 left the push decision (push as is, or a fresh history) open for Task 10.
+- **Decision (owner, explicit):** in Task 10, before the first push to GitHub, Nabhanyu approves rewriting the
+  repository's history so that no commit (content or message) contains the forbidden word, while keeping the
+  commit trail (every commit, its author, date and message otherwise intact, merges and all) and re-pointing
+  the tags `t01-verified` to `t10-verified` at the rewritten commits. The pushed GitHub history must be 100%
+  clean. This is the one exception to "never rewrite history, never move tags" (Constraint 21, ROLLBACK), and it
+  applies only to that Task 10 step, done by Claude with Nabhanyu, after a backup of the unrewritten repository
+  (a bundle or a mirror clone) and a check that the rewritten tree of every tag equals the original's apart from
+  the scrubbed word.
+- **Alternatives:** pushing the history as is (the word would be public in old commits); a fresh single-commit
+  history (loses the audited trail and the tags' meaning).

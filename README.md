@@ -17,7 +17,8 @@ cached by moment so the cost scales with the match, not with the number of fans.
 The demo replays **real ball-by-ball data** (Cricsheet) of India vs Pakistan at the 2022 T20 World
 Cup, with the 2024 final as a second match to prove nothing is hardcoded.
 
-**Live:** <https://sideline.nabhanyubm.xyz/> (once the domain's DNS is published) and
+**Live:** <https://sideline.nabhanyubm.tech/> (the owner's domain, D-070: its DNS points here; Caddy serves it
+once `sudo deploy/install.sh` has run with it) and
 <https://3-108-67-100.sslip.io/> (always): one EC2 host, Caddy with automatic HTTPS, the server under
 systemd (`deploy/README.md`).
 

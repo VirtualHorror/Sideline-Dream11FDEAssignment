@@ -60,8 +60,8 @@ T20 World Cup game, with the 2024 final as a second match that proves nothing is
 No managed cloud services. Everything (TLS, app, database, model artefacts) runs on one machine;
 the only outbound dependency is the optional LLM API.
 
-**As deployed (T7, D-066, D-068):** `https://sideline.nabhanyubm.xyz/` (the owner's domain, once its DNS
-resolves) and `https://3-108-67-100.sslip.io/` (the Elastic IP, always). Caddy proxies to the server on
+**As deployed (T7, D-066, D-068, D-070):** `https://sideline.nabhanyubm.tech/` (the owner's domain; its DNS
+points here, and Caddy serves it once `sudo deploy/install.sh` has run with it) and `https://3-108-67-100.sslip.io/` (the Elastic IP, always). Caddy proxies to the server on
 `127.0.0.1:8780` (8787 stays free for `pnpm dev`); systemd runs it sandboxed from `/srv/sideline`, a clone of
 the repository at the deployed commit, with the AI settings in the root-only `/etc/sideline/sideline.env`.
 `deploy/install.sh` sets it up (once, with sudo), `deploy/update.sh <ref>` redeploys or rolls back (Flow §14).

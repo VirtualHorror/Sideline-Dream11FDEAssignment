@@ -1,9 +1,9 @@
 # Deploying Sideline (Milestone A)
 
 One EC2 host serves the public link: Caddy terminates TLS for the owner's domain
-`sideline.nabhanyubm.xyz` and for `<public-ip-with-dashes>.sslip.io` (which needs no DNS at all:
+`sideline.nabhanyubm.tech` and for `<public-ip-with-dashes>.sslip.io` (which needs no DNS at all:
 sslip.io answers that name with the IP inside it), and proxies to the Node server, which systemd
-keeps running. Decisions: D-025 (Caddy, sslip.io, systemd), D-066 (as built), D-068 (the domain).
+keeps running. Decisions: D-025 (Caddy, sslip.io, systemd), D-066 (as built), D-068 and D-070 (the domain).
 
 ```
 browser ──HTTPS :443──► Caddy (/etc/caddy/Caddyfile, Let's Encrypt certificate, HTTP → HTTPS on :80)
@@ -26,8 +26,9 @@ this same host (the port is set once, in `install.sh`).
    redirects every other HTTP request to HTTPS.
 2. **Elastic IP** associated with the instance, so the public IP, and with it the sslip.io name,
    survives a stop and start. A new IP means a new name: re-run `install.sh`.
-3. **The domain** (optional, D-068): a DNS A record `sideline.nabhanyubm.xyz` → the Elastic IP
-   (`dig +short A sideline.nabhanyubm.xyz` must print it). `install.sh` serves the name by default
+3. **The domain** (optional, D-068, D-070): a DNS A record `sideline.nabhanyubm.tech` → the Elastic IP
+   (`dig +short A sideline.nabhanyubm.tech @1.1.1.1` must print it; on Cloudflare the record is DNS only, not
+   proxied, so Caddy answers Let's Encrypt itself). `install.sh` serves the name by default
    (`--domain ''` turns it off, `--domain <name>` changes it); Caddy gets its certificate as soon as
    the name resolves here, and until then the sslip.io name keeps working (install.sh warns).
 4. **Install**, from this repository (it asks for your password once):
@@ -79,7 +80,7 @@ to everyone once it is committed and deployed, with or without a key.
 | Symptom | Look at | Usual fix |
 | --- | --- | --- |
 | `install.sh` stops at the HTTPS check | `journalctl -u caddy -n 50` | open 80 and 443 in the security group; Let's Encrypt allows 5 failed checks an hour |
-| the domain does not answer (the sslip.io name does) | `dig +short A sideline.nabhanyubm.xyz` | the A record must point at the Elastic IP; then `sudo deploy/install.sh` (Caddy also retries by itself) |
+| the domain does not answer (the sslip.io name does) | `dig +short A sideline.nabhanyubm.tech` | the A record must point at the Elastic IP; then `sudo deploy/install.sh` (Caddy also retries by itself) |
 | 502 from Caddy | `systemctl status sideline`, `journalctl -u sideline -n 50` | fix the error it shows; `sudo systemctl restart sideline` |
 | blank page right after a build | the asset names in `index.html` | `sudo systemctl restart sideline` (`update.sh` does this) |
 | `update.sh: could not restart sideline without a password` | `sudo -l` | `sudo deploy/install.sh` (it adds the rule) |

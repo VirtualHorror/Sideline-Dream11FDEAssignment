@@ -608,7 +608,7 @@ as built: D-064. Lighthouse was not run (Task 9.5). Follow-ups: F06.
 **Audit result (2026-10-17, Claude): accepted, `t07-verified`.** Implemented by Claude because Codex was
 unavailable (a self-audit), after an independent spot-check of `t06-verified` in the same session (three Task 6
 test gaps pinned, D-065). Live on this host: `https://3-108-67-100.sslip.io/` (Caddy 2.11.7, Let's Encrypt) and
-`https://sideline.nabhanyubm.xyz/` once its DNS resolves (D-068); the public E2E passes against production.
+`https://sideline.nabhanyubm.tech/` (D-068; the name corrected by D-070); the public E2E passes against production.
 Deviations, each with a Decisions entry: production runs from a deploy checkout at `/srv/sideline` on loopback
 port 8780 (the working copy and 8787 belong to development on this same host), one sudo rule lets `update.sh`
 restart the service (D-066); the recorder runs at 1x on a hand-moved clock and covers the room's one-click jumps
@@ -705,6 +705,9 @@ explains the engineering.
 - [ ] `docs/DEMO_SCRIPT.md`: a 5-minute walkthrough and likely questions with answers (when not to call AI, scale, cost, failure modes, what's next).
 - [ ] Push to GitHub (D-069): Nabhanyu provides the remote; first decide on the history that still holds the AI
   proxy's name (D-068: push as is, or a fresh history), then push `main` and the tags.
+  *Decided 2026-10-17 by D-072 (Nabhanyu): scrub the forbidden word from every old commit and commit message,
+  keep the commit trail, re-point `t01-verified` to `t10-verified` at the rewritten commits, back up first, then
+  push; the pushed history must be 100% clean.*
 - [ ] README final pass; tag `t10-verified`.
 
 ## Stretch (only after Milestone B)
