@@ -43,7 +43,7 @@ export function ChatComposer({
         className="chat__compose-input"
         value={text}
         maxLength={280}
-        placeholder="Kohli is carrying this chase"
+        placeholder="Your take on what your TV just showed"
         disabled={disabled}
         onChange={(event) => setText(event.target.value)}
       />
