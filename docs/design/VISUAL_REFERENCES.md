@@ -3,8 +3,8 @@
 > Source files: `/home/nabhanyu/Downloads/ReferenceAttachements/` (owner's recordings). Frames
 > were extracted with ffmpeg 7.0.2 and colours sampled from raw pixels; compressed copies live in
 > `docs/design/reference/`. This document is the implementation spec for the four effects
-> (built in Task 6). Each effect is tied to a *meaning* in the product, so the spectacle carries
-> information instead of decorating.
+> (built in Task 6; the "As built" section at the end records the tuned values). Each effect is tied
+> to a *meaning* in the product, so the spectacle carries information instead of decorating.
 
 ## Reference 1: "Aurora" hero (`Recording 2026-10-16 111836.mp4`, 1478×494, 5.6 s)
 
@@ -121,3 +121,34 @@ chip; a disclaimer line below: "Slackbot is AI and can make mistakes."
   (IntersectionObserver).
 - DPR capped at 2; target 60 fps on a mid-range phone; WebGL contexts created lazily and released
   on unmount.
+
+## As built (Task 6): where the code departs from or refines this spec
+
+Checked in Chrome and in headless Chrome screenshots at 1440 and 390 px in both themes (F06 log).
+
+- **FloodlightGlow** (`src/effects/FloodlightGlow.tsx`, `src/styles/effects.css`): the blobs are sized
+  from the container's height as well as its width (46% × 92%, anchored 34% below the bottom edge);
+  sized by width alone, they vanished below a tall hero. The cone mask takes `--fl-cone` (the hero uses
+  `78% 118%`, a narrower bell reaching up behind the wordmark; the TV screen keeps `120% 100%`). The left
+  blobs run up to 4.8 s ahead in the 14 s cycle, so a new colour enters from one side. The outburst
+  animates the cone (scale, brightness) and a registered `--fl-burst` number that mixes the blob colours
+  towards the burst colour; without the Web Animations API (jsdom) it only records `data-burst`.
+- **Which moments burst** (`src/broadcast/outburst.ts`): a delivery with a spoiler teaser (the gate's
+  big-ball rule: leverage at or above the threshold, or the deciding ball) and the result. A six that the
+  gate did not flag (1298150's 18.5, BUG-003) stays calm. Colours: a six is
+  `color-mix(in oklab, var(--six) 62%, <batting team>)`, a four the same with `--four`, a wicket the
+  bowling team's colour, the result the winner's (strength 1.6, so it lasts longer), any other big ball a
+  floodlight white.
+- **GhostText** (`src/effects/GhostText.tsx`, `ghost.glsl.ts`): the trail field is RGBA16F when
+  `EXT_color_buffer_float` exists, else RGBA8 with signed encoding. Velocity is the pointer's travel per
+  frame as a share of the text's width × 24, capped at 1, fed at 0.12 per frame (the sweep: 0.24, with a
+  16% splat, because it crosses a short headline once); strength 0.8, so the channel offset stays near 5%
+  of the width. The splat's energy no longer scales its velocity (it hid the sweep entirely). The sweep
+  takes 700 ms. Light or dark rendering follows the surface's `--ghost-mode` (the TV screen stays dark).
+- **DitherVeil** (`src/effects/DitherVeil.tsx`, `dither.glsl.ts`): the field is computed in CSS pixels
+  (`uDpr`), so retina screens get the same scale; dots use `--ink-muted` over a `--surface-2` base. A veil
+  holds a WebGL context only while it is visible (holding, dissolving or pulsing) and releases it at 0, so
+  a feed of revealed cards holds none. The CSS fallback keeps its short fade under reduced motion (the
+  global reduced-motion rule exempts `.veil` transitions: an opacity fade is not motion).
+- **GlowInput** (`src/effects/GlowInput.tsx`): the halo sits behind an inner shell (the field wrapper
+  isolates; the shell carries the background), and a keyboard focus ring outlines the shell.

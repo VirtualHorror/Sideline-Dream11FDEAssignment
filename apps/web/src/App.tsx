@@ -1,32 +1,65 @@
 /**
- * App shell: header (wordmark + theme control), page content, footer.
+ * App shell: header (wordmark, "How Sideline is built", theme control), the routed page, and the
+ * footer with the attribution line, which therefore appears on every route (Constraint 17).
  *
- * Task 1 ships the shell and design tokens only. The landing hero with the floodlight
- * effects (Task 6) and the match room (Tasks 6-10) render inside <main>; the footer and
- * header stay in this shell so every view carries the attribution line.
+ * Routes (router.tsx): `/` the landing page, `/match/:matchId` the match room, `/architecture` the
+ * shareable architecture and plan page (loaded on demand: it carries the docs and the markdown
+ * renderer, which the landing and the match room do not need).
  */
+import { lazy, Suspense } from "react";
 import { AttributionFooter } from "./components/AttributionFooter.tsx";
+import { Landing } from "./pages/Landing.tsx";
+import { MatchRoom } from "./pages/MatchRoom.tsx";
+import { Link, useRoute } from "./router.tsx";
 import { ThemeControl } from "./theme/ThemeControl.tsx";
 
-export function App() {
+const Architecture = lazy(() =>
+  import("./pages/Architecture.tsx").then((module) => ({ default: module.Architecture })),
+);
+
+function NotFound() {
   return (
-    <div className="shell">
+    <section className="page-message">
+      <h1 className="page-message__title">That page isn't here</h1>
+      <p>
+        <Link to="/">Go to the start</Link> to pick a match and a fan.
+      </p>
+    </section>
+  );
+}
+
+export function App() {
+  const { route } = useRoute();
+  return (
+    <div className="shell" data-route={route.name}>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
       <header className="shell__header">
-        <span className="wordmark">Sideline</span>
+        <Link to="/" className="wordmark">
+          Sideline
+        </Link>
+        <nav className="shell__nav" aria-label="Site">
+          <Link
+            to="/architecture"
+            className="shell__link"
+            aria-current={route.name === "architecture" ? "page" : undefined}
+          >
+            How Sideline is built
+          </Link>
+        </nav>
         <ThemeControl />
       </header>
 
-      <main className="shell__main">
-        <section className="intro" aria-labelledby="intro-title">
-          <h1 id="intro-title" className="intro__title">
-            The match, on your clock.
-          </h1>
-          <p className="intro__lede">
-            Sideline is a second-screen companion for live cricket. It steps in at the moments a
-            match usually loses you: a surprise team sheet before the lock, your captain out for
-            nothing, joining halfway through, and a stream that runs 25 seconds behind the chat.
-          </p>
-        </section>
+      <main id="main" className="shell__main">
+        {route.name === "landing" ? <Landing /> : null}
+        {route.name === "match" ? <MatchRoom matchId={route.matchId} /> : null}
+        {route.name === "architecture" ? (
+          <Suspense fallback={<p className="page-loading">Loading the architecture…</p>}>
+            <Architecture />
+          </Suspense>
+        ) : null}
+        {route.name === "not_found" ? <NotFound /> : null}
       </main>
 
       <AttributionFooter />

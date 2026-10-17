@@ -4,7 +4,8 @@
  */
 import { expect, type Page, test } from "@playwright/test";
 
-const ROUTES = ["/"];
+// /match/1298150 without a persona shows that match's fan picker (no session is started).
+const ROUTES = ["/", "/match/1298150", "/architecture"];
 const ATTRIBUTION =
   "Made with 💖 by Nabhanyu for Dream11 - Forward Deployed Engineer Intern - Assignment";
 

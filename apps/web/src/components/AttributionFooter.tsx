@@ -2,6 +2,8 @@
  * Site-wide footer. Rendered once by the App shell, so it appears on every page and view.
  * The first line is required verbatim by the assignment brief; do not reword it.
  */
+import { Link } from "../router.tsx";
+
 export const ATTRIBUTION_LINE =
   "Made with 💖 by Nabhanyu for Dream11 - Forward Deployed Engineer Intern - Assignment";
 
@@ -15,7 +17,7 @@ export function AttributionFooter() {
           Cricsheet
         </a>{" "}
         (Open Data Commons Attribution License 1.0). A concept prototype, not an official Dream11
-        product.
+        product. <Link to="/architecture">How Sideline is built</Link>.
       </p>
     </footer>
   );

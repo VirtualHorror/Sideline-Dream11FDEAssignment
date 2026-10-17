@@ -13,6 +13,7 @@ audit updates this page.
 | F03 | Models: T20I archive pipeline, win probability, leverage threshold, player priors | audited and merged, `t03-verified` | [F03](features/F03-models.md) |
 | F04 | Moments engine: clocks, delay buffer, commentary lines, phase detectors (lineup, collapse, nudge with the match-deciding ball, room), catch-up facts, entropy gate, quest resolver, synthetic crowd; Task 3 carry-overs (step 4.0) | audited and merged, `t04-verified` | [F04](features/F04-moments-engine.md) |
 | F05 | Server runtime and AI layer: match bundles, SQLite, per-browser sessions on one ticker, SSE, the AI gateway (Anthropic and OpenAI-compatible providers, cache, budget, traces, replay rows, labelled fallbacks), orchestrator, spoiler teaser / catch-up / explainer skills with their guards, telemetry and the scale projection, `pnpm ai:smoke`; the `t04-verified` spot-check and its two pinned test gaps | audited and merged, `t05-verified` | [F05](features/F05-server-ai.md) |
+| F06 | Frontend I: landing page (floodlit hero, ghost-text wordmark, persona picker), match room on the fan's TV clock (TV pane, companion with held spoilers, catch-up reels, the explainer, the simulated chat, control plane drawer), the four effects with fallbacks, `/architecture`; `GET /api/matches/:matchId`; the `t05-verified` spot-check and its four pinned test gaps; BUG-004 | audited and merged, `t06-verified` | [F06](features/F06-frontend-core.md) |
 
 ## Bugs
 
@@ -21,6 +22,7 @@ audit updates this page.
 | [BUG-001](bugs/BUG-001-oracle-scores-substitute-fielders.md) | The oracle gave fantasy points to substitute fielders outside the playing XI. DOMAIN §3 says they score nothing, and the engine follows DOMAIN. | minor | fixed in the oracle (D-038) |
 | [BUG-002](bugs/BUG-002-engine-rejects-cricsheet-edge-cases.md) | `buildTimeline` rejects some valid Cricsheet files: 31 of 230 in the World Cup archive, and 162 of the 3,255 T20Is that pass Task 3's filters (mid-over bowler change, seven-ball over, XI not 11, nameless fielder, `retired not out`) | minor for the product, major for Task 3 if unhandled | open: Task 3 excludes and counts them (162 of 3,255, by reason in `data/models/README.md`); engine support is backlog |
 | [BUG-003](bugs/BUG-003-leverage-misses-two-planned-climax-balls.md) | PLAN 3.4 expected 1298150's 18.5 six and winning single to be big balls; the specified model scores them 0.093 and 0.019 against a 0.184 threshold (the 19.6 wide before the single carries the swing) | major for Task 3 acceptance | resolved by amending the plan (D-043, Nabhanyu); nothing tuned |
+| [BUG-004](bugs/BUG-004-delayed-tv-never-reaches-the-result.md) | A fan whose TV runs further behind than the crowd's last reaction (25 s and 40 s personas in 1298150) never saw the last balls or the result: the session clock stopped when the ground was done | major | fixed in Task 6 (D-063, test first) |
 
 Fixed while Task 2 was being implemented (logged in F02, no bug file):
 - The result text used Cricsheet's team name instead of the authored display name. A regression test now covers it.
@@ -47,3 +49,10 @@ Closed by tests in Task 5 (the `t04-verified` spot-check, D-051, no bug file):
 - Nothing pinned the room detector's ten-minute history minimum or an at-most dots quest settling on the
   ball that makes it certain; the merged code was right, and both edges now have tests.
 
+Fixed while Task 6 was being implemented (logged in F06, no bug file):
+- The scorebug read "Need 0 off 0" between the winning run and the innings end (test first).
+- Playback buttons changed only when the server's clock came back, so a click looked ignored for a round
+  trip; they now show the choice at once and the answered clock is applied immediately (test first).
+- The floodlight was invisible on a tall hero (its blobs were offset by a share of the container's height
+  but sized by its width), and the ghost-text sweep painted no fringes (the splat's energy scaled its
+  velocity to almost nothing); both found in the visual review and tuned (VISUAL_REFERENCES "As built").

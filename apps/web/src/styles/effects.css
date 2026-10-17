@@ -1,0 +1,378 @@
+/*
+ * The four reference effects (docs/design/VISUAL_REFERENCES.md). Components in src/effects/ own the
+ * behaviour; this file owns the look. Floodlight hexes are the sampled spectrum (--fl-*): they are the
+ * same in both themes, and --glow-strength softens them in daylight.
+ */
+
+/* Registered so the browser can interpolate them (colour cycle, outburst, halo rotation). */
+@property --fl-c {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: #5171e8;
+}
+
+@property --fl-burst {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --glow-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* ---------------------------------------------------------------- Effect A: FloodlightGlow */
+
+.floodlight {
+  --fl-burst-color: #ffffff;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: calc(var(--glow-strength) * var(--fl-intensity, 1));
+}
+
+.floodlight__cone {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+  mask-image: radial-gradient(
+    var(--fl-cone, 120% 100%) at 50% 100%,
+    #000 0%,
+    #000 30%,
+    transparent 70%
+  );
+}
+
+/* Sized from the container's height as well as its width, so the cone shows on a wide TV screen,
+   a tall phone hero and everything between. */
+.floodlight__blob {
+  position: absolute;
+  bottom: -34%;
+  width: 46%;
+  height: 92%;
+  border-radius: 50%;
+  filter: blur(48px);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--fl-c), var(--fl-burst-color) calc(var(--fl-burst) * 100%)) 0%,
+    color-mix(in oklab, var(--fl-c), var(--fl-burst-color) calc(var(--fl-burst) * 100%)) 35%,
+    transparent 100%
+  );
+  animation:
+    fl-cycle 14s linear infinite,
+    fl-drift var(--fl-drift, 13s) ease-in-out infinite alternate;
+}
+
+/* The left blobs run ahead in the cycle: a new colour enters from one side, as in the reference. */
+.floodlight__blob--1 {
+  --fl-c: #5171e8;
+  --fl-drift: 13s;
+  left: 10%;
+  animation-delay: -4.8s, -2s;
+}
+
+.floodlight__blob--2 {
+  --fl-c: #69b9ec;
+  --fl-drift: 17s;
+  left: 22%;
+  bottom: -38%;
+  animation-delay: -3.2s, -6s;
+}
+
+.floodlight__blob--3 {
+  --fl-c: #7771bc;
+  --fl-drift: 11s;
+  left: 33%;
+  animation-delay: -1.6s, -1s;
+}
+
+.floodlight__blob--4 {
+  --fl-c: #d165aa;
+  --fl-drift: 15s;
+  left: 44%;
+  bottom: -36%;
+  animation-delay: 0s, -8s;
+}
+
+.floodlight__beam {
+  position: absolute;
+  top: -12%;
+  left: 50%;
+  width: 22%;
+  height: 78%;
+  translate: -50% 0;
+  background: radial-gradient(
+    50% 100% at 50% 0%,
+    color-mix(in oklab, #69b9ec 55%, white),
+    transparent
+  );
+  opacity: 0.12;
+  filter: blur(28px);
+}
+
+.floodlight__pulse {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(80% 70% at 50% 100%, var(--fl-burst-color), transparent 70%);
+  opacity: 0;
+}
+
+.floodlight[data-motion="static"] .floodlight__blob {
+  animation: none;
+}
+
+@keyframes fl-cycle {
+  0%,
+  100% {
+    --fl-c: #5171e8;
+  }
+  25% {
+    --fl-c: #69b9ec;
+  }
+  50% {
+    --fl-c: #7771bc;
+  }
+  75% {
+    --fl-c: #d165aa;
+  }
+}
+
+@keyframes fl-drift {
+  from {
+    translate: -12% 0;
+  }
+  to {
+    translate: 12% 0;
+  }
+}
+
+/* ---------------------------------------------------------------- Effect B: GhostText */
+
+.ghost {
+  position: relative;
+  display: inline-block;
+}
+
+.ghost__text {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.ghost__gl {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ghost__canvas {
+  position: absolute;
+}
+
+.ghost[data-render="webgl"] .ghost__text {
+  opacity: 0;
+}
+
+/* Additive fringes on a dark surface, the subtractive pair on a light one. A surface that stays
+   dark in both themes (the TV screen) sets the dark values again. */
+:root {
+  --ghost-mode: light;
+  --ghost-fringe-a: color-mix(in oklab, #d7263d 60%, transparent);
+  --ghost-fringe-b: color-mix(in oklab, #1d7fb8 60%, transparent);
+}
+
+:root[data-theme="dark"],
+.surface-night {
+  --ghost-mode: dark;
+  --ghost-fringe-a: color-mix(in oklab, #ff3b5c 85%, transparent);
+  --ghost-fringe-b: color-mix(in oklab, #3fe0d0 85%, transparent);
+}
+
+.ghost[data-render="css"] .ghost__text {
+  text-shadow:
+    -1px 0 var(--ghost-fringe-a),
+    1px 0 var(--ghost-fringe-b);
+}
+
+/* ---------------------------------------------------------------- Effect C: DitherVeil */
+
+.veil {
+  --veil-ink: var(--ink-muted);
+  --veil-base: var(--surface-2);
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.veil[data-render="css"] {
+  color: var(--veil-ink);
+  background-color: color-mix(in oklab, var(--veil-base) 88%, transparent);
+  background-image: radial-gradient(circle, currentColor 1px, transparent 1.2px);
+  background-size: 6px 6px;
+  opacity: var(--veil);
+  transition: opacity 900ms var(--ease-out);
+}
+
+/* An opacity fade is not motion: under reduced motion the reveal still fades, briefly. */
+.veil[data-render="css"][data-motion="reduced"] {
+  transition-duration: 150ms;
+}
+
+.veil[data-render="css"][data-pulse="true"] {
+  animation: veil-pulse 2.5s ease-in-out infinite;
+}
+
+.veil[data-render="css"][data-pulse="true"][data-motion="reduced"] {
+  animation: none;
+  opacity: 0.25;
+}
+
+.veil__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes veil-pulse {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* ---------------------------------------------------------------- Effect D: GlowInput */
+
+.glow-input {
+  --glow-idle: 0.12;
+  --glow-focus: 0.28;
+  --glow-thinking: 0.36;
+  display: grid;
+  gap: 0.45rem;
+}
+
+:root[data-theme="dark"] .glow-input {
+  --glow-idle: 0.18;
+  --glow-focus: 0.42;
+  --glow-thinking: 0.55;
+}
+
+.glow-input__field {
+  position: relative;
+  isolation: isolate;
+}
+
+.glow-input__field::before {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  z-index: -1;
+  border-radius: calc(var(--r-control) + 14px);
+  background: conic-gradient(
+    from var(--glow-angle),
+    #ff4d6d,
+    #c64dff,
+    #4d7cff,
+    #3fe0d0,
+    #b8f05a,
+    #ffc94a,
+    #ff4d6d
+  );
+  filter: blur(22px);
+  opacity: var(--glow-idle);
+  transition: opacity 200ms var(--ease-out);
+  pointer-events: none;
+}
+
+.glow-input__field:focus-within::before {
+  opacity: var(--glow-focus);
+}
+
+.glow-input[data-state="thinking"] .glow-input__field::before {
+  opacity: var(--glow-thinking);
+  animation: glow-turn 2.4s linear infinite;
+}
+
+.glow-input__shell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.35rem 0.3rem 0.9rem;
+  background: var(--surface-1);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-control);
+}
+
+.glow-input__box {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.glow-input__box::placeholder {
+  color: var(--ink-muted);
+}
+
+.glow-input__box:focus-visible {
+  outline: none;
+}
+
+.glow-input__field:has(.glow-input__box:focus-visible) .glow-input__shell {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.glow-input__key {
+  flex: none;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 560;
+  color: var(--ink-muted);
+  background: var(--surface-2);
+}
+
+.glow-input__send {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 0;
+  border-radius: var(--r-control);
+  background: var(--ink);
+  color: var(--bg);
+  cursor: pointer;
+}
+
+.glow-input__send:disabled {
+  background: var(--surface-3);
+  color: var(--ink-muted);
+  cursor: default;
+}
+
+.glow-input__helper {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ink-muted);
+}
+
+@keyframes glow-turn {
+  to {
+    --glow-angle: 360deg;
+  }
+}

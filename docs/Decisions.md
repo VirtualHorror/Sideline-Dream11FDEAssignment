@@ -656,3 +656,94 @@
 - **Engine:** `situationOf` is exported (the explainer's facts); no contract changed except D-053.
 - **Smoke:** `pnpm ai:smoke` uses an in-memory database, so its call never lands in the app's traces or
   daily budget.
+
+### D-059 — Spot-check of `t05-verified`: accepted, four test gaps pinned in Task 6 (2026-10-17, before T6, Claude)
+- **Context:** Task 5 was implemented and audited by the same agent; Nabhanyu asked for an independent
+  check in a fresh session before Task 6 (F06 log). Verify, E2E, the oracle diff, `mutate.py` (18/18) and
+  a keyless live run of the API the UI will consume all agree with the Task 5 record. 17 of 21 fresh hand
+  mutants of the server code were killed.
+- **Decision:** the four survivors are test gaps, not defects, so `t05-verified` stands and the gaps are
+  closed with tests on the Task 6 branch (no server source change): a jump back then playing forward
+  streams the held teasers again, once each (Review focus 1); no event or chat line is streamed before the
+  stadium clock reaches it; the clock keeps running after the match ends until the crowd's last reaction;
+  `/ask` on a session an internal error stopped answers 409 `session_failed`. Each new test fails on its
+  mutant and passes on the merged code.
+
+### D-060 — The match room reads players, rules and the model from `GET /api/matches/:matchId` (2026-10-17, T6, Claude)
+- **Context:** PLAN Task 6 has the browser call `describeDelivery`, `winProbability` and (for the catch-up's
+  squad impact, F05 follow-up 1) `fantasyPoints`/`squadPoints`, which need the players, the win-probability
+  model and the fantasy rules. Task 5's API sends none of them: `/api/matches` lists summaries and
+  personas, and `hello` carries the summary and the fan's persona.
+- **Decision:** one read-only route, `GET /api/matches/:matchId` → `{ match, players, rules, winprob }`
+  straight from the match bundle (404 JSON for an unknown id), validated in the browser with the engine's
+  own schemas (`MatchSummarySchema`, `PlayerSchema`, `FantasyRulesSchema`, `WinProbModelSchema`). It is
+  public match data and model weights; personas stay out (the stream's `hello` brings the session's).
+  No contract changes: the response is composed of existing schemas.
+- **Alternatives:** adding the fields to `hello` (a contract change, and the same 40 KB resent on every
+  reconnect); importing `data/` into the web bundle at build time (match data baked into the client, a
+  rebuild per match, and every match shipped to every fan).
+
+### D-061 — `/architecture` renders the docs with `markdown-it` 15.0.2, as React elements (2026-10-17, T6, Claude)
+- **Context:** D-034 and PLAN Task 6 need a markdown renderer with raw HTML disabled, added with a
+  Decisions entry and a version published at least 14 days ago (D-007; pnpm enforces it).
+- **Decision:** `markdown-it` **15.0.2** (published 2026-09-11; MIT; ships its own types), exact pin in
+  `apps/web/package.json`. New transitive packages: `argparse` 3.0.2 (2026-09-10), `linkify-it` 6.1.0,
+  `mdurl` 2.1.0, `uc.micro` 3.0.0 (2026-07-22) and `punycode.js` 2.3.1 (2023-10-30); `entities` 8.1.0 was
+  already in the lockfile. None has an install script; nothing native. It runs with `html: false` (raw
+  HTML stays text). `src/lib/markdown.ts` walks its token stream and builds React elements from a fixed
+  tag list, so no HTML string is ever injected (`dangerouslySetInnerHTML` is not used anywhere): web
+  links open in a new tab, in-page anchors stay, repository paths become plain text, wide tables and code
+  blocks scroll inside their own box. The page is a separate chunk (`React.lazy`), so the landing page
+  and the match room do not carry the docs or the parser.
+- **Alternatives:** `marked` (no switch to disable raw HTML; needs an escaping renderer and a sanitiser
+  for its HTML string); `react-markdown` with `remark-gfm` (safe by default, but about 50 packages);
+  `micromark` (safe, but tables need extensions); a hand-written parser (the PLAN asks for a library, and
+  CommonMark has many edge cases).
+
+### D-062 — A 60-line router instead of a routing library (2026-10-17, T6, Claude)
+- **Context:** Task 6 brings three routes (`/`, `/match/:matchId`, `/architecture`); the server already
+  answers every non-API path with `index.html` (Flow §2).
+- **Decision:** `src/router.tsx`: `parseRoute(pathname)`, `useRoute()` (`useSyncExternalStore` over
+  `popstate` and a custom navigate event), `navigate(to, { replace })` and `Link` (modified clicks and
+  new tabs left to the browser). Match ids must look like Cricsheet ids (`MatchIdSchema`), anything else
+  is "not found". The persona travels as `?persona=<id>`, so a match link without one shows the picker.
+- **Alternatives:** React Router or TanStack Router (a dependency and its supply chain for three routes,
+  D-019's "no kit" spirit); hash routing (ugly shareable links for the demo round).
+
+### D-063 — The session clock stops when the fan's TV has shown the end (2026-10-17, T6, Claude; amends D-056)
+- **Context:** BUG-004. D-056 stopped a session's clock "at the end of the match and its crowd", at
+  stadium time; a fan whose TV runs further behind than the crowd's last reaction (25 s and 40 s
+  personas in 1298150) never saw the last balls or the result.
+- **Decision:** the stadium clock runs on to `endT + delayMs` and pauses there, so the fan's TV reaches
+  the end first; seeks and jumps still clamp to `endT`. Two Task 5 expectations that encoded the old
+  rule now add the fan's delay (named in BUG-004); the new test fails on the old code.
+- **Alternatives:** letting the browser run its TV clock past a paused server clock (the client would
+  invent time the server never had); stopping at `endT` and treating "paused at the end" as "show
+  everything" in the UI (a TV that jumps 25 s at the end, and every other consumer of the clock would
+  still be wrong).
+
+### D-064 — The match room as built: TV clock, spectacle rules, held control plane, layout (2026-10-17, T6, Claude)
+- **TV clock:** the browser folds the stream's events to `tvTimeAt(clock, now)`, re-read every 100 ms
+  while playing (and on `visibilitychange`), not every animation frame: state changes only when the TV
+  passes an event, a chat line or a card's times, seconds apart even at 32x; the effects run their own
+  frame loops. A snapshot replaces everything and bumps an epoch that the fold and the outburst watcher
+  start again from (Review focus 1). The store applies the clock a control request answers with at once,
+  and the controls show the fan's choice before it arrives, dropping the guess on failure.
+- **Spectacle:** the floodlight outburst and the ghost-text headline fire only for events newly released
+  on the TV clock during play, and only for a ball with a spoiler teaser (the gate's big-ball rule) or the
+  result. Every six and wicket stays in the dot matrix and commentary; only the balls that swung the match
+  light the stadium ("spend boldness in one place", DESIGN_SYSTEM §1). A seek is not a moment.
+- **Spoiler safety beyond the cards:** a held card renders empty bars under the veil, never the hidden
+  text; the control plane shows a gate decision once the TV reaches its event and a trace once its moment
+  is revealed, because trace details can quote the outcome (a guard's "score after the ball").
+- **Layout:** two columns from 960 px (the design's desktop starts at 1200 and phone below 768; the
+  in-between is closer to a tablet in landscape, which the two columns serve), tabs below; the TV screen is
+  a night picture in both themes (`.surface-night`); the landing hero is the wordmark with the floodlight
+  rising from its bottom edge, and the picker follows it (the reference's composition; the sketch's picker
+  inside the hero buried the cone under the persona cards).
+- **Persona in the URL:** `/match/<id>?persona=<id>` creates the session in the room, so a link works on
+  its own and a reload starts a fresh session; without a persona the room shows that match's picker.
+- **Alternatives:** an animation-frame TV clock (60 renders a second for nothing); outbursts on every six
+  and wicket (a dozen spectacles a match, against the design's restraint); the control plane at stadium time
+  (a reviewer watching the drawer would be spoiled); a single responsive grid with CSS-only tabs (the tab
+  roles would be wrong on desktop and hidden panels would still mount the TV's effects).

@@ -1,4 +1,10 @@
-import { type Detector, foldEvents, type StreamMessage, situationOf } from "@sideline/engine";
+import {
+  type Detector,
+  foldEvents,
+  type StreamMessage,
+  situationOf,
+  tvTimeAt,
+} from "@sideline/engine";
 import { describe, expect, it } from "vitest";
 import { bundle } from "./helpers.ts";
 import { delivery, listen, playUntil, testRuntime } from "./runtime.ts";
@@ -145,7 +151,10 @@ describe("sessions (PLAN 5.2)", () => {
     rt.manager.tick();
     expect(session.clock().playing).toBe(false);
     expect(ofType(messages, "clock").at(-1)?.data.clock.playing).toBe(false);
-    expect(session.clock().stadiumT).toBe(Math.max(end.t, b.crowd.at(-1)?.t ?? 0));
+    // The stadium clock stops once the fan's TV, `delayMs` behind, has shown the end (BUG-004, D-063).
+    expect(session.clock().stadiumT).toBe(
+      Math.max(end.t, b.crowd.at(-1)?.t ?? 0) + session.clock().delayMs,
+    );
   });
 
   it("evicts a session that has been idle past its TTL, and keeps one with an open stream", () => {
@@ -235,5 +244,101 @@ describe("sessions (PLAN 5.2)", () => {
     expect(() =>
       session.control({ action: "jump", target: { kind: "event", eventId: "1298150:9999" } }),
     ).toThrow(/unknown event/);
+  });
+});
+
+// Task 6 step 6.0, the independent spot-check of t05-verified (D-059): each of these failed on a hand
+// mutant that every Task 5 test let through, and passes on the code as merged.
+describe("sessions: behaviour the t05-verified spot-check found unpinned", () => {
+  it("streams the teasers again, once each, when play passes them after a jump back (Review focus 1)", async () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const messages = listen(session);
+    session.control({ action: "speed", value: 8 });
+    const nineteenOne = delivery(events, 2, "19.1");
+    await playUntil(rt, session, nineteenOne.t);
+    const teasers = session.moments().filter((m) => m.kind === "spoiler_nudge");
+    expect(teasers.map((m) => m.createdAt)).toEqual([delivery(events, 2, "18.6").t, nineteenOne.t]);
+
+    session.control({ action: "jump", target: { kind: "over", innings: 2, afterOvers: 18 } });
+    const afterJump = messages.length;
+    await playUntil(rt, session, nineteenOne.t);
+    const replayed = ofType(messages.slice(afterJump), "moment").map((m) => m.data.moment.id);
+    expect(replayed).toEqual(teasers.map((m) => m.id));
+  });
+
+  it("never streams an event or a chat line before the stadium clock reaches it", () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const messages = listen(session);
+    session.control({ action: "speed", value: 8 });
+    const until = delivery(events, 2, "19.1").t;
+    let checked = 0;
+    while (session.stadiumNow() < until) {
+      rt.clock.advance(100);
+      const before = messages.length;
+      rt.manager.tick();
+      const now = session.stadiumNow();
+      for (const message of messages.slice(before)) {
+        const stamped =
+          message.type === "events"
+            ? message.data.events
+            : message.type === "chat"
+              ? message.data.messages
+              : [];
+        for (const item of stamped) {
+          expect(item.t).toBeLessThanOrEqual(now);
+          checked += 1;
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(100);
+  });
+
+  it("keeps the clock running after the last event until the crowd's last reaction", () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const end = events.at(-1);
+    const lastChat = b.crowd.at(-1);
+    if (!end || !lastChat) throw new Error("no events or crowd");
+    expect(lastChat.t).toBeGreaterThan(end.t);
+    session.control({ action: "jump", target: { kind: "event", eventId: end.id } });
+    const messages = listen(session);
+    rt.clock.advance(1_000);
+    rt.manager.tick();
+    expect(session.clock().playing).toBe(true);
+    // The crowd's last line, then the fan's delay for their TV to show it (BUG-004, D-063).
+    rt.clock.advance(lastChat.t - end.t + session.clock().delayMs);
+    rt.manager.tick();
+    expect(session.clock().playing).toBe(false);
+    const streamed = ofType(messages, "chat").flatMap((m) => m.data.messages);
+    expect(streamed.at(-1)).toEqual(lastChat);
+  });
+});
+
+// BUG-004, found by the Task 6 UI: the clock stopped when the ground was done, so a fan whose TV runs
+// behind never saw the last balls or the result.
+describe("sessions: the end of the match reaches the fan's TV (BUG-004)", () => {
+  it("keeps the clock running until the fan's delayed TV has shown the match end", () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const end = events.at(-1);
+    const lastChat = b.crowd.at(-1);
+    if (end?.kind !== "match_end" || !lastChat) throw new Error("no match end or crowd");
+    // A feed further behind than the crowd's last reaction to the result (22 s here; 25 s for the
+    // babar-believer persona, where the Task 6 UI found it).
+    const delay = 30_000;
+    expect(delay).toBeGreaterThan(lastChat.t - end.t);
+    session.control({ action: "delay", ms: delay });
+    session.control({ action: "jump", target: { kind: "event", eventId: end.id } });
+    // Everything has happened at the ground, but the fan's TV has not shown the result yet.
+    rt.clock.advance(lastChat.t - end.t + 1_000);
+    rt.manager.tick();
+    expect(session.clock().playing).toBe(true);
+    expect(tvTimeAt(session.clock(), rt.clock.now())).toBeLessThan(end.t);
+    rt.clock.advance(delay);
+    rt.manager.tick();
+    expect(session.clock().playing).toBe(false);
+    expect(tvTimeAt(session.clock(), rt.clock.now())).toBe(lastChat.t);
   });
 });

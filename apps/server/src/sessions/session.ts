@@ -159,7 +159,10 @@ export function createSession(
   const sent = new Set<string>();
   const pending = new Set<Promise<unknown>>();
 
-  const stadiumNow = () => Math.min(endT, stadiumAt(clock, deps.now()));
+  // The stadium clock runs on past the end by the fan's delay, so their TV shows the end too: stopped
+  // at `endT`, a TV 25 s behind would never reach the last balls or the result (BUG-004, D-063).
+  const finalT = () => endT + clock.delayMs;
+  const stadiumNow = () => Math.min(finalT(), stadiumAt(clock, deps.now()));
   const touch = () => {
     activity = deps.now();
   };
@@ -325,8 +328,14 @@ export function createSession(
           emit("moment", { moment });
         }
       }
-      // Everything has happened: stop the clock at the end so the stream says the match is over.
-      if (clock.playing && cursor >= events.length && chatCursor >= crowd.length) {
+      // Everything has happened and the fan's TV has shown it: stop the clock so the stream says the
+      // match is over.
+      if (
+        clock.playing &&
+        cursor >= events.length &&
+        chatCursor >= crowd.length &&
+        now >= finalT()
+      ) {
         clock = { ...rebased(), playing: false };
         emit("clock", { clock: { ...clock } });
       }

@@ -5,6 +5,7 @@
  * socket). Route map (grows task by task, see docs/Flow.md §2):
  *   GET  /api/health                    liveness + public config summary          (Task 1)
  *   GET  /api/matches                   matches and personas for the picker       (Task 5)
+ *   GET  /api/matches/:matchId          players, rules and model for the room     (Task 6)
  *   POST /api/sessions                  a session per browser                     (Task 5)
  *   GET  /api/sessions/:id/stream       SSE of StreamMessages                     (Task 5)
  *   POST /api/sessions/:id/control      play, pause, speed, seek, jump, delay, lens (Task 5)

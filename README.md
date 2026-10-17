@@ -17,14 +17,18 @@ cached by moment so the cost scales with the match, not with the number of fans.
 The demo replays **real ball-by-ball data** (Cricsheet) of India vs Pakistan at the 2022 T20 World
 Cup, with the 2024 final as a second match to prove nothing is hardcoded.
 
-> Status: Tasks 1-5 complete and audited: foundation; cricket core (Cricsheet timeline, match
+> Status: Tasks 1-6 complete and audited: foundation; cricket core (Cricsheet timeline, match
 > reducer, fantasy scoring, engine report); models (win probability, leverage and player priors
 > trained on 3,093 real men's T20Is, rebuilt byte for byte by one script); the moments engine (TV
 > clock and delay buffer, the four phase detectors, the entropy gate that keeps 233 of 266 events
 > of the 2022 replay away from any model, quest resolution and a seeded synthetic crowd); the server
 > runtime (a session per browser streamed over SSE, the AI gateway with moment-keyed caching, budgets
 > and labelled fallbacks, spoiler teasers that never see the outcome, catch-up reels, a
-> glossary-first explainer, telemetry with the scale projection). See `docs/PLAN.md` for the build
+> glossary-first explainer, telemetry with the scale projection); and the first UI: a floodlit landing
+> page with a ghost-text wordmark and a persona picker, a match room folded on the fan's own delayed TV
+> clock (big balls held under a dither veil until the fan's stream shows them, then revealed with a
+> floodlight outburst; catch-up reels; questions; a simulated watch-along chat), a control plane that
+> shows every decision and what it cost, and `/architecture`. See `docs/PLAN.md` for the build
 > sequence and status.
 
 ## Quick start
@@ -36,6 +40,7 @@ pnpm install --frozen-lockfile
 pnpm verify          # typecheck, lint, unit tests, anti-hardcoding scan, data gate, build
 pnpm test:e2e        # Playwright on system Chrome, desktop + 390 px mobile
 pnpm dev             # web on http://127.0.0.1:5173 (proxies /api to the server on :8787)
+SIDELINE_AI_PROVIDER=none pnpm dev   # the same without calling the AI provider in .env
 pnpm build && pnpm start   # production: server on :8787 serving apps/web/dist
 
 # scorecard + fantasy points for a match, straight from the engine (--json for the oracle format)
@@ -59,8 +64,9 @@ defaults to whichever key is present. Without a key Sideline runs on determinist
 AI card falls back to a labelled template built from the same facts (recorded AI output joins in
 Task 7).
 
-For the demo round, `/architecture` (from Task 6) presents this architecture and the live build
-plan inside the app, rendered from the same docs in this repository.
+For the demo round, `/architecture` presents this architecture, the live build plan and every
+decision inside the app, rendered at build time from the same docs in this repository. Open
+`/match/1298150?persona=late-from-work` to join the 2022 chase after 14 overs, or pick any fan on `/`.
 
 ## Repository
 
@@ -77,8 +83,8 @@ plan inside the app, rendered from the same docs in this repository.
 ## How this was built
 
 Claude Code (architect and auditor) designed the system, wrote the plan and Task 1, and audits each
-task; OpenAI Codex implements tasks on branches (Claude implemented Tasks 3, 4 and 5 while Codex was
-unavailable). The process is documented as it happens:
+task; OpenAI Codex implements tasks on branches (Claude implemented Tasks 3, 4, 5 and 6 while Codex
+was unavailable). The process is documented as it happens:
 `docs/Decisions.md` (why), `docs/Flow.md` (how execution travels), `docs/features/` (per-task
 traces), `docs/TEST_CHECKLIST.md` (what proves it works), `docs/ROLLBACK.md` (how to undo it).
 
@@ -86,6 +92,7 @@ traces), `docs/TEST_CHECKLIST.md` (what proves it works), `docs/ROLLBACK.md` (ho
 
 - Ball-by-ball data: [Cricsheet](https://cricsheet.org), Open Data Commons Attribution License 1.0.
 - Typeface: Anek Latin by Ek Type (OFL-1.1), self-hosted via Fontsource.
+- Markdown on `/architecture`: markdown-it (MIT).
 - A concept prototype, not an official Dream11 product.
 
 Made with 💖 by Nabhanyu for Dream11 - Forward Deployed Engineer Intern - Assignment
