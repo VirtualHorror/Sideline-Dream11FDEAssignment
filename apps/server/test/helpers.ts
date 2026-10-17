@@ -1,5 +1,14 @@
 /** Shared helpers for the server tests: the real data dir, bundles, and an injected clock. */
 import { join } from "node:path";
+import {
+  applyEvent,
+  createMatchState,
+  type InningsNumber,
+  type NudgeFacts,
+  nudgeDetector,
+  type Persona,
+} from "@sideline/engine";
+import type { TeamName } from "../src/ai/skills/format.ts";
 import { loadMatchBundles, type MatchBundle } from "../src/data/bundle.ts";
 
 export const DATA_DIR = join(import.meta.dirname, "..", "..", "..", "data");
@@ -33,3 +42,37 @@ export function fakeClock(start = Date.UTC(2026, 9, 16, 12, 0, 0)) {
 
 /** Resolves once every pending promise callback has run (lets fire-and-forget work settle). */
 export const flush = () => new Promise<void>((resolve) => setImmediate(resolve));
+
+/** Every teaser trigger of a full replay of a match (the nudge detector is persona-independent). */
+export function nudgeFacts(id: string): NudgeFacts[] {
+  const b = bundle(id);
+  const ctx = {
+    matchId: id,
+    players: b.players,
+    rules: b.rules,
+    persona: b.personas[0] as Persona,
+    winprob: b.winprob,
+    priors: b.priors,
+  };
+  const state = createMatchState(id);
+  const found: NudgeFacts[] = [];
+  for (const event of b.events) {
+    const before = structuredClone(state);
+    applyEvent(state, event);
+    const verdict = nudgeDetector.evaluate({ before, after: state, event, events: b.events, ctx });
+    if (verdict.outcome === "ai_trigger" && verdict.trigger.kind === "spoiler_nudge") {
+      found.push(verdict.trigger.facts);
+    }
+  }
+  return found;
+}
+
+export const teamsOf = (id: string): TeamName[] =>
+  bundle(id).context.teams.map((t) => ({ code: t.code, name: t.name }));
+
+/** The teaser skill's facts for the teaser on `innings` `label` of match `id`. */
+export function teaserFactsAt(id: string, innings: InningsNumber, label: string) {
+  const nudge = nudgeFacts(id).find((f) => f.innings === innings && f.label === label);
+  if (!nudge) throw new Error(`no teaser at ${id} ${innings}:${label}`);
+  return { nudge, teams: teamsOf(id) };
+}
