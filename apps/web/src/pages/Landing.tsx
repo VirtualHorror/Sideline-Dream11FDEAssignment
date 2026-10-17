@@ -10,7 +10,7 @@ import { PersonaPicker } from "../components/PersonaPicker.tsx";
 import { FloodlightGlow } from "../effects/FloodlightGlow.tsx";
 import { GhostText } from "../effects/GhostText.tsx";
 import { ApiError, api, type MatchListing } from "../lib/api.ts";
-import { navigate } from "../router.tsx";
+import { Link, navigate } from "../router.tsx";
 
 export function Landing() {
   const [matches, setMatches] = useState<MatchListing[] | null>(null);
@@ -49,13 +49,14 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="start" aria-label="Start watching">
+      <section className={matches ? "start" : "start start--loading"} aria-label="Start watching">
         {matches ? (
           <PersonaPicker
             matches={matches}
             onStart={(matchId, personaId) =>
               navigate(`/match/${matchId}?persona=${encodeURIComponent(personaId)}`)
             }
+            onStory={(matchId) => navigate(`/match/${matchId}?story=1`)}
           />
         ) : problem ? (
           <p className="notice" role="alert">
@@ -93,6 +94,10 @@ export function Landing() {
             </p>
           </article>
         </div>
+        <p className="ai-use__more">
+          <Link to="/architecture">How Sideline is built</Link>, with the live count of what ran
+          without AI.
+        </p>
       </section>
     </div>
   );

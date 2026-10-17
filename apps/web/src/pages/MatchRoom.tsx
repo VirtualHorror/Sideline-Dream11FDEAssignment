@@ -8,7 +8,9 @@
  * the fan's TV has reached (stream/tvClock.ts) and hands the TV view to every panel, so the TV pane,
  * the cards, the chat and the control plane can never show more than the fan's picture. Controls and
  * questions go back over REST; the stream brings the result. A link without a persona shows the
- * picker for this match first.
+ * picker for this match first. With `story=1` the room runs the guided story (story/, D-076): it
+ * loads the match's plan, watches as the plan's persona, and the tour drives the controls until the
+ * fan leaves it.
  *
  * Caller: App.tsx.
  */
@@ -17,23 +19,26 @@ import {
   type DeliveryEvent,
   fantasyPoints,
   type Lens,
+  type StoryPlan,
   squadPoints,
 } from "@sideline/engine";
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { PhaseRail } from "../broadcast/PhaseRail.tsx";
 import { Scorebug } from "../broadcast/Scorebug.tsx";
 import { TvPane } from "../broadcast/TvPane.tsx";
+import { ChatComposer } from "../companion/ChatComposer.tsx";
 import { ChatFeed } from "../companion/ChatFeed.tsx";
 import { Composer } from "../companion/Composer.tsx";
 import type { SquadImpact } from "../companion/cards/CatchUpReel.tsx";
 import { LensSwitch } from "../companion/LensSwitch.tsx";
-import { MomentFeed } from "../companion/MomentFeed.tsx";
+import { type LineupRequest, MomentFeed } from "../companion/MomentFeed.tsx";
 import { suggestQuestion } from "../companion/suggest.ts";
 import { PersonaPicker } from "../components/PersonaPicker.tsx";
 import { ControlPlaneDrawer } from "../controlplane/ControlPlaneDrawer.tsx";
 import { ApiError, api, type MatchDetail, type MatchListing } from "../lib/api.ts";
 import { useMediaQuery } from "../lib/useMediaQuery.ts";
 import { Link, navigate, useRoute } from "../router.tsx";
+import { StoryOverlay, useStoryDirector } from "../story/StoryOverlay.tsx";
 import { releasedCount, TvContext, useTvView } from "../stream/tvClock.ts";
 import { useSessionStream } from "../stream/useSessionStream.ts";
 
@@ -47,12 +52,17 @@ function messageOf(error: unknown): string {
   }
   if (error.code === "session_failed") return "This session was paused. Start a new one to go on.";
   if (error.code === "invalid_control") return `That jump isn't possible: ${error.message}.`;
+  if (error.code === "locked") return "Teams locked at the first ball on your TV.";
+  if (error.code === "not_yet") return "The playing XIs are not out yet.";
   return error.message;
 }
 
 export function MatchRoom({ matchId }: { matchId: string }) {
   const { search } = useRoute();
   const personaId = search.get("persona");
+  const storyMode = search.get("story") === "1";
+  // undefined while loading; null when this match has no story (no pre-match fan with a team).
+  const [story, setStory] = useState<StoryPlan | null | undefined>(undefined);
   const [detail, setDetail] = useState<MatchDetail | null>(null);
   const [listing, setListing] = useState<MatchListing | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
@@ -82,6 +92,27 @@ export function MatchRoom({ matchId }: { matchId: string }) {
     };
   }, [matchId]);
 
+  useEffect(() => {
+    if (!storyMode) return;
+    let live = true;
+    api
+      .story(matchId)
+      .then((plan) => {
+        if (!live) return;
+        setStory(plan);
+        // The story watches as its own fan: the plan names the persona.
+        if (plan && personaId !== plan.personaId) {
+          navigate(`/match/${matchId}?persona=${encodeURIComponent(plan.personaId)}&story=1`, {
+            replace: true,
+          });
+        }
+      })
+      .catch(() => live && setStory(null));
+    return () => {
+      live = false;
+    };
+  }, [matchId, storyMode, personaId]);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: `attempt` restarts a stopped session
   useEffect(() => {
     setSessionId(null);
@@ -107,6 +138,9 @@ export function MatchRoom({ matchId }: { matchId: string }) {
     );
   }
   if (!detail) return <p className="page-loading">Loading the match…</p>;
+  if (storyMode && (story === undefined || (story && personaId !== story.personaId))) {
+    return <p className="page-loading">Loading the story…</p>;
+  }
   if (!personaId || !listing?.personas.some((p) => p.id === personaId)) {
     return (
       <section className="room-pick">
@@ -130,6 +164,7 @@ export function MatchRoom({ matchId }: { matchId: string }) {
       matchId={matchId}
       detail={detail}
       sessionId={sessionId}
+      story={storyMode ? (story ?? null) : null}
       onRestart={() => setAttempt((n) => n + 1)}
     />
   );
@@ -146,11 +181,13 @@ function Room({
   matchId,
   detail,
   sessionId,
+  story,
   onRestart,
 }: {
   matchId: string;
   detail: MatchDetail;
   sessionId: string;
+  story: StoryPlan | null;
   onRestart(): void;
 }) {
   const { store, state } = useSessionStream(sessionId);
@@ -161,6 +198,10 @@ function Room({
   const [askError, setAskError] = useState<string | null>(null);
   const [controlError, setControlError] = useState<string | null>(null);
   const [lens, setLens] = useState<Lens | null>(null);
+  const [lineupPending, setLineupPending] = useState(false);
+  const [lineupError, setLineupError] = useState<string | null>(null);
+  const [chatPending, setChatPending] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
   const players = useMemo(() => new Map(detail.players.map((p) => [p.id, p])), [detail.players]);
   const teams = detail.match.teams;
   const persona = state.session?.persona ?? null;
@@ -193,6 +234,46 @@ function Room({
   };
 
   const chat = state.chat.slice(0, releasedCount(state.chat, view.tvT));
+  const tvEvents = useMemo(
+    () => state.events.slice(0, view.released),
+    [state.events, view.released],
+  );
+  // Fantasy teams lock at the first ball (DOMAIN §3), on the fan's own picture.
+  const firstBallShown = tvEvents.some((event) => event.kind === "delivery");
+  const lineup: LineupRequest = {
+    locked: firstBallShown,
+    pending: lineupPending,
+    error: lineupError,
+    send(text) {
+      setLineupPending(true);
+      setLineupError(null);
+      api
+        .lineupIntent(sessionId, text)
+        .then((moment) => store.dispatch({ type: "moment", moment }))
+        .catch((error: unknown) => setLineupError(messageOf(error)))
+        .finally(() => setLineupPending(false));
+    },
+  };
+  const post = (text: string, statBack: boolean) => {
+    setChatError(null);
+    if (statBack) {
+      setChatPending(true);
+      setPending(text);
+    }
+    api
+      .chat(sessionId, text, statBack)
+      .then(({ message, moment }) => {
+        store.dispatch({ type: "chat", messages: [message] });
+        if (moment) store.dispatch({ type: "moment", moment });
+      })
+      .catch((error: unknown) => setChatError(messageOf(error)))
+      .finally(() => {
+        if (statBack) {
+          setChatPending(false);
+          setPending(null);
+        }
+      });
+  };
   const lastDelivery = useMemo(() => {
     for (let i = view.released - 1; i >= 0; i -= 1) {
       const event = state.events[i];
@@ -221,6 +302,16 @@ function Room({
   }, [persona, view.state, detail.players, detail.rules, players]);
 
   const delayMs = state.clock?.delayMs ?? persona?.delayMs ?? 0;
+  const director = useStoryDirector(
+    story,
+    { tvT: view.tvT, moments: state.moments, resultShown: view.state.result !== null },
+    control,
+  );
+  // While the tour steers, the room's own controls wait (leaving the tour gives them back).
+  const steering = director.active;
+  const overlay = story ? (
+    <StoryOverlay plan={story} director={director} moments={state.moments} delayMs={delayMs} />
+  ) : null;
   const teamStyle = {
     "--team-a": teams[0].color,
     "--team-b": teams[1].color,
@@ -254,7 +345,7 @@ function Room({
       players={players}
       winprob={detail.winprob}
       aiMode={state.session?.aiMode ?? null}
-      disabled={stopped || !state.clock}
+      disabled={stopped || !state.clock || steering}
       onControl={control}
     />
   );
@@ -271,14 +362,19 @@ function Room({
       <MomentFeed
         moments={state.moments}
         events={state.events}
+        tvEvents={tvEvents}
+        chat={chat}
+        players={players}
         tvT={view.tvT}
         delayMs={delayMs}
         speed={state.clock?.speed ?? 1}
         impact={impact}
         pendingQuestion={pending}
         onAsk={ask}
+        lineup={lineup}
       />
       <ChatFeed messages={chat} teams={teams} />
+      <ChatComposer disabled={stopped} pending={chatPending} error={chatError} onPost={post} />
       <Composer
         suggestion={suggestQuestion(view.state, lastDelivery)}
         thinking={pending !== null}
@@ -295,13 +391,14 @@ function Room({
       events={state.events}
       moments={state.moments}
       variant={phone ? "panel" : "drawer"}
+      sessionId={sessionId}
     />
   );
   const rail = (
     <PhaseRail
       state={view.state}
       onJump={(target) => void control({ action: "jump", target })}
-      disabled={stopped || !state.clock}
+      disabled={stopped || !state.clock || steering}
     />
   );
 
@@ -333,6 +430,7 @@ function Room({
               </div>
             </div>
             {banner}
+            {overlay}
             {controlError ? (
               <p className="room__error" role="alert">
                 {controlError}
@@ -362,6 +460,7 @@ function Room({
                 <p className="room__stage">
                   {detail.match.competition}, {detail.match.stage}
                 </p>
+                {persona ? <p className="room__persona">Watching as {persona.label}</p> : null}
               </div>
               {rail}
               {state.connection === "reconnecting" ? (
@@ -369,6 +468,7 @@ function Room({
               ) : null}
             </div>
             {banner}
+            {overlay}
             {controlError ? (
               <p className="room__error" role="alert">
                 {controlError}

@@ -511,3 +511,35 @@ runSandboxed(sql, tables)                                                   sql/
     SELECT * FROM (<sql>) LIMIT 200 → rows posted back
   not answered after 2 s → worker.terminate → timeout
 ```
+
+## 17. Story mode, the Task 9 cards and `/architecture` — BUILT (T9)
+
+```
+landing "Watch the story" → /match/<id>?story=1                             components/PersonaPicker.tsx
+  MatchRoom: GET /api/matches/:id/story → StoryPlan | null                  http/routes/matches.ts
+       buildStoryPlan (once per bundle): story fan = first pre-match persona with a team; catch-up
+       point = first late joiner's; the gate (four detectors, the crowd) over the whole match for
+       that fan → beats: lineup, bailout, catch_up, climax, room_read, result     engine/story/plan.ts
+  → navigate(replace) ?persona=<plan.personaId>&story=1 → session as usual (§7)
+  Room: useStoryDirector(plan, {tvT, moments, resultShown}, control)          story/StoryOverlay.tsx
+       every TV tick: advanceStory                                             story/director.ts
+         steer  → POST control: jump(beat lead-in) · delay 25 s (climax) · speed (32 | 2 | 8 | 16) · play
+         watch  → the beat's moment revealed on the TV (the climax: its teaser, then its reveal) /
+                  the result on the TV → POST control pause; the overlay's one-line callout
+         Continue → next beat (after the teaser: play on to the reveal); Leave → no more commands,
+                  the room's own controls come back
+
+MomentFeed (each card checks momentVisibility itself: held cards carry nothing of the moment)
+  lineup_patch → SquadDiffLedger: request → POST /lineup-intent (§16) until the first ball on the TV
+  bailout      → BailoutQuestCard: resolveQuestRule(rule, events on the TV) per call; BanterCard →
+                 share/cardImage.ts (canvas PNG) → navigator.share({files}) | ({text}) | download
+  room_read    → RoomReadPods: sample ids looked up in the chat on the TV; poll rule settled the same way
+  take_card    → TakeCard (from ChatComposer → POST /chat {statBack: true}, §16)
+ControlPlaneDrawer → InspectorQuery: GET /api/inspector/views once; POST /inspector {question} | {sql}
+  traces for nudge, bailout and room keys wait for their ball on the TV (controlplane/spoilerSafe.ts)
+
+/architecture                                                               pages/Architecture.tsx
+  ?raw at build time: docs/Architecture.md (the theses section and the whole file), docs/PLAN.md (the
+  checklist as a table and as PlanTimeline), docs/Decisions.md, README.md (credits)
+  PipelineDiagram (inline SVG, across or down by width) · AiUsageTable ← GET /api/telemetry?scope=global
+```

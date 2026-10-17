@@ -626,6 +626,18 @@
     max-width: 72rem;
   }
 
+  .ai-use__more {
+    margin: clamp(1.5rem, 3vw, 2.25rem) 0 0;
+    color: var(--ink-muted);
+  }
+
+  .ai-use__more a {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
   .ai-use__item p {
     margin: 0;
     max-width: 34rem;
@@ -2264,6 +2276,645 @@
 
   .decision__body {
     padding: 0.75rem 1rem 0.25rem;
+  }
+
+  /* ---------------------------------------------- Task 9 cards (DESIGN_SYSTEM §7) */
+
+  /* Lineup patch: a ledger of benched picks against their legal replacements. */
+  .ledger__scroll {
+    overflow-x: auto;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+
+  .ledger {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+
+  .ledger thead th {
+    padding: 0.4rem 0.6rem;
+    background: var(--surface-2);
+    text-align: left;
+    font-weight: 620;
+    color: var(--ink-muted);
+  }
+
+  .ledger tbody td {
+    padding: 0.5rem 0.6rem;
+    border-top: 1px solid var(--line);
+    vertical-align: top;
+  }
+
+  .ledger__out {
+    color: var(--ink-muted);
+    text-decoration: line-through;
+    text-decoration-color: var(--wicket);
+    text-decoration-thickness: 2px;
+  }
+
+  .ledger__in {
+    display: block;
+    font-weight: 640;
+  }
+
+  .ledger__why {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    color: var(--ink-muted);
+  }
+
+  .ledger__credits {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .ledger__armbands {
+    display: grid;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ledger__intent,
+  .ledger__conditions {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .ledger__intent {
+    color: var(--ink-muted);
+  }
+
+  .ledger__valid {
+    margin: 0;
+    padding-left: 0.6rem;
+    border-left: 3px solid var(--fl-cyan);
+    font-size: 0.875rem;
+    font-weight: 560;
+  }
+
+  .ledger__valid[data-valid="false"] {
+    border-left-color: var(--wicket);
+  }
+
+  .ledger__ask,
+  .chat__compose,
+  .inspector__ask,
+  .inspector__sql {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .ledger__ask-label,
+  .chat__compose-label,
+  .inspector__label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+  }
+
+  .ledger__ask-row,
+  .inspector__row,
+  .chat__compose-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .ledger__ask-input,
+  .chat__compose-input,
+  .inspector__input,
+  .inspector__textarea {
+    flex: 1 1 12rem;
+    min-width: 0;
+    min-height: 2.5rem;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-control);
+    background: var(--surface-1);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.9375rem;
+  }
+
+  .inspector__textarea {
+    width: 100%;
+    resize: vertical;
+    font-stretch: 88%;
+    line-height: 1.45;
+  }
+
+  /* Comeback quest: a ticket of yes-or-no calls the engine settles. */
+  .quest__trigger {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .quest__projection {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--ink-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .quest__ticket {
+    display: grid;
+    gap: 0.6rem;
+    padding: 0.75rem;
+    border: 1px dashed var(--line-strong);
+    border-radius: 10px;
+  }
+
+  .quest__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 660;
+  }
+
+  .quest__call {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0.5rem 0 0;
+    border: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .quest__prompt {
+    margin: 0;
+    padding: 0;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  .quest__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .quest__status {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+  }
+
+  .quest__call[data-outcome="won"] .quest__status {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .quest__tally {
+    margin: 0;
+    font-weight: 640;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .quest__trivia {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  /* The friend-league cope card: the shareable image, framed as on the TV screen. */
+  .banter {
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.9rem 1rem;
+    border-radius: 12px;
+    background:
+      radial-gradient(
+        120% 90% at 50% 120%,
+        color-mix(in oklab, var(--fl-cyan) 38%, transparent),
+        transparent 60%
+      ),
+      linear-gradient(#080b14, #141c30);
+    color: #f4f2fc;
+  }
+
+  .banter__tone {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #a2abc6;
+  }
+
+  .banter__headline {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .banter__body {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .banter__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.35rem;
+  }
+
+  .banter .button {
+    border-color: rgb(244 242 252 / 0.35);
+    background: transparent;
+    color: #f4f2fc;
+  }
+
+  .banter .card__note {
+    color: #a2abc6;
+  }
+
+  /* Room read: pods as shares of one bar, each with its real lines. */
+  .room__mood {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--ink-muted);
+  }
+
+  .room__emoji {
+    font-size: 1.125rem;
+  }
+
+  .pods__bar {
+    display: flex;
+    gap: 3px;
+    height: 0.6rem;
+  }
+
+  .pods__share {
+    flex-basis: 0;
+    border-radius: 3px;
+    background: var(--fl-violet);
+  }
+
+  .pods__share:nth-child(2n) {
+    background: var(--fl-cyan);
+  }
+
+  .pods__share:nth-child(3n) {
+    background: var(--fl-pink);
+  }
+
+  .pods {
+    display: grid;
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pod__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .pod__title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 640;
+  }
+
+  .pod__pct {
+    font-variant-numeric: tabular-nums;
+    font-weight: 640;
+  }
+
+  .pod__stance {
+    margin: 0.1rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+  }
+
+  .pod__lines {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0.3rem 0 0;
+    padding: 0 0 0 0.6rem;
+    border-left: 2px solid var(--line-strong);
+    list-style: none;
+    font-size: 0.875rem;
+  }
+
+  .pod__handle {
+    color: var(--ink-faint);
+    font-size: 0.75rem;
+  }
+
+  .room__hot {
+    margin: 0;
+    padding: 0.6rem 0.75rem;
+    border-radius: 10px;
+    background: var(--surface-2);
+  }
+
+  .room__hot blockquote {
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .room__hot blockquote p {
+    margin: 0;
+  }
+
+  .room__hot figcaption {
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+  }
+
+  .room__poll {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  /* Stat-back: a verdict stamp, the evidence, and the SQL behind it. */
+  .card__title--take::before {
+    content: "Your take: ";
+    font-weight: 500;
+    color: var(--ink-muted);
+  }
+
+  .take__verdict {
+    justify-self: start;
+    margin: 0;
+    padding: 0.15rem 0.7rem;
+    border: 2px solid currentColor;
+    border-radius: 6px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  /* --four-fill: the four's colour at AA contrast for text in both themes. */
+  .take__verdict[data-verdict="backed"] {
+    color: var(--four-fill);
+  }
+
+  .take__verdict[data-verdict="busted"] {
+    color: var(--wicket);
+  }
+
+  .take__verdict[data-verdict="mixed"],
+  .take__verdict[data-verdict="unclear"] {
+    color: var(--ink-muted);
+  }
+
+  .take__how summary {
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .take__sql {
+    margin: 0.5rem 0;
+    padding: 0.6rem 0.75rem;
+    overflow-x: auto;
+    border-radius: 8px;
+    background: var(--surface-2);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+
+  /* The chat composer and the inspector. */
+  .chat__compose {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .inspector {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .inspector__result {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .inspector__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .inspector__status,
+  .inspector__explanation {
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .inspector__result[data-status="refused"] .inspector__status,
+  .inspector__result[data-status="error"] .inspector__status,
+  .inspector__result[data-status="timeout"] .inspector__status {
+    color: var(--wicket);
+    font-weight: 600;
+  }
+
+  .inspector__views summary {
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .inspector__views dl {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0.5rem 0 0;
+  }
+
+  .inspector__views dd {
+    margin: 0.15rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+  }
+
+  .inspector__views ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.1rem;
+  }
+
+  .room__persona {
+    margin: 0.15rem 0 0;
+    font-size: 0.875rem;
+    font-weight: 560;
+  }
+
+  /* Story mode: the tour's panel, one stop at a time. */
+  .story {
+    display: grid;
+    gap: 0.45rem;
+    margin: 0 0 1rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--line-strong);
+    border-left: 4px solid var(--fl-cyan);
+    border-radius: var(--r-card);
+    background: var(--surface-1);
+  }
+
+  .story__title {
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+  }
+
+  .story__line {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    max-width: 70ch;
+  }
+
+  .story__actions,
+  .picker__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  /* /architecture polish (Task 9): headings, the pipeline picture, the timeline. */
+  .docs__h2 {
+    margin: 0 0 1rem;
+    font-weight: 680;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    line-height: 1.15;
+  }
+
+  .pipeline-figure {
+    margin: 0;
+  }
+
+  .pipeline {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .pipeline--down {
+    display: none;
+    max-width: 22.5rem;
+  }
+
+  .pipeline rect {
+    fill: var(--surface-1);
+    stroke: var(--line-strong);
+    stroke-width: 1.5;
+  }
+
+  .pipeline__node--ai rect {
+    stroke: var(--fl-cyan);
+    stroke-width: 2;
+  }
+
+  .pipeline__title {
+    fill: var(--ink);
+    font-size: 15px;
+    font-weight: 640;
+  }
+
+  .pipeline__sub,
+  .pipeline__note {
+    fill: var(--ink-muted);
+    font-size: 12px;
+  }
+
+  .pipeline__edges path {
+    fill: none;
+    stroke: var(--ink-faint);
+    stroke-width: 2;
+  }
+
+  .pipeline__edges .pipeline__ai {
+    stroke: var(--fl-cyan);
+  }
+
+  .pipeline__edges .pipeline__rules {
+    stroke-dasharray: 6 5;
+  }
+
+  .pipeline__head {
+    fill: var(--ink-faint);
+  }
+
+  .timeline {
+    display: grid;
+    gap: 0.75rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .timeline__step {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .timeline__num {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 2px solid var(--line-strong);
+    border-radius: 50%;
+    font-weight: 680;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .timeline__step[data-status="done"] .timeline__num {
+    border-color: var(--fl-cyan);
+    background: color-mix(in oklab, var(--fl-cyan) 18%, transparent);
+  }
+
+  .timeline__title {
+    margin: 0;
+    font-weight: 620;
+    line-height: 1.35;
+  }
+
+  .timeline__meta {
+    margin: 0.15rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--ink-muted);
+  }
+
+  @media (max-width: 640px) {
+    .pipeline--across {
+      display: none;
+    }
+
+    .pipeline--down {
+      display: block;
+    }
+  }
+
+  /* The picker's room, kept while the matches load, so nothing below it jumps when it arrives
+     (Task 9.5: Lighthouse counted the jump as a layout shift). Its height with both demo matches. */
+  .start--loading {
+    min-height: 37.5rem;
+  }
+
+  @media (max-width: 640px) {
+    .start--loading {
+      min-height: 70rem;
+    }
   }
 
   /* -------------------------------------------------------------- phone */

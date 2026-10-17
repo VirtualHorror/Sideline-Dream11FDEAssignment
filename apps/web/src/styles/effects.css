@@ -4,13 +4,7 @@
  * same in both themes, and --glow-strength softens them in daylight.
  */
 
-/* Registered so the browser can interpolate them (colour cycle, outburst, halo rotation). */
-@property --fl-c {
-  syntax: "<color>";
-  inherits: false;
-  initial-value: #5171e8;
-}
-
+/* Registered so the browser can interpolate them (outburst, halo rotation). */
 @property --fl-burst {
   syntax: "<number>";
   inherits: true;
@@ -47,12 +41,22 @@
 }
 
 /* Sized from the container's height as well as its width, so the cone shows on a wide TV screen,
-   a tall phone hero and everything between. */
+   a tall phone hero and everything between. A blob only drifts (translate: the compositor's); its
+   colour comes from four tints that cross-fade (opacity: the compositor's too). Task 9.5 measured the
+   previous colour cycle, an animated custom property that repainted four 48 px blurs every frame on
+   the main thread, at over a second of blocking time on a phone without a GPU (Lighthouse). */
 .floodlight__blob {
   position: absolute;
   bottom: -34%;
   width: 46%;
   height: 92%;
+  animation: fl-drift var(--fl-drift, 13s) ease-in-out infinite alternate;
+  will-change: translate;
+}
+
+.floodlight__tint {
+  position: absolute;
+  inset: 0;
   border-radius: 50%;
   filter: blur(48px);
   background: radial-gradient(
@@ -61,40 +65,63 @@
     color-mix(in oklab, var(--fl-c), var(--fl-burst-color) calc(var(--fl-burst) * 100%)) 35%,
     transparent 100%
   );
-  animation:
-    fl-cycle 14s linear infinite,
-    fl-drift var(--fl-drift, 13s) ease-in-out infinite alternate;
+  opacity: 0;
+  /* Twenty steps a second: a slow ambient fade looks the same and asks for a third of the frames. */
+  animation: fl-tint 14s steps(280) infinite;
+  animation-delay: calc(var(--fl-phase) + var(--fl-turn));
+  will-change: opacity;
+}
+
+/* Each colour's turn in the 14 s cycle: blue, then cyan, violet and pink, a quarter each. */
+.floodlight__tint--blue {
+  --fl-c: #5171e8;
+  --fl-turn: 0s;
+}
+
+.floodlight__tint--cyan {
+  --fl-c: #69b9ec;
+  --fl-turn: -10.5s;
+}
+
+.floodlight__tint--violet {
+  --fl-c: #7771bc;
+  --fl-turn: -7s;
+}
+
+.floodlight__tint--pink {
+  --fl-c: #d165aa;
+  --fl-turn: -3.5s;
 }
 
 /* The left blobs run ahead in the cycle: a new colour enters from one side, as in the reference. */
 .floodlight__blob--1 {
-  --fl-c: #5171e8;
+  --fl-phase: -4.8s;
   --fl-drift: 13s;
   left: 10%;
-  animation-delay: -4.8s, -2s;
+  animation-delay: -2s;
 }
 
 .floodlight__blob--2 {
-  --fl-c: #69b9ec;
+  --fl-phase: -3.2s;
   --fl-drift: 17s;
   left: 22%;
   bottom: -38%;
-  animation-delay: -3.2s, -6s;
+  animation-delay: -6s;
 }
 
 .floodlight__blob--3 {
-  --fl-c: #7771bc;
+  --fl-phase: -1.6s;
   --fl-drift: 11s;
   left: 33%;
-  animation-delay: -1.6s, -1s;
+  animation-delay: -1s;
 }
 
 .floodlight__blob--4 {
-  --fl-c: #d165aa;
+  --fl-phase: 0s;
   --fl-drift: 15s;
   left: 44%;
   bottom: -36%;
-  animation-delay: 0s, -8s;
+  animation-delay: -8s;
 }
 
 .floodlight__beam {
@@ -120,23 +147,31 @@
   opacity: 0;
 }
 
-.floodlight[data-motion="static"] .floodlight__blob {
+.floodlight[data-motion="static"] .floodlight__blob,
+.floodlight[data-motion="static"] .floodlight__tint {
   animation: none;
 }
 
-@keyframes fl-cycle {
-  0%,
-  100% {
-    --fl-c: #5171e8;
+/* Still, each blob keeps the colour it starts the cycle in. */
+.floodlight[data-motion="static"] .floodlight__blob--1 .floodlight__tint--blue,
+.floodlight[data-motion="static"] .floodlight__blob--2 .floodlight__tint--cyan,
+.floodlight[data-motion="static"] .floodlight__blob--3 .floodlight__tint--violet,
+.floodlight[data-motion="static"] .floodlight__blob--4 .floodlight__tint--pink {
+  opacity: 1;
+}
+
+/* A tint fades in over 6% of the cycle, holds its quarter, and fades as the next one fades in. */
+@keyframes fl-tint {
+  0% {
+    opacity: 0;
   }
+  6%,
   25% {
-    --fl-c: #69b9ec;
+    opacity: 1;
   }
-  50% {
-    --fl-c: #7771bc;
-  }
-  75% {
-    --fl-c: #d165aa;
+  31%,
+  100% {
+    opacity: 0;
   }
 }
 

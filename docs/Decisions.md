@@ -938,3 +938,60 @@
 - **Alternatives:** an all-or-nothing lineup guard (one bad swap would discard a good patch, against PLAN 8.1);
   multi-option predictions (one rule can only say yes or no); a discriminated union in the model's schema (strict
   structured-output modes handle unions unevenly).
+
+### D-076 — Story mode and the Task 9 surfaces as built (2026-10-18, T9, Claude)
+- **Story plan:** the engine's `buildStoryPlan` (contract `StoryPlan`, `contracts/story.ts`) picks the story's fan as
+  the first pre-match persona with a team and the catch-up point as the first late joiner's join point; every other
+  beat is a trigger the gate raises (all four detectors, the match's crowd) when that fan watches the whole match:
+  the lineup patch (lead-in: the toss), the first bailout before the catch-up point (lead-in: two deliveries
+  before), the catch-up jump, the first teaser of the last innings' death overs from the catch-up point on (lead-in:
+  one delivery), the first room read from that ball on, and the end. `GET /api/matches/:matchId/story` serves it,
+  built once per bundle; it names beats by event id and time, never what happens. On 2022: Babar's 1.1, the jump to
+  14 overs of the chase, the 18.6 teaser and room read; on 2024: Rohit's 1.4, 15 overs, 16.1, the 16.6 room read.
+- **Director:** a pure state machine in the browser (`story/director.ts`): steer (the beat's jump and pace: 32x
+  between beats, the climax at 2x with the 25 s OTT delay so the hold is visible, 8x to the room read, 16x to the
+  result), watch the fan's TV for the beat's moment, pause there with a one-line callout written by code, continue.
+  The climax stops at its teaser (when it came in time) and its reveal. The room's own controls are off while the
+  tour steers; "Leave the tour" ends its commands and gives them back. Lead-ins come from the plan, so a live model
+  gets the teaser's full budget at 2x (at 16x or 32x it would be late, Review focus 3).
+- **Cards:** each kind has its own shape: the lineup ledger (benched pick, replacement, credits after; the fan's
+  request until the first ball), the comeback quest (calls settled by `resolveQuestRule` on the TV's events, simulated
+  DreamBucks, trivia, the banter card drawn to a PNG on a canvas and shared with the Web Share API or downloaded), the
+  room pods (shares as one bar, real chat lines), the take card (verdict, evidence, SQL and rows). Each is held on the
+  TV clock until the picture shows what triggered it, with nothing of it in the DOM; the control plane holds bailout
+  and room traces the same way. The fan's own chat lines are merged in time order.
+- **Inspector UI and `/architecture`:** the inspector sits in the control plane (a question, the model's SQL in an
+  editable box, the rows, every failure with its reason, the views from `GET /api/inspector/views`). `/architecture`
+  adds, above the docs: the three theses (Architecture.md's section), the pipeline as an inline SVG drawn across or
+  down for phones, the live AI-usage table from `GET /api/telemetry?scope=global`, the PLAN checklist as a timeline,
+  and the credits (README.md's section). No new prose: the page renders the files.
+- **Personas:** the story's fan comes from `personas.json`; the room says "Watching as <persona>". No persona editor
+  (no PLAN step asks for one).
+- **Alternatives:** a client-only director that waits for moments as they come (it cannot know where the big balls
+  are, so it would play minutes of death overs at 2x, or run fast and make a live teaser late); story beats in a data
+  file (hand-picked moments, the opposite of beats from triggers); the diagram as a raster image (no theme colours, no
+  text alternative); a separate route for the story (the room is the story; `story=1` keeps links shareable).
+
+### D-077 — The landing's performance pass, and how it was measured (2026-10-18, T9 step 9.5, Claude)
+- **Measured first:** Lighthouse 13.5.0 (published 2026-09-18, run with `npx` from a scratch directory, not a
+  dependency) on the landing page served the way production serves it (the built app behind a local Caddy with
+  the production site block's `encode zstd gzip`): accessibility 100, best practices 96, performance 50 on the
+  phone preset (1.2 s of blocking time) before the pass. Runs with reduced motion forced and with WebGL disabled
+  showed the cost was the floodlight's colour cycle, a registered custom property animated on the main thread
+  that repainted four 48 px blurs every frame (software raster in a GPU-less Chrome).
+- **Decision:** (1) each floodlight blob is four fixed-colour tints cross-faded with `opacity`, stepped twenty
+  times a second, and drifted with `translate`, all compositor work, with the same colours, order, phases and
+  cycle (VISUAL_REFERENCES "As built"); (2) the match room is loaded on demand like `/architecture`, so the
+  landing ships 358 kB of script instead of 442 kB (110 kB compressed); (3) the landing's wordmark makes its
+  WebGL context when a pointer first enters it, so a page nobody points at compiles no shader; (4) the start
+  section keeps the persona picker's height while the matches load (the arriving picker pushed the page down: a
+  layout shift of 0.12). A quarter-size floodlight scaled up, and stepping the drift, were tried and measured: no
+  gain, reverted.
+- **Result, honestly:** the same build scores differently from run to run on this host (a remote desktop and other
+  sessions keep its load average near 4 on 4 vCPUs): phone performance 87-92 (blocking 170-380 ms, first paint
+  2.3 s, layout shift 0.007), desktop 79-98; accessibility 100 and best practices 96 in every run (the 4 points: a
+  content-security-policy note in Chrome's Issues panel with no detail; no console error). The PLAN's "≥ 90" is met
+  on a quiet run of each form factor, not reliably on this busy host; Task 10 measures again (F09 follow-up 1).
+- **Alternatives:** dropping the floodlight's animation on GPU-less browsers (it would also hide it from the headless
+  visual review); prerendering the landing's HTML (a build step and duplicated markup, for about a second of
+  simulated first paint on a slow phone).

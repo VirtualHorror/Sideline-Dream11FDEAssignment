@@ -113,7 +113,10 @@ function serve() {
 async function openRoom() {
   window.history.pushState(null, "", `/match/${MATCH_ID}?persona=babar-believer`);
   render(<App />);
-  await waitFor(() => expect(FakeEventSource.last?.url).toBe("/api/sessions/s-1/stream"));
+  // The room is loaded on demand (App.tsx, Task 9.5): its chunk can take a while on a busy runner.
+  await waitFor(() => expect(FakeEventSource.last?.url).toBe("/api/sessions/s-1/stream"), {
+    timeout: 10_000,
+  });
   return FakeEventSource.last as FakeEventSource;
 }
 

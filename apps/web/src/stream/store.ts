@@ -9,7 +9,9 @@
  * Review focus 1: a `snapshot` (every connect, every seek and jump) replaces the clock, events,
  * moments and chat outright; it is never merged, so a jump back cannot leave the future behind.
  * Incremental messages are idempotent: an event or chat line already held is skipped, and a moment
- * is upserted by id, because an answer arrives both in the POST response and on the stream.
+ * is upserted by id, because an answer arrives both in the POST response and on the stream. The fan's
+ * own chat lines (Task 9) are stamped on their TV clock, earlier than the crowd's latest, so chat
+ * lines are merged in time order rather than appended.
  */
 import type {
   AiMode,
@@ -47,7 +49,9 @@ export type StreamAction =
   /** A moment from a REST answer (POST /ask) rather than the stream. */
   | { type: "moment"; moment: Moment }
   /** The clock a control request answered with; the stream's own `clock` message follows. */
-  | { type: "clock"; clock: ClockState };
+  | { type: "clock"; clock: ClockState }
+  /** The fan's own chat line from a REST answer (POST /chat); the stream sends it too. */
+  | { type: "chat"; messages: ChatMessage[] };
 
 export function initialStreamState(): StreamState {
   return {
@@ -71,6 +75,19 @@ function upsertMoment(moments: Moment[], moment: Moment): Moment[] {
   return next;
 }
 
+/** Adds the lines not already held, keeping the list in time order (stable for equal times). */
+function mergeChat(chat: ChatMessage[], messages: readonly ChatMessage[]): ChatMessage[] {
+  const held = new Set(chat.map((m) => m.id));
+  const fresh = messages.filter((m) => !held.has(m.id));
+  if (fresh.length === 0) return chat;
+  const last = chat.at(-1)?.t ?? Number.NEGATIVE_INFINITY;
+  // The crowd arrives in order: the common case appends without sorting.
+  if (fresh.every((m, i) => m.t >= (i === 0 ? last : (fresh[i - 1]?.t ?? last)))) {
+    return [...chat, ...fresh];
+  }
+  return [...chat, ...fresh].sort((a, b) => a.t - b.t);
+}
+
 function apply(state: StreamState, message: StreamMessage): StreamState {
   switch (message.type) {
     case "hello":
@@ -91,9 +108,8 @@ function apply(state: StreamState, message: StreamMessage): StreamState {
       return fresh.length === 0 ? state : { ...state, events: [...state.events, ...fresh] };
     }
     case "chat": {
-      const held = new Set(state.chat.map((m) => m.id));
-      const fresh = message.data.messages.filter((m) => !held.has(m.id));
-      return fresh.length === 0 ? state : { ...state, chat: [...state.chat, ...fresh] };
+      const chat = mergeChat(state.chat, message.data.messages);
+      return chat === state.chat ? state : { ...state, chat };
     }
     case "moment":
       return { ...state, moments: upsertMoment(state.moments, message.data.moment) };
@@ -125,6 +141,10 @@ export function reduceStream(state: StreamState, action: StreamAction): StreamSt
       return { ...state, moments: upsertMoment(state.moments, action.moment) };
     case "clock":
       return { ...state, clock: action.clock };
+    case "chat": {
+      const chat = mergeChat(state.chat, action.messages);
+      return chat === state.chat ? state : { ...state, chat };
+    }
   }
 }
 

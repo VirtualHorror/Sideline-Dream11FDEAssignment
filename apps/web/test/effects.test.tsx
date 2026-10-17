@@ -80,6 +80,8 @@ describe("effects fall back to CSS (PLAN 6.3, Review focus 4)", () => {
     withReducedMotion(false);
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
     const { container } = renderEffects();
+    // The wordmark asks for its context when a pointer first comes near (Task 9.5).
+    fireEvent.pointerEnter(container.querySelector('[data-effect="ghost"]') as HTMLElement);
     expect(container.querySelector('[data-effect="ghost"]')?.getAttribute("data-render")).toBe(
       "css",
     );
@@ -175,5 +177,19 @@ describe("GlowInput (PLAN 6.3)", () => {
   it("says that it uses AI", () => {
     render(<GlowInput state="idle" label="Ask Sideline" onSubmit={() => {}} />);
     expect(screen.getByText("Sideline uses AI and can make mistakes.")).toBeTruthy();
+  });
+});
+
+describe("the landing's wordmark waits for a pointer (Task 9.5)", () => {
+  it("asks for no WebGL context until a pointer enters it, then asks once", () => {
+    withWebGL2();
+    withReducedMotion(false);
+    const getContext = vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(null);
+    const { container } = render(<GhostText text="Sideline" as="h1" mode="pointer" />);
+    expect(getContext).not.toHaveBeenCalled();
+    const host = container.querySelector('[data-effect="ghost"]') as HTMLElement;
+    fireEvent.pointerEnter(host);
+    fireEvent.pointerEnter(host);
+    expect(getContext).toHaveBeenCalledTimes(1);
   });
 });
