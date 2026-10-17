@@ -13,6 +13,13 @@
 import { existsSync } from "node:fs";
 import { expect, type Page, test } from "@playwright/test";
 
+declare global {
+  interface Window {
+    /** Every state the 18.6 card showed, in order, with its text at the time (the climax test). */
+    cardStates?: { state: string; text: string }[];
+  }
+}
+
 const LABELS = {
   live: "Live AI",
   cache: "Cached for everyone at this moment",
@@ -71,20 +78,44 @@ test("a fan watches the climax: the teaser is held for their TV, then revealed",
   await page.getByRole("button", { name: "Jump" }).click();
 
   await openTab("Companion");
+  // The page records every state the 18.6 card shows, as it happens: the hold lasts (25 - 6) / 16, about
+  // 1.2 s of wall time, and Playwright's polls (up to 1 s apart) can miss it on a busy host (F07).
+  await page.evaluate(() => {
+    const states: { state: string; text: string }[] = [];
+    window.cardStates = states;
+    const record = () => {
+      const shown = document.querySelector('[data-kind="spoiler_nudge"][data-ball="18.6"]');
+      const state = shown?.getAttribute("data-visibility");
+      if (shown && state && states.at(-1)?.state !== state) {
+        states.push({ state, text: shown.textContent ?? "" });
+      }
+    };
+    record();
+    new MutationObserver(record).observe(document.body, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["data-visibility"],
+    });
+  });
   const card = page.locator('[data-kind="spoiler_nudge"][data-ball="18.6"]');
   await expect(card).toBeAttached({ timeout: 45_000 });
-  // With no model call (replay mode) the card always comes 25 s ahead of the fan's TV, so it must be
-  // held first; a live answer slower than the fan's 1.6 s may only arrive once the TV showed the ball.
-  if (aiMode !== "live" || (await card.getAttribute("data-visibility")) === "hidden") {
-    await expect(card).toHaveAttribute("data-visibility", "hidden");
-    await expect(card).toContainText("Held for your TV");
-    await expect(card).not.toContainText(/144\/4|Rauf to Kohli/);
+  if ((await card.getAttribute("data-visibility")) === "hidden") {
     await page.screenshot({ path: testInfo.outputPath("room-held.png"), fullPage: true });
   }
 
   await expect(card).toHaveAttribute("data-visibility", "revealed", { timeout: 15_000 });
   await expect(card).toContainText("18.6 Rauf to Kohli, six");
   expect(allowedProvenance(aiMode)).toContain(await card.locator(".provenance").innerText());
+  const states = (await page.evaluate(() => window.cardStates)) ?? [];
+  // With no model call (replay mode) the card always comes 25 s ahead of the fan's TV, so it is held
+  // first; a live answer slower than the fan's 1.6 s may only arrive once the TV showed the ball.
+  if (aiMode !== "live") expect(states[0]?.state).toBe("hidden");
+  expect(states.at(-1)?.state).toBe("revealed");
+  for (const { state, text } of states.filter((s) => s.state !== "revealed")) {
+    expect(text).not.toMatch(/144\/4|Rauf to Kohli/);
+    if (state === "hidden") expect(text).toContain("Held for your TV");
+  }
 
   await openTab("Control plane");
   if (!phone) await page.getByRole("button", { name: /^Control plane/ }).click();

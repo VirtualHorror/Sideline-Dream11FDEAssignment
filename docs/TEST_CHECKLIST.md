@@ -18,8 +18,8 @@
 | --- | --- | --- |
 | 1 | `pnpm typecheck` | `packages/engine typecheck: Done`, `apps/server typecheck: Done`, `apps/web typecheck: Done`, then no output from root `tsc`; exit 0 |
 | 2 | `pnpm lint` | `Checked N files in …ms. No fixes applied.` and no `×` or `!` diagnostics; exit 0 |
-| 3 | `pnpm test` | `Test Files  47 passed (47)` and `Tests  569 passed (569)`; no failed, no skipped |
-| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (131 source files, 209 terms; @TRACKED@ tracked files, no forbidden words)` (counts grow with code/data; the second pass fails on the AI proxy's name in any tracked file, D-068) |
+| 3 | `pnpm test` | `Test Files  50 passed (50)` and `Tests  599 passed (599)`; no failed, no skipped |
+| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (131 source files, 209 terms; 299 tracked files, no forbidden words)` (counts grow with code/data; the second pass fails on the AI proxy's name in any tracked file, D-068) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
 | 7 | `pnpm test:e2e` (any UI-visible change) | `22 passed` (desktop + mobile: every route, the climax flow with a held then revealed teaser, tabular numerals, reduced motion); about 1.5 min. The local server is always keyless (`SIDELINE_AI_PROVIDER=none`) |
@@ -151,3 +151,4 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 | T4 Moments engine | 2026-10-16 | pass | pass (113 files) | 25 files / 337 tests | OK (51 files, 209 terms) | OK (2 matches) | 641 ms | 8 passed |
 | T5 Server runtime + AI | 2026-10-17 | pass | pass (165 files) | 37 files / 492 tests | OK (86 files, 209 terms) | OK (2 matches) | 292 ms | 8 passed |
 | T6 Frontend I | 2026-10-17 | pass | pass (222 files) | 47 files / 569 tests | OK (131 files, 209 terms) | OK (2 matches) | 805 ms | 22 passed |
+| T7 Deploy | 2026-10-17 | pass | pass (229 files) | 50 files / 599 tests | OK (131 files, 209 terms; 299 tracked files, no forbidden words) | OK (2 matches) | 1.02 s | 22 passed locally; 22 passed against https://3-108-67-100.sslip.io |

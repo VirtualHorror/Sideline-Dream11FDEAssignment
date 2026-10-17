@@ -73,6 +73,13 @@ owner's call: see "Open").
   writing the `.xyz` registry answers NXDOMAIN for `nabhanyubm.xyz` (the domain is not published yet), so
   Caddy will get its certificate once it resolves; the sslip.io name works meanwhile.
 
+- **The climax E2E records the card's states in the page:** with production, Caddy and the public runs' sessions
+  loading this host, a local run first saw the 18.6 card in its teaser state: the hold lasts (25 - 6) / 16 = 1.2 s
+  of wall time and Playwright polls up to 1 s apart, so the Task 6 assertion could miss it. A MutationObserver now
+  logs every state with the card's text; the test asserts held first (replay mode), the outcome never in the DOM
+  before the reveal, revealed last. Stable twice under load, and it fails when the card shows the outcome while
+  held (mutant, restored).
+
 ## What worked / what did not
 - Worked: proving "a dry run changes nothing" with PATH shims instead of trusting it; testing the env file
   against systemd itself; the recorder reusing the session machinery (no second copy of the key rules);
@@ -89,12 +96,16 @@ Task 10 pushes to GitHub).
 ```
 pnpm verify                     (task/07-deploy, before the merge)
 … typecheck: Done ×3; Checked 229 files … No fixes applied.
- Test Files  50 passed (50) / Tests  598 passed (598)
-check-no-hardcode: OK (131 source files, 209 terms; 300 tracked files, no forbidden words)
-verify-data: OK (2 matches); ✓ built
+ Test Files  50 passed (50)
+      Tests  599 passed (599)
+check-no-hardcode: OK (131 source files, 209 terms; 299 tracked files, no forbidden words)
+verify-data: OK (2 matches)
+✓ built in 1.02s
 
 pnpm test:e2e (local, keyless)                           22 passed
-PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e   (see Audit notes)
+PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e   22 passed (1.2m)
+  (production on the task branch, the key's account without credit: 43 provider calls, all 403
+  key_expired, 0 tokens, $0, every card the labelled fallback; the journal has no key prefix)
 
 deploy/update.sh task/07-deploy
 update: health: http://127.0.0.1:8780/api/health
@@ -130,8 +141,9 @@ ai-record: plan: 67 moments need a provider call (48 teasers, 19 catch-up reels)
 ## Audit notes (filled by the auditor)
 **Audit, 2026-10-17, Claude. Verdict: accepted; merged `--no-ff`, tagged `t07-verified`.** Self-audit (Codex
 unavailable), after the independent spot-check of `t06-verified` in the same session (D-065).
-- **Verification:** the numbers above, fresh. Local E2E 22 passed; the public E2E against production is in
-  the Verification block of HANDOFF9 and TEST_CHECKLIST's task log.
+- **Verification:** the numbers above, fresh; local E2E 22 passed and the public E2E 22 passed against
+  production. The first public run had one timeout: two full-page phone screenshots of the WebGL landing page
+  take 10-15 s each here (the same through Caddy as direct), so that test got a 60 s budget (commit 577dc43).
 - **Read-only files:** golden fixtures, `scripts/oracle/`, `data/raw`, `data/models` and the engine's contracts
   untouched. `data/ai-replay/` does not exist (no real recording yet; scripted rows only ever in scratch dirs).
 - **Anti-hardcoding:** scan OK, no `hardcode-ok`, no `.skip`/`.only`; the deploy scripts name no match facts.
