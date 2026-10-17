@@ -18,12 +18,8 @@ import {
   SERVER_ENV_NAMES,
 } from "../../apps/server/src/config.ts";
 
-/** What production always runs with: loopback behind Caddy, on the port the Caddyfile proxies to. */
-export const PRODUCTION_ENV: Readonly<Record<string, string>> = {
-  HOST: "127.0.0.1",
-  NODE_ENV: "production",
-  PORT: "8787",
-};
+/** Set whatever .env says: loopback only, behind Caddy, on the port install.sh chose. */
+const FORCED = new Set(["HOST", "NODE_ENV", "PORT"]);
 
 /** Server settings production leaves at their defaults: paths inside the deploy checkout. */
 const CHECKOUT_PATHS = new Set(["SIDELINE_DATA_DIR", "SIDELINE_WEB_DIST"]);
@@ -55,10 +51,12 @@ const quote = (value: string) => `"${value.replace(/[\\"`$]/g, (c) => `\\${c}`)}
 
 export function renderProductionEnv(
   source: Readonly<Record<string, string>>,
-  opts: { repoRoot: string; keyless?: boolean },
+  opts: { repoRoot: string; port: number; keyless?: boolean },
 ): ProductionEnv {
   const forcedValues: Record<string, string> = {
-    ...PRODUCTION_ENV,
+    HOST: "127.0.0.1",
+    NODE_ENV: "production",
+    PORT: String(opts.port),
     ...(opts.keyless ? { SIDELINE_AI_PROVIDER: "none" } : {}),
   };
   const values: Record<string, string> = {};
@@ -66,7 +64,7 @@ export function renderProductionEnv(
   const skipped: string[] = [];
   for (const name of Object.keys(source).sort()) {
     const value = source[name] ?? "";
-    if (name in PRODUCTION_ENV) continue;
+    if (FORCED.has(name)) continue;
     if (
       !SERVER_ENV_NAMES.includes(name) ||
       CHECKOUT_PATHS.has(name) ||

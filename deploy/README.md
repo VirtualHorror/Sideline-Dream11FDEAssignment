@@ -6,7 +6,7 @@ which systemd keeps running. Decisions: D-025 (Caddy, sslip.io, systemd), D-066 
 
 ```
 browser ──HTTPS :443──► Caddy (/etc/caddy/Caddyfile, Let's Encrypt certificate, HTTP → HTTPS on :80)
-                          └──► 127.0.0.1:8787  Node 24: apps/server/src/index.ts  (sideline.service)
+                          └──► 127.0.0.1:8780  Node 24: apps/server/src/index.ts  (sideline.service)
                                  runs in /srv/sideline: a clone of this repository at the deployed commit
                                  reads /etc/sideline/sideline.env (root-only): AI keys and settings
                                  writes /srv/sideline/data/runtime only (SQLite: AI cache, traces, analytics)
@@ -14,7 +14,9 @@ browser ──HTTPS :443──► Caddy (/etc/caddy/Caddyfile, Let's Encrypt cer
 
 The deploy checkout (`/srv/sideline`) is separate from this working copy on purpose: `pnpm verify`
 rebuilds `apps/web/dist`, tests share `data/runtime`, and branches come and go here, none of which
-may change what the public link serves. Only `deploy/update.sh` moves the deploy checkout.
+may change what the public link serves. Only `deploy/update.sh` moves the deploy checkout. For the
+same reason production listens on port 8780, not 8787: `pnpm dev` and its Vite proxy use 8787 on
+this same host (the port is set once, in `install.sh`).
 
 ## Once, by hand (the parts a script cannot do)
 
@@ -41,7 +43,7 @@ metadata service), `--env-file <path>` (default `.env`).
 | `/srv/sideline` | deploy checkout, built by `deploy/update.sh --no-restart` as you | you, 755 |
 | `/usr/share/keyrings/caddy-stable-archive-keyring.gpg`, `/etc/apt/sources.list.d/caddy-stable.list` | Caddy's official apt repository (caddyserver.com/docs/install) | root, 644 |
 | `/etc/caddy/Caddyfile` | `deploy/Caddyfile.template` with the site name filled in, checked with `caddy validate` first | root, 644 |
-| `/etc/sideline/sideline.env` | from `.env` by `scripts/deploy-env.ts`: only the variables the server reads; `HOST=127.0.0.1`, `PORT=8787`, `NODE_ENV=production` forced; names printed, never values | root, 600 |
+| `/etc/sideline/sideline.env` | from `.env` by `scripts/deploy-env.ts`: only the variables the server reads; `HOST=127.0.0.1`, `PORT=8780`, `NODE_ENV=production` forced; names printed, never values | root, 600 |
 | `/etc/systemd/system/sideline.service` | `deploy/sideline.service` filled in, checked with `systemd-analyze verify` first; sandboxed (read-only system and home, writes only `data/runtime`) | root, 644 |
 | `/etc/sudoers.d/sideline` | one rule: you may run `/usr/bin/systemctl restart sideline` without a password (for `update.sh`), checked with `visudo` first | root, 440 |
 

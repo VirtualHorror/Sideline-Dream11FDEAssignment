@@ -2,7 +2,8 @@
  * Prints the production environment file for deploy/install.sh (PLAN Task 7, D-066): the file on
  * stdout, a report of variable names (never values) on stderr.
  *
- * Usage: node scripts/deploy-env.ts [--env-file <path>] [--keyless]
+ * Usage: node scripts/deploy-env.ts --port <port> [--env-file <path>] [--keyless]
+ *   --port       the server's loopback port, the one the Caddyfile proxies to (install.sh's PORT)
  *   --env-file   the .env to read (default: this repository's .env; none means a keyless install)
  *   --keyless    leave the AI keys out and set SIDELINE_AI_PROVIDER=none: recorded AI and labelled
  *                fallbacks only, never a paid call
@@ -21,6 +22,7 @@ const { values: args } = parseArgs({
   options: {
     "env-file": { type: "string" },
     keyless: { type: "boolean", default: false },
+    port: { type: "string" },
   },
 });
 const envFile = args["env-file"] ?? join(repoRoot, ".env");
@@ -30,7 +32,11 @@ try {
   const source = Object.fromEntries(
     Object.entries(parsed).filter((entry): entry is [string, string] => entry[1] !== undefined),
   );
-  const out = renderProductionEnv(source, { repoRoot, keyless: args.keyless });
+  const port = Number(args.port);
+  if (!Number.isInteger(port) || port < 1 || port > 65_535) {
+    throw new Error(`--port needs the server's port (got ${args.port ?? "nothing"})`);
+  }
+  const out = renderProductionEnv(source, { repoRoot, port, keyless: args.keyless });
   process.stdout.write(out.text);
   const list = (names: string[]) => (names.length > 0 ? names.join(", ") : "none");
   console.error(`deploy-env: from ${existsSync(envFile) ? envFile : "no .env (keyless)"}`);

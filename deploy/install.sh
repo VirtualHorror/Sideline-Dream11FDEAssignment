@@ -31,7 +31,9 @@ SUDOERS_FILE=/etc/sudoers.d/sideline
 CADDY_REPO=https://dl.cloudsmith.io/public/caddy/stable
 CADDY_KEYRING=/usr/share/keyrings/caddy-stable-archive-keyring.gpg
 CADDY_SOURCES=/etc/apt/sources.list.d/caddy-stable.list
-PORT=8787
+# The server's loopback port. Not 8787: `pnpm dev` and its Vite proxy use that on this same host.
+# install.sh is its one source: the Caddyfile, the unit and the environment file get it from here.
+PORT=8780
 
 ARGS=("$@")
 DRY_RUN=0
@@ -217,12 +219,12 @@ else
 fi
 
 say "3/7 $CADDYFILE for $SITE"
-caddyfile=$(sed "s/@SITE@/$SITE/g" "$SCRIPT_DIR/Caddyfile.template")
+caddyfile=$(sed -e "s/@SITE@/$SITE/g" -e "s/@PORT@/$PORT/g" "$SCRIPT_DIR/Caddyfile.template")
 ((DRY_RUN)) && printf '%s\n' "$caddyfile" | grep -v '^#' | sed 's/^/install:     /'
 put_file "$CADDYFILE" 644 "$caddyfile" validate_caddyfile
 
 say "4/7 $ENV_FILE from $SOURCE_ENV (root-only; variable names below, never values)"
-env_args=(--env-file "$SOURCE_ENV")
+env_args=(--env-file "$SOURCE_ENV" --port "$PORT")
 ((KEYLESS)) && env_args+=(--keyless)
 env_text=$(as_app "$NODE_BIN" "$REPO_DIR/scripts/deploy-env.ts" "${env_args[@]}") ||
   die "the environment file could not be built (above); nothing was installed from this step on"

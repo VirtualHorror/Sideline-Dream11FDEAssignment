@@ -21,7 +21,6 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
 DEPLOY_DIR=/srv/sideline
 CADDYFILE=/etc/caddy/Caddyfile
-HEALTH_URL=http://127.0.0.1:8787/api/health
 DRY_RUN=0
 RESTART=1
 REF=main
@@ -113,14 +112,17 @@ healthy() {
   return 1
 }
 if ((DRY_RUN)); then
-  say "would check $HEALTH_URL and the site in $CADDYFILE"
+  say "would check the server's health on the port and site in $CADDYFILE"
   say "dry run: nothing was changed"
   exit 0
 fi
-say "health: $HEALTH_URL"
-if ! healthy "$HEALTH_URL" 30; then
+# install.sh wrote both into the Caddyfile: the site, and the loopback port it proxies to.
+port=$(sed -n 's/^[[:space:]]*reverse_proxy 127\.0\.0\.1:\([0-9][0-9]*\)[[:space:]]*$/\1/p' "$CADDYFILE" 2>/dev/null | head -n 1)
+[[ -n $port ]] || die "no 'reverse_proxy 127.0.0.1:<port>' in $CADDYFILE: run sudo deploy/install.sh first"
+say "health: http://127.0.0.1:$port/api/health"
+if ! healthy "http://127.0.0.1:$port/api/health" 30; then
   journalctl -u sideline -n 30 --no-pager 2>/dev/null || true
-  die "sideline did not answer on $HEALTH_URL (systemctl status sideline)"
+  die "sideline did not answer on 127.0.0.1:$port (systemctl status sideline)"
 fi
 site=$(awk '!/^[[:space:]]*#/ && /\{[[:space:]]*$/ { print $1; exit }' "$CADDYFILE" 2>/dev/null || true)
 if [[ -n $site ]]; then

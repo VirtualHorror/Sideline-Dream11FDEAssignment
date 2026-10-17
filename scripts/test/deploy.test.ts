@@ -126,7 +126,7 @@ describe("deploy scripts (PLAN 7.1)", () => {
       /would run: env DEBIAN_FRONTEND=noninteractive apt-get install|caddy is installed: 2\./,
     );
     expect(text).toContain(`install:     ${SITE} {`);
-    expect(text).toContain("install:     \treverse_proxy 127.0.0.1:8787");
+    expect(text).toContain("install:     \treverse_proxy 127.0.0.1:8780");
     expect(text).toMatch(/(would write|unchanged) \/etc\/caddy\/Caddyfile/);
     expect(text).toContain("deploy-env: forced HOST, NODE_ENV, PORT");
     expect(text).toContain(

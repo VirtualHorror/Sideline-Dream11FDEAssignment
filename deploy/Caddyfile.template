@@ -1,6 +1,6 @@
 # Sideline's public site (PLAN Task 7, D-025, D-066). Written by deploy/install.sh to
-# /etc/caddy/Caddyfile with the site name (<public-ip-with-dashes>.sslip.io) filled in: edit
-# this template and re-run install.sh rather than editing the installed copy.
+# /etc/caddy/Caddyfile with the site name (<public-ip-with-dashes>.sslip.io) and the server's
+# loopback port filled in: edit this template and re-run install.sh, not the installed copy.
 #
 # Caddy gets and renews the Let's Encrypt certificate for the site itself (ports 80 and 443 open)
 # and redirects HTTP to HTTPS. The Node server listens on loopback only. Caddy sets
@@ -12,5 +12,5 @@
 	@static not path /api/*
 	encode @static zstd gzip
 
-	reverse_proxy 127.0.0.1:8787
+	reverse_proxy 127.0.0.1:@PORT@
 }
