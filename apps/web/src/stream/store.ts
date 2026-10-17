@@ -99,8 +99,15 @@ function apply(state: StreamState, message: StreamMessage): StreamState {
       return { ...state, moments: upsertMoment(state.moments, message.data.moment) };
     case "clock":
       return { ...state, clock: message.data.clock };
-    case "telemetry":
-      return { ...state, telemetry: message.data.telemetry };
+    case "telemetry": {
+      // The mode can change mid-session (a key that starts failing): the chip follows it (D-071).
+      const { aiMode } = message.data;
+      const session =
+        state.session && aiMode && aiMode !== state.session.aiMode
+          ? { ...state.session, aiMode }
+          : state.session;
+      return { ...state, telemetry: message.data.telemetry, session };
+    }
     case "error":
       return { ...state, failure: message.data };
   }

@@ -342,7 +342,10 @@ export function createSession(
       const wall = deps.now();
       if (listeners.size > 0 && wall - lastTelemetry >= TELEMETRY_EVERY_MS) {
         lastTelemetry = wall;
-        emit("telemetry", { telemetry: deps.telemetry.snapshot("session", id) });
+        emit("telemetry", {
+          telemetry: deps.telemetry.snapshot("session", id),
+          aiMode: deps.aiMode(),
+        });
       }
     },
 

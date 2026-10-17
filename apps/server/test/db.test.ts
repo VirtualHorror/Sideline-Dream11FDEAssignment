@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { describe, expect, it } from "vitest";
 import { loadMatchBundles } from "../src/data/bundle.ts";
 import { openDatabase, rebuildAnalytics } from "../src/db/database.ts";
+import { MIGRATIONS, migrate } from "../src/db/migrations.ts";
 
 const DATA = join(import.meta.dirname, "..", "..", "..", "data");
 const bundles = loadMatchBundles(DATA);
@@ -26,9 +28,68 @@ describe("SQLite schema (PLAN Task 5)", () => {
       .all()
       .map((row) => row.name);
     expect(tables).toEqual(["ai_cache", "ai_calls", "deliveries", "players"]);
-    expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 1 });
+    expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 2 });
     const again = openDatabase(":memory:");
-    expect(again.prepare("PRAGMA user_version").get()).toEqual({ user_version: 1 });
+    expect(again.prepare("PRAGMA user_version").get()).toEqual({ user_version: 2 });
+  });
+});
+
+describe("migration 2: each ai_calls row says whether its run reached the provider (D-071)", () => {
+  it("adds `called` and fills it in for the rows an older server wrote", () => {
+    // A version-1 database as production holds it, with one row of each kind the gateway writes.
+    const db = new DatabaseSync(":memory:");
+    db.exec(MIGRATIONS[0] ?? "");
+    db.exec("PRAGMA user_version = 1");
+    const insert = db.prepare(
+      `INSERT INTO ai_calls (id, session_id, skill, moment_key, provider, model, cache, outcome,
+         latency_ms, tokens_in, tokens_out, cost_usd, cost_estimated, prompt_version,
+         started_at_wall, budget_ms, detail) VALUES (?, NULL, 'echo', 'k', ?, 'm', ?, ?, 1, 0, 0, 0, 0,
+         'v1', '2026-10-17T10:00:00.000Z', NULL, ?)`,
+    );
+    insert.run("cache-hit", "openai", "hit", "ok", null);
+    insert.run("replay-hit", "replay", "hit", "ok", null);
+    insert.run(
+      "no-provider",
+      "none",
+      "miss",
+      "fallback",
+      "no provider configured and no recorded output",
+    );
+    insert.run("budget", "openai", "miss", "budget", "daily budget of $3.00 spent");
+    insert.run(
+      "provider-error",
+      "openai",
+      "miss",
+      "error",
+      "provider error: PermissionDeniedError (403)",
+    );
+    insert.run(
+      "shared",
+      "openai",
+      "miss",
+      "error",
+      "shared result: provider error: PermissionDeniedError (403)",
+    );
+    insert.run("guard", "openai", "miss", "fallback", "guard: score after the ball");
+    insert.run("answered", "openai", "miss", "ok", null);
+    migrate(db);
+    const called = Object.fromEntries(
+      db
+        .prepare("SELECT id, called FROM ai_calls")
+        .all()
+        .map((row) => [row.id, row.called]),
+    );
+    expect(called).toEqual({
+      "cache-hit": 0,
+      "replay-hit": 0,
+      "no-provider": 0,
+      budget: 0,
+      "provider-error": 1,
+      shared: 0,
+      guard: 1,
+      answered: 1,
+    });
+    expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 2 });
   });
 });
 

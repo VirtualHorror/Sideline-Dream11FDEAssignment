@@ -74,6 +74,8 @@ export function buildRuntime(
     models: config.ai.models,
     pricing: config.ai.pricing,
     now,
+    // A restart keeps what the provider last said: a failing key stays in replay mode (D-071).
+    providerAnswering: traces.lastProviderAnswer(),
   });
   const orchestrator = createOrchestrator({ gateway, glossary, telemetry, bundles });
   const manager = createSessionManager({

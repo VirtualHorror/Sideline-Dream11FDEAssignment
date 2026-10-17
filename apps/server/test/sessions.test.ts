@@ -359,3 +359,33 @@ describe("sessions: the end of the match reaches the fan's TV (BUG-004)", () => 
     expect(tvTimeAt(session.clock(), rt.clock.now())).toBe(lastChat.t);
   });
 });
+
+describe("sessions: the TV's AI chip follows the provider (D-071)", () => {
+  const telemetryModes = (messages: ReturnType<typeof listen>) =>
+    messages.flatMap((m) => (m.type === "telemetry" ? [m.data.aiMode] : []));
+
+  it("a key that fails turns the stream's AI mode to replay within one telemetry message", async () => {
+    const rt = testRuntime({
+      script: () => {
+        throw Object.assign(new Error("403"), { status: 403, code: "key_expired" });
+      },
+    });
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const messages = listen(session);
+    expect(messages[0]?.type === "hello" && messages[0].data.aiMode).toBe("live");
+    await session.settle(); // the join point's catch-up reel asked the provider and got a 403
+    rt.clock.advance(5_000);
+    rt.manager.tick();
+    expect(telemetryModes(messages)).toEqual(["replay"]);
+  });
+
+  it("an answering provider keeps it live", async () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const messages = listen(session);
+    await session.settle();
+    rt.clock.advance(5_000);
+    rt.manager.tick();
+    expect(telemetryModes(messages)).toEqual(["live"]);
+  });
+});

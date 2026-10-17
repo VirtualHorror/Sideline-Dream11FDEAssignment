@@ -838,6 +838,24 @@
 - **Alternatives:** keeping `.xyz` as the default (it does not exist); making the domain required (the
   sslip.io name must keep working on its own, D-068).
 
+### D-071 — The AI mode follows the provider's last answer (2026-10-17, T8-9, Nabhanyu + Claude; F07 follow-up 3)
+- **Context:** with a key whose account has no credit, production's gateway reported "live" (a provider is
+  configured and the budget holds), so the TV's chip said "Live AI connected" while every card was a labelled
+  fallback. Nabhanyu asked for the chip to say what is really happening.
+- **Decision:** the gateway remembers the provider's last answer: a call that ends in a provider error (a bad
+  key, no credit, an outage: the `provider error:` trace detail) turns `mode()` to "replay" until a later call
+  gets any answer (valid, invalid, rejected by a guard or refused all count as answers); a timeout says nothing
+  either way. Calls are still made, so live AI comes back by itself (D-067). A restart starts from the last
+  answer on record: migration 2 adds `ai_calls.called` (filled in for older rows from the shape of the
+  gateway's traces), and `TraceSink.lastProviderAnswer()` seeds the gateway at boot. The mode now also rides
+  on every `telemetry` stream message (an optional `aiMode`, a contract addition), so an open TV's chip
+  follows it within five seconds. The E2E reads whether a key is configured from `/api/health`
+  (`aiProvider`), not from the chip, since a failing key's server still makes calls.
+- **Alternatives:** a circuit breaker that stops calling a failing provider for a while (faster fallbacks, but
+  it changes behaviour and hides recovery behind a timer); a fourth AI mode, "failing" (a contract change
+  every consumer must learn, for a chip whose replay wording already says the truth: recorded answers or
+  labelled fallbacks); a health probe at boot (spends money on every restart, Constraint 26).
+
 ### D-072 — Task 10 may scrub the forbidden word from git history and re-point the tags (2026-10-17, T8-9, Nabhanyu; for Task 10, amends D-023 and D-068)
 - **Context:** D-068 removed the AI proxy's name from every tracked file but left old commits holding it, and
   D-069 left the push decision (push as is, or a fresh history) open for Task 10.

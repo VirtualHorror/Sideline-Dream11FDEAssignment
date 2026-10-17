@@ -30,16 +30,18 @@ const LABELS = {
 /**
  * The provenance labels the 18.6 card may show (D-054, D-066). The local test server is keyless, so
  * there is exactly one: replayed if this repository holds a recording of the match (`pnpm ai:record`
- * records every teaser), else the labelled fallback. A deployed server in replay mode replays or falls
+ * records every teaser), else the labelled fallback. A deployed server with no key replays or falls
  * back; with a key it may answer live or from the cache, a recording answers before any call, and a
- * failing provider (an account out of credit) falls back.
+ * failing provider (an account out of credit) falls back. Whether a key is configured comes from
+ * /api/health, not the TV's chip: the chip says "replay" for a key that fails too (D-071), and that
+ * server still makes its calls.
  */
-function allowedProvenance(aiMode: string | null): string[] {
+function allowedProvenance(keyless: boolean): string[] {
   if (!process.env.PLAYWRIGHT_BASE_URL) {
     const recorded = existsSync(new URL("../data/ai-replay/1298150.jsonl", import.meta.url));
     return [recorded ? LABELS.replay : LABELS.fallback];
   }
-  return aiMode === "live" ? Object.values(LABELS) : [LABELS.replay, LABELS.fallback];
+  return keyless ? [LABELS.replay, LABELS.fallback] : Object.values(LABELS);
 }
 
 function watchErrors(page: Page): string[] {
@@ -69,7 +71,8 @@ test("a fan watches the climax: the teaser is held for their TV, then revealed",
   await expect(page.locator('[data-component="scorebug"]').first()).toContainText(/(89|90)\/4/);
 
   await openTab("TV");
-  const aiMode = await page.locator("[data-ai-mode]").first().getAttribute("data-ai-mode");
+  const health = (await (await page.request.get("/api/health")).json()) as { aiProvider: string };
+  const keyless = health.aiProvider === "none";
   await page.getByRole("button", { name: "OTT app, 25 s" }).click();
   await expect(page.getByRole("slider", { name: /25 s behind the ground/ })).toBeVisible();
   await page.getByRole("radio", { name: "16x" }).check({ force: true });
@@ -106,11 +109,11 @@ test("a fan watches the climax: the teaser is held for their TV, then revealed",
 
   await expect(card).toHaveAttribute("data-visibility", "revealed", { timeout: 15_000 });
   await expect(card).toContainText("18.6 Rauf to Kohli, six");
-  expect(allowedProvenance(aiMode)).toContain(await card.locator(".provenance").innerText());
+  expect(allowedProvenance(keyless)).toContain(await card.locator(".provenance").innerText());
   const states = (await page.evaluate(() => window.cardStates)) ?? [];
-  // With no model call (replay mode) the card always comes 25 s ahead of the fan's TV, so it is held
-  // first; a live answer slower than the fan's 1.6 s may only arrive once the TV showed the ball.
-  if (aiMode !== "live") expect(states[0]?.state).toBe("hidden");
+  // With no key there is no model call: the card always comes 25 s ahead of the fan's TV, so it is
+  // held first; an answer (or an error) slower than the fan's 1.6 s may arrive once the TV showed it.
+  if (keyless) expect(states[0]?.state).toBe("hidden");
   expect(states.at(-1)?.state).toBe("revealed");
   for (const { state, text } of states.filter((s) => s.state !== "revealed")) {
     expect(text).not.toMatch(/144\/4|Rauf to Kohli/);

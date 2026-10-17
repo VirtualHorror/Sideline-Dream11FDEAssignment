@@ -42,6 +42,12 @@ export interface LlmProvider {
   complete(req: ProviderRequest): Promise<ProviderResult>;
 }
 
+/**
+ * How the gateway's trace detail starts when the provider itself failed (a bad key, an account out of
+ * credit, an outage): telemetry's TraceSink.lastProviderAnswer reads it back at boot (D-071).
+ */
+export const PROVIDER_ERROR_DETAIL = "provider error:";
+
 /** The model declined (Anthropic `stop_reason: "refusal"`, an OpenAI refusal item). Tokens count. */
 export class ProviderRefusalError extends Error {
   readonly usage: Usage;
