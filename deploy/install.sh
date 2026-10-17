@@ -7,7 +7,9 @@
 #   sudo deploy/install.sh --keyless    the same with the AI keys left out: recorded AI and
 #                                       labelled fallbacks only, never a paid call
 #   Options: --ref <ref>        the branch, tag or commit to deploy (default main, the audited line)
-#            --site <host>      the site name (default: from the EC2 metadata service, IMDSv2)
+#            --site <host>      the sslip.io name (default: from the EC2 metadata service, IMDSv2)
+#            --domain <host>    the owner's domain, served too (default sideline.nabhanyubm.xyz;
+#                               --domain '' serves the sslip.io name only)
 #            --env-file <path>  where the AI settings come from (default: this repository's .env)
 #
 # In order: the deploy checkout /srv/sideline (a clone of this repository at the ref, built by
@@ -31,6 +33,9 @@ SUDOERS_FILE=/etc/sudoers.d/sideline
 CADDY_REPO=https://dl.cloudsmith.io/public/caddy/stable
 CADDY_KEYRING=/usr/share/keyrings/caddy-stable-archive-keyring.gpg
 CADDY_SOURCES=/etc/apt/sources.list.d/caddy-stable.list
+# The owner's domain: a DNS A record to this host's Elastic IP (D-068). Caddy serves it next to the
+# sslip.io name and gets its certificate once the name resolves here.
+DOMAIN=sideline.nabhanyubm.xyz
 # The server's loopback port. Not 8787: `pnpm dev` and its Vite proxy use that on this same host.
 # install.sh is its one source: the Caddyfile, the unit and the environment file get it from here.
 PORT=8780
@@ -61,11 +66,12 @@ while (($# > 0)); do
   case $1 in
     --dry-run) DRY_RUN=1 ;;
     --keyless) KEYLESS=1 ;;
-    --ref | --site | --env-file)
+    --ref | --site | --domain | --env-file)
       [[ $# -ge 2 ]] || die "$1 needs a value"
       case $1 in
         --ref) REF=$2 ;;
         --site) SITE=$2 ;;
+        --domain) DOMAIN=$2 ;;
         --env-file) SOURCE_ENV=$2 ;;
       esac
       shift
@@ -120,12 +126,17 @@ public_ipv4() {
     curl -fsS -m 3 -H "X-aws-ec2-metadata-token: $token" \
       http://169.254.169.254/latest/meta-data/public-ipv4
 }
+ip=""
 if [[ -z $SITE ]]; then
   ip=$(public_ipv4) || die "the EC2 metadata service has no public IPv4 for this host: attach an Elastic IP, or pass --site <host>"
   [[ $ip =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]] || die "the metadata service returned '$ip', not an IPv4 address"
   SITE=${ip//./-}.sslip.io
 fi
-[[ $SITE =~ ^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$ ]] || die "not a host name: $SITE"
+for name in "$SITE" "$DOMAIN"; do
+  [[ -z $name || $name =~ ^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$ ]] || die "not a host name: $name"
+done
+# Caddy's site addresses: the sslip.io name, which always works, first.
+SITES=$SITE${DOMAIN:+, $DOMAIN}
 
 # Installs $3 as $1 (mode $2, owned by root) unless it is already identical, through a temporary
 # file next to it that the optional validator ($4) checks first. Never call it in an || or &&
@@ -182,7 +193,7 @@ healthy() {
 }
 
 ((DRY_RUN)) && say "dry run: printing the plan, changing nothing"
-say "site https://$SITE/  ref $REF  user $APP_USER  node $NODE_VERSION$( ((KEYLESS)) && printf '  keyless')"
+say "site https://$SITE/${DOMAIN:+ and https://$DOMAIN/}  ref $REF  user $APP_USER  node $NODE_VERSION$( ((KEYLESS)) && printf '  keyless')"
 say "repository $REPO_DIR, deploy checkout $DEPLOY_DIR"
 
 say "1/7 deploy checkout: $DEPLOY_DIR at $REF (deploy/update.sh --no-restart, as $APP_USER)"
@@ -219,8 +230,17 @@ else
   run env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq caddy
 fi
 
-say "3/7 $CADDYFILE for $SITE"
-caddyfile=$(sed -e "s/@SITE@/$SITE/g" -e "s/@PORT@/$PORT/g" "$SCRIPT_DIR/Caddyfile.template")
+say "3/7 $CADDYFILE for $SITES"
+# Only a site name from the metadata service tells us this host's IP to compare the domain with.
+if [[ -n $DOMAIN && -n $ip ]]; then
+  resolved=$(getent ahostsv4 "$DOMAIN" | awk '{ print $1 }' | sort -u | tr '\n' ' ' || true)
+  if [[ " $resolved" == *" $ip "* ]]; then
+    say "  $DOMAIN resolves to $ip"
+  else
+    say "  warning: $DOMAIN resolves to '${resolved% }', not $ip: Caddy keeps asking for its certificate until the DNS A record points here"
+  fi
+fi
+caddyfile=$(sed -e "s/@SITES@/$SITES/g" -e "s/@PORT@/$PORT/g" "$SCRIPT_DIR/Caddyfile.template")
 ((DRY_RUN)) && printf '%s\n' "$caddyfile" | grep -v '^#' | sed 's/^/install:     /'
 put_file "$CADDYFILE" 644 "$caddyfile" validate_caddyfile
 
@@ -277,6 +297,15 @@ if ! healthy "https://$SITE/api/health" 60; then
   journalctl -u caddy -n 40 --no-pager || true
   die "https://$SITE/ did not answer: are 80 and 443 open to the internet in the security group? (log above)"
 fi
-say "done: Sideline is live at https://$SITE/"
+live="https://$SITE/"
+if [[ -n $DOMAIN ]]; then
+  say "  https://$DOMAIN/api/health"
+  if healthy "https://$DOMAIN/api/health" 15; then
+    live="https://$DOMAIN/ (and $live)"
+  else
+    say "  warning: https://$DOMAIN/ does not answer yet (its DNS, or its first certificate): Caddy keeps trying; re-run this script once the domain resolves to this host"
+  fi
+fi
+say "done: Sideline is live at $live"
 say "redeploy after a merge: deploy/update.sh   (as $APP_USER, no password)"
 say "logs: journalctl -u sideline -f    journalctl -u caddy -f"

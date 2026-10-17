@@ -125,9 +125,14 @@ if ! healthy "http://127.0.0.1:$port/api/health" 30; then
   journalctl -u sideline -n 30 --no-pager 2>/dev/null || true
   die "sideline did not answer on 127.0.0.1:$port (systemctl status sideline)"
 fi
-site=$(awk '!/^[[:space:]]*#/ && /\{[[:space:]]*$/ { print $1; exit }' "$CADDYFILE" 2>/dev/null || true)
-if [[ -n $site ]]; then
-  say "health: https://$site/api/health"
-  healthy "https://$site/api/health" 15 || die "https://$site/ did not answer (journalctl -u caddy)"
-fi
-say "deployed $(git -C "$REPO_DIR" rev-parse --short "$sha") ($REF)${site:+ at https://$site/}"
+# The site line: the sslip.io name first (must answer), then the owner's domain (may wait for DNS).
+sites=$(awk '!/^[[:space:]]*#/ && /\{[[:space:]]*$/ { sub(/[[:space:]]*\{[[:space:]]*$/, ""); gsub(/,/, " "); print; exit }' "$CADDYFILE" 2>/dev/null || true)
+read -r -a names <<<"$sites"
+for i in "${!names[@]}"; do
+  say "health: https://${names[i]}/api/health"
+  if ! healthy "https://${names[i]}/api/health" 15; then
+    ((i > 0)) || die "https://${names[i]}/ did not answer (journalctl -u caddy)"
+    say "warning: https://${names[i]}/ does not answer yet (its DNS or certificate); the other name does"
+  fi
+done
+say "deployed $(git -C "$REPO_DIR" rev-parse --short "$sha") ($REF)${names[0]:+ at https://${names[0]}/}"

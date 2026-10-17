@@ -25,6 +25,7 @@ const repo = resolve(import.meta.dirname, "..", "..");
 const install = join(repo, "deploy", "install.sh");
 const update = join(repo, "deploy", "update.sh");
 const SITE = "203-0-113-10.sslip.io"; // a documentation address (RFC 5737), never a real host
+const DOMAIN = "sideline.nabhanyubm.xyz"; // install.sh's default, the owner's domain (D-068)
 const FAKE_KEY = "sk-fake-value-that-must-never-be-printed";
 
 const SHIMMED = [
@@ -119,13 +120,13 @@ describe("deploy scripts (PLAN 7.1)", () => {
     const text = `${out.stdout}${out.stderr}`;
     expect(out.status, text).toBe(0);
     expect(readFileSync(log, "utf8")).toBe("");
-    expect(text).toContain(`install: site https://${SITE}/  ref main`);
+    expect(text).toContain(`install: site https://${SITE}/ and https://${DOMAIN}/  ref main`);
     expect(text).toMatch(/would run: git (clone|-C \/srv\/sideline fetch)/);
     expect(text).toContain("would run: pnpm --dir /srv/sideline build");
     expect(text).toMatch(
       /would run: env DEBIAN_FRONTEND=noninteractive apt-get install|caddy is installed: 2\./,
     );
-    expect(text).toContain(`install:     ${SITE} {`);
+    expect(text).toContain(`install:     ${SITE}, ${DOMAIN} {`);
     expect(text).toContain("install:     \treverse_proxy 127.0.0.1:8780");
     expect(text).toMatch(/(would write|unchanged) \/etc\/caddy\/Caddyfile/);
     expect(text).toContain("deploy-env: forced HOST, NODE_ENV, PORT");
@@ -153,6 +154,15 @@ describe("deploy scripts (PLAN 7.1)", () => {
       .filter((line) => line.includes('"$SYSTEMCTL" '));
     expect(calls.length).toBeGreaterThanOrEqual(4);
     for (const line of calls) expect(line.trim()).toMatch(/^(if ! )?run "\$SYSTEMCTL" /);
+  });
+
+  it("install.sh --domain '' serves the sslip.io name alone", () => {
+    const out = runScript(install, ["--dry-run", "--site", SITE, "--domain", ""]);
+    expect(out.status, out.stderr).toBe(0);
+    expect(out.stdout).toContain(`install: site https://${SITE}/  ref main`);
+    expect(out.stdout).toContain(`install:     ${SITE} {`);
+    expect(out.stdout).not.toContain(DOMAIN);
+    expect(readFileSync(log, "utf8")).toBe("");
   });
 
   it("install.sh refuses to run for real without root, before changing anything", () => {
