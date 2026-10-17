@@ -375,7 +375,7 @@ export function createGateway(deps: GatewayDeps): Gateway {
     counters.tokensIn += outcome.trace.tokensIn;
     counters.tokensOut += outcome.trace.tokensOut;
     counters.costUsd += outcome.trace.costUsd;
-    deps.traces.record(outcome.trace, sessionId);
+    deps.traces.record(outcome.trace, sessionId, outcome.called);
   }
 
   return {
