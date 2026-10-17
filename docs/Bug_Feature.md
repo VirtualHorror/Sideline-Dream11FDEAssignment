@@ -14,6 +14,7 @@ audit updates this page.
 | F04 | Moments engine: clocks, delay buffer, commentary lines, phase detectors (lineup, collapse, nudge with the match-deciding ball, room), catch-up facts, entropy gate, quest resolver, synthetic crowd; Task 3 carry-overs (step 4.0) | audited and merged, `t04-verified` | [F04](features/F04-moments-engine.md) |
 | F05 | Server runtime and AI layer: match bundles, SQLite, per-browser sessions on one ticker, SSE, the AI gateway (Anthropic and OpenAI-compatible providers, cache, budget, traces, replay rows, labelled fallbacks), orchestrator, spoiler teaser / catch-up / explainer skills with their guards, telemetry and the scale projection, `pnpm ai:smoke`; the `t04-verified` spot-check and its two pinned test gaps | audited and merged, `t05-verified` | [F05](features/F05-server-ai.md) |
 | F06 | Frontend I: landing page (floodlit hero, ghost-text wordmark, persona picker), match room on the fan's TV clock (TV pane, companion with held spoilers, catch-up reels, the explainer, the simulated chat, control plane drawer), the four effects with fallbacks, `/architecture`; `GET /api/matches/:matchId`; the `t05-verified` spot-check and its four pinned test gaps; BUG-004 | audited and merged, `t06-verified` | [F06](features/F06-frontend-core.md) |
+| F07 | Deploy (Milestone A): `deploy/install.sh` (Caddy, automatic TLS for the sslip.io name and the owner's domain, the sandboxed `sideline` unit from a deploy checkout, the root-only env file, one sudo rule), `deploy/update.sh` (redeploy, rollback), `pnpm ai:record` (the replay recorder; rows wait for a key with credit), the E2E against the public site; `/api/health` reports the endpoint's kind; the forbidden-word scan (D-068); the `t06-verified` spot-check and its three pinned test gaps | audited and merged, `t07-verified` | [F07](features/F07-deploy.md) |
 
 ## Bugs
 
@@ -56,3 +57,14 @@ Fixed while Task 6 was being implemented (logged in F06, no bug file):
 - The floodlight was invisible on a tall hero (its blobs were offset by a share of the container's height
   but sized by its width), and the ghost-text sweep painted no fringes (the splat's energy scaled its
   velocity to almost nothing); both found in the visual review and tuned (VISUAL_REFERENCES "As built").
+
+Fixed while Task 7 was being implemented (logged in F07, no bug file):
+- The catch-up fallback reel said "1 balls without a run" and "From 15.1 to 15.1" for a one-ball scoreless spell,
+  and could say "1 wickets" or "1 overs" (Nabhanyu, from the Task 6 screenshots; test first).
+- Before anything ran with sudo, the deploy scripts' own review found three shell traps (a function called in an
+  `||` list loses `set -e`; a pipe into a reader that exits early can abort under pipefail; `systemctl` taken from
+  PATH by a root script) and the plan's port 8787 colliding with `pnpm dev` on the same host (D-066).
+
+Closed by tests in Task 7 (the `t06-verified` spot-check, D-065, no bug file):
+- Nothing pinned a teaser's trace staying held while its card only teases, a question's trace showing at once, or
+  a seek past the end clamping to the crowd's last reaction; the merged code was right, and all three now have tests.

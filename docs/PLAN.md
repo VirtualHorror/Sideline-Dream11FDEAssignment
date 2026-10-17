@@ -79,10 +79,10 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 4 | Moments engine: clock, delay buffer, detectors, gate, quests, crowd, commentary | Claude (Codex unavailable) | `task/04-moments-engine` | ✅ done, tagged `t04-verified` |
 | 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Claude (Codex unavailable) | `task/05-server-ai` | ✅ done, tagged `t05-verified` |
 | 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Claude (Codex unavailable) | `task/06-frontend-core` | ✅ done, tagged `t06-verified` |
-| 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Codex + Nabhanyu | `task/07-deploy` | ⬜ |
-| 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | Codex | `task/08-ai-skills-2` | ⬜ |
-| 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | Codex | `task/09-frontend-complete` | ⬜ |
-| 10 | Final audit, holdout match, security review, submission note, demo script | Claude | `main` | ⬜ |
+| 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Claude (Codex unavailable) + Nabhanyu | `task/07-deploy` | ✅ done, tagged `t07-verified` (recording waits for a key with credit) |
+| 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | next session, with Task 9 (D-069) | `task/08-09-skills-frontend` | ⬜ |
+| 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | next session, with Task 8 (D-069) | `task/08-09-skills-frontend` | ⬜ |
+| 10 | Final audit, holdout match, security review, submission note, demo script, GitHub push (D-069) | Claude | `main` | ⬜ |
 
 ---
 
@@ -598,15 +598,32 @@ as built: D-064. Lighthouse was not run (Task 9.5). Follow-ups: F06.
   updating `~/.bashrc` (Codex), `.env` and re-running `install.sh`.
 
 **Steps**
-- [ ] **7.1** Shellcheck-clean scripts (`bash -n`; `shellcheck` if available); `install.sh --dry-run` prints the plan without changes.
-- [ ] **7.2** `ai-record` dry run on a scripted provider (`--provider scripted`) writes well-formed JSONL that the replay provider loads (unit test).
-- [ ] **7.3** With Nabhanyu: run `install.sh`, open the ports, record the replay cache, `update.sh`.
-- [ ] **7.4** `PLAYWRIGHT_BASE_URL=https://<host> pnpm test:e2e` green; replay mode check: unset the key, restart, the climax shows `Replayed AI` chips (Review focus 2).
-- [ ] **7.5** Docs (F07, deploy README, ROLLBACK deploy rows, TEST_CHECKLIST §F, Architecture deployment status).
+- [x] **7.0** Independent spot-check of `t06-verified` (added at Nabhanyu's request, as D-051 and D-059 did; D-065).
+- [x] **7.1** Shellcheck-clean scripts (`bash -n`; `shellcheck` if available); `install.sh --dry-run` prints the plan without changes.
+- [x] **7.2** `ai-record` dry run on a scripted provider (`--provider scripted`) writes well-formed JSONL that the replay provider loads (unit test).
+- [ ] **7.3** With Nabhanyu: run `install.sh`, open the ports, record the replay cache, `update.sh`. *(Done except the recording, which waits for a key with credit: D-067, F07 follow-up 1.)*
+- [x] **7.4** `PLAYWRIGHT_BASE_URL=https://<host> pnpm test:e2e` green; replay mode check: unset the key, restart, the climax shows `Replayed AI` chips (Review focus 2). *(The replay check ran on scripted rows in a scratch data directory through the real UI; the real one follows the recording.)*
+- [x] **7.5** Docs (F07, deploy README, ROLLBACK deploy rows, TEST_CHECKLIST §F, Architecture deployment status).
+
+**Audit result (2026-10-17, Claude): accepted, `t07-verified`.** Implemented by Claude because Codex was
+unavailable (a self-audit), after an independent spot-check of `t06-verified` in the same session (three Task 6
+test gaps pinned, D-065). Live on this host: `https://3-108-67-100.sslip.io/` (Caddy 2.11.7, Let's Encrypt) and
+`https://sideline.nabhanyubm.xyz/` once its DNS resolves (D-068); the public E2E passes against production.
+Deviations, each with a Decisions entry: production runs from a deploy checkout at `/srv/sideline` on loopback
+port 8780 (the working copy and 8787 belong to development on this same host), one sudo rule lets `update.sh`
+restart the service (D-066); the recorder runs at 1x on a hand-moved clock and covers the room's one-click jumps
+(D-067); the AI proxy's name left the repository and `/api/health` reports the endpoint's kind (D-068). The key's
+account has no credit (the proxy now answers 403 `key_expired`), so every production AI card is a labelled
+fallback until it is renewed and `pnpm ai:record --yes` runs. Follow-ups: F07.
 
 ---
 
 ## Task 8: AI skills II (lineup patch, bailout, room read, stat-back, inspector)
+
+> **Tasks 8 and 9 run in one session (D-069)** on `task/08-09-skills-frontend`: Task 8's steps first (each
+> skill with its guard and fallback, test first), then Task 9's, then one audit, `t08-verified` and
+> `t09-verified` on the merge, a redeploy (`deploy/update.sh`) and HANDOFF10 for Task 10. Production
+> (Constraints §F) and the forbidden word (Constraint 27) bind every step.
 
 **Goal:** Phases 1-2 and the remaining phase 4 intelligence, each with guardrails that make the
 model's proposals safe to show.
@@ -686,6 +703,8 @@ explains the engineering.
 - [ ] Redeploy, public E2E, live AI smoke.
 - [ ] `docs/SUBMISSION.md`: the ≤ 200-word note (fan problem, how Sideline helps, AI tools used) in Nabhanyu's voice, plus the link.
 - [ ] `docs/DEMO_SCRIPT.md`: a 5-minute walkthrough and likely questions with answers (when not to call AI, scale, cost, failure modes, what's next).
+- [ ] Push to GitHub (D-069): Nabhanyu provides the remote; first decide on the history that still holds the AI
+  proxy's name (D-068: push as is, or a fresh history), then push `main` and the tags.
 - [ ] README final pass; tag `t10-verified`.
 
 ## Stretch (only after Milestone B)

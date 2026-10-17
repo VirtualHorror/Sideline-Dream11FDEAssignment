@@ -21,6 +21,10 @@ You implement **exactly one task** from `docs/PLAN.md` per session.
 - The server runs TypeScript directly: `node apps/server/src/index.ts`. Erasable syntax only
   (no `enum`, `namespace`, constructor parameter properties); `.ts` extensions on relative imports.
 - Google Chrome is installed; Playwright uses it via `channel: "chrome"`.
+- Production runs on this host (Task 7, `deploy/README.md`): Caddy on 80/443, the `sideline` systemd unit
+  on `127.0.0.1:8780` from `/srv/sideline`. Never edit those by hand; `pnpm dev` keeps using 8787.
+- The AI proxy behind the `.env` key is never named in a tracked file or a commit message (Constraint
+  27): call it "the proxy". `pnpm check:hardcode` fails on its name.
 - `python3 -I scripts/oracle/cricsheet_oracle.py` is the auditor's reference. Read it, run it,
   never edit it.
 
@@ -35,6 +39,9 @@ You implement **exactly one task** from `docs/PLAN.md` per session.
 | `pnpm lint:fix` | apply Biome formatting and safe fixes |
 | `node scripts/verify-data.ts`, `node scripts/check-no-hardcode.ts` | data gate, anti-hardcoding scan |
 | `pnpm ai:smoke` | one real teaser call through the gateway with the `.env` provider (spends tokens: ask Nabhanyu first; `SIDELINE_AI_PROVIDER=none` skips) |
+| `pnpm ai:record` | the replay recorder's plan (sends nothing); `--yes` records with the `.env` provider (spends money: ask Nabhanyu first) |
+| `deploy/update.sh [ref]` | redeploy production on this host (`/srv/sideline`, no password); audited refs only (Constraints §F) |
+| `PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e` | the browser tests against the live site |
 
 ## How to work
 

@@ -747,3 +747,79 @@
   and wicket (a dozen spectacles a match, against the design's restraint); the control plane at stadium time
   (a reviewer watching the drawer would be spoiled); a single responsive grid with CSS-only tabs (the tab
   roles would be wrong on desktop and hidden panels would still mount the TV's effects).
+
+### D-065 — Spot-check of `t06-verified`: accepted, three test gaps pinned in Task 7 (2026-10-17, T7 step 7.0, Claude)
+- **Context:** Task 6 was implemented and audited by the same agent; Nabhanyu asked for an independent check in
+  a fresh session before Task 7 (as D-051 and D-059 did). Verify (47 files / 569 tests), E2E (22), the oracle diff
+  (identical on both matches) and `mutate.py` (18 killed) all agree with the Task 6 record; 11 of 14 fresh hand
+  mutants of the Task 6 code were killed.
+- **Decision:** the three survivors are test gaps, not defects, so `t06-verified` stands and the gaps are closed
+  with tests on the Task 7 branch (no source change): a teaser's trace stays held in the control plane while its
+  card only teases; a trace with no card and no ball to wait for (a fan's question) shows at once; a seek past the
+  end clamps to the crowd's last reaction, not to the fan's delayed TV (D-063). Each fails on its mutant.
+
+### D-066 — The deployment as built: a deploy checkout, port 8780, the environment file, one sudo rule (2026-10-17, T7, Claude; builds D-025)
+- **Deploy checkout:** production runs from `/srv/sideline`, a clone of the repository detached at the deployed
+  commit (default `main`), never from the working copy: on this host the working copy is also the development
+  machine, and `pnpm verify` empties `apps/web/dist` under a server that keeps `index.html` in memory (a blank
+  public page), tests share `data/runtime`, and `update.sh <ref>` would otherwise switch the developer's branch.
+- **Port:** the server listens on `127.0.0.1:8780`, not the PLAN's 8787, which `pnpm dev`, its Vite proxy and the
+  developer's `.env` use on the same host. `install.sh`'s `PORT` is the one source (Caddyfile, unit, env file);
+  `update.sh` reads it back from the installed Caddyfile.
+- **Environment file:** `scripts/deploy-env.ts` parses `.env` with Node's own parser (what `pnpm dev` reads),
+  copies only the variables the server reads (`SERVER_ENV_NAMES`, exported by config.ts), forces HOST, PORT and
+  NODE_ENV (an EnvironmentFile overrides the unit's Environment= lines), leaves the data and web paths at the
+  checkout's defaults, writes systemd's double-quoted form (checked against systemd 255) and validates with
+  `loadConfig`; root-owned, mode 600; names printed, never values. `--keyless` leaves the AI keys out.
+- **Unit:** runs `node apps/server/src/index.ts` as the developer with `ProtectSystem=strict`,
+  `ProtectHome=read-only`, write access to `data/runtime` only, no capabilities, an address-family filter (with
+  AF_NETLINK for glibc's resolver) and the other `Protect*`/`Restrict*` options (`systemd-analyze security` 3.2).
+- **Caddy:** from its official apt repository (the documented key and source); the site block only compresses
+  static files and proxies to the server; no `trusted_proxies`, so a client's own X-Forwarded-For is replaced
+  (spoofing checked end to end, D-058). SSE is flushed as written.
+- **One sudo rule:** `/etc/sudoers.d/sideline` lets the developer run `/usr/bin/systemctl restart sideline`
+  without a password (validated with `visudo`), so `deploy/update.sh` (and an agent) can redeploy without the
+  owner's terminal. Nothing else is allowed; the Caddyfile and env file still need `sudo deploy/install.sh`.
+- **Scripts:** every change goes through `run()`, so `--dry-run` prints the plan; files are installed through a
+  validated temporary file next to the target; idempotent; ufw opened only if it is filtering (it is not here).
+- **Alternatives:** the working copy as WorkingDirectory (above); a user-level unit (cannot read a root-only env
+  file); polkit instead of sudoers (less familiar, same effect); a hardcoded build-and-swap of `dist` (deferred,
+  F07 follow-up 5).
+
+### D-067 — The replay recorder, and production on a key with no credit (2026-10-17, T7, Nabhanyu + Claude)
+- **Recorder:** `pnpm ai:record` walks every persona of both matches through the server's own sessions (play from
+  the join point to the end; each one-click jump of the room: the phase rail's 0, 6 and 15 overs per innings and
+  the jump control's 2nd innings after 18), so its keys are exactly what a live server asks for: 67 today (48
+  teasers, 19 catch-up reels). Calls go one at a time on a hand-moved clock at 1x with the 60 s maximum delay, so
+  each teaser gets the full 15 s timeout (the PLAN's 32x would give 9 s). Rows already recorded answer first
+  (D-054), so a second run only fills gaps; explainer answers are never recorded. Without `--yes` it plans with no
+  provider and sends nothing; `--provider scripted` (tests) refuses `data/ai-replay` as its output.
+- **Owner's call (this session):** the key's account has no credit; keep the key as it is, in `.env` and in
+  production, and do not block Task 7 on recording. Production therefore runs in "live" mode: every AI moment
+  tries the provider, gets a 403 and shows the labelled fallback, and live AI resumes by itself once the account
+  has credit. Recording and the real replay check wait for that (F07 follow-up 1); the mechanism is proven with
+  scripted rows in a scratch data directory, through the real UI ("Replayed AI" on the reel and the 18.6 card).
+- **Tests:** the E2E's local server is forced keyless (`SIDELINE_AI_PROVIDER=none`), so no test can spend money;
+  the 18.6 card's expected provenance follows the server (exactly "Fallback" or "Replayed AI" locally, by whether
+  a recording exists; what the AI mode allows on a deployed server).
+
+### D-068 — The AI proxy's name leaves the repository; `/api/health` reports the endpoint's kind; the owner's domain (2026-10-17, T7, Nabhanyu)
+- **Name:** the name of the OpenAI-compatible proxy behind today's key appears in no tracked file (code, tests,
+  docs, handoffs, `.env.example`); it is "the proxy". Its base URL lives only in `.env` and
+  `/etc/sideline/sideline.env`, still read as `OPENAI_BASE_URL`. `pnpm check:hardcode` gains a pass over every
+  tracked file that fails on the name in any case, with no opt-out (the word list is stored reversed, the tests
+  build it from parts). Git history keeps the old text: it is not rewritten (D-023); Task 10's push decides.
+- **Health:** `publicConfigSummary` (and so `/api/health`, the boot line, `ai:smoke`, `ai:record`) reports
+  `aiEndpoint`: `anthropic`, `openai` (api.openai.com) or `openai-compatible` for any other base URL, instead of
+  `aiEndpointHost`. A custom host is configuration, not something to publish.
+- **Domain:** `sideline.nabhanyubm.xyz` (an A record to the Elastic IP) is served next to the sslip.io name;
+  `install.sh --domain` changes or drops it. The domain is checked but never required: the sslip.io name must
+  answer, the domain only warns, and Caddy gets its certificate once the name resolves here.
+
+### D-069 — Tasks 8 and 9 in one session; Task 10 pushes to GitHub (2026-10-17, after T7, Nabhanyu)
+- **Decision:** the next fresh session implements Task 8 (AI skills II) and Task 9 (frontend II) together in one
+  pass on one branch, `task/08-09-skills-frontend`, then writes HANDOFF10 for Task 10: the final audit and the push
+  of the repository to GitHub (the first remote; until then nothing is pushed). The audit protocol is unchanged:
+  the auditor verifies before merging and tags `t08-verified` and `t09-verified` on the merge commit.
+- **Open for Task 10:** old commits contain the proxy's name (D-068); pushing them needs the owner's decision
+  (push as is, or a fresh history), recorded then.

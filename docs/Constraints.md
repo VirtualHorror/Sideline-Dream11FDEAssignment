@@ -72,7 +72,8 @@
 ## E. Process
 
 21. **Work on `task/NN-<slug>`**, branched from `main`. Never merge into `main`, never move or
-    delete tags, never rewrite history, never push. The auditor merges after verification.
+    delete tags, never rewrite history, never push. The auditor merges after verification. The one
+    push is Task 10's, to GitHub, with Nabhanyu (D-069).
 22. **Docs are part of "done".** Every task updates: its feature file, `docs/Flow.md`,
     `docs/Architecture.md` status, `docs/Decisions.md`, `docs/TEST_CHECKLIST.md` (new commands and
     expected outputs), `docs/ROLLBACK.md` (task row), `docs/Bug_Feature.md` (register rows).
@@ -81,3 +82,16 @@
     HANDOFF, and the HANDOFF must paste the actual summary lines, not a paraphrase.
 24. **Stay in scope.** Implement your task's checklist. Note ideas for later in the feature file
     under "Follow-ups" instead of building them.
+
+## F. Production (Task 7 on)
+
+25. **Production changes only through the deploy scripts.** `sudo deploy/install.sh` (Nabhanyu) writes
+    `/etc/caddy/Caddyfile`, `/etc/sideline/sideline.env` and the systemd unit; `deploy/update.sh <ref>`
+    moves the deploy checkout. Never edit those files or `/srv/sideline` by hand. Deploy audited refs
+    (`main` or a `tNN-verified` tag); a task branch only during its own audit.
+26. **No test spends money.** `pnpm test` uses the scripted provider and the E2E's local server is forced
+    keyless. `pnpm ai:smoke` and `pnpm ai:record --yes` run only with Nabhanyu's go-ahead
+    (`pnpm ai:record` without `--yes` only plans and sends nothing).
+27. **The AI proxy's name never appears in a tracked file** (D-068), in code, docs, handoffs or commit
+    messages: call it "the proxy". Its base URL lives only in `.env` and the production environment
+    file. `pnpm check:hardcode` fails on it.

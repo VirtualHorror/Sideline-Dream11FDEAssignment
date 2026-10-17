@@ -10,7 +10,8 @@
 ## 1. Server boot — BUILT (T1, T5)
 
 ```
-node apps/server/src/index.ts                       (`pnpm start`; `pnpm dev` adds --env-file-if-exists=.env)
+node apps/server/src/index.ts                       (`pnpm start`; `pnpm dev` adds --env-file-if-exists=.env;
+                                                      production: systemd in /srv/sideline, §14)
   └─ index.ts
        ├─ resolve repoRoot = apps/server/src/../../..           (import.meta.dirname)
        ├─ read version from <repoRoot>/package.json
@@ -63,7 +64,7 @@ request
             ├─ serveStatic(root = webDistDir)   (rejects "..", "//", "\" and any "%" in the path)
             └─ GET * (non-/api)      → index.html from memory (SPA fallback)
   thrown error anywhere → app.onError → console.error(err) + JSON 500 {error:{code:"internal"}}
-clientIp(c): the socket peer (getConnInfo); X-Forwarded-For only when the peer is loopback (Task 7's proxy)
+clientIp(c): the socket peer (getConnInfo); X-Forwarded-For only when the peer is loopback (Caddy, §14)
 ```
 
 ## 3. Web page load, theming and routes — BUILT (T1, T6)
@@ -404,3 +405,47 @@ POST /api/sessions/:id/ask {text, lens?}                                  http/r
   → moment {kind explainer, phase any, revealAt null, scope session} → deliver → {moment}
 ```
 
+
+## 14. Deploy, redeploy and the public request path — BUILT (T7)
+
+```
+sudo deploy/install.sh [--keyless] [--ref <ref>] [--domain <host>]       (once, by Nabhanyu; idempotent)
+  ├─ app user = owner of the repository; Node 24 from ~/.local/bin; site = IMDSv2 public IPv4 → <a-b-c-d>.sslip.io
+  ├─ 1 /srv/sideline (created root, owned by the developer) → as the developer: deploy/update.sh --no-restart <ref>
+  ├─ 2 Caddy: the official apt key and source (dl.cloudsmith.io), apt-get install caddy (once)
+  ├─ 3 /etc/caddy/Caddyfile ← Caddyfile.template (sslip.io name, domain, port 8780) → caddy validate → mv
+  ├─ 4 /etc/sideline/sideline.env (root 600) ← scripts/deploy-env.ts --env-file .env --port 8780 [--keyless]
+  │      Node's .env parser → only SERVER_ENV_NAMES → HOST/PORT/NODE_ENV forced → loadConfig → "NAME=\"value\""
+  ├─ 5 /etc/systemd/system/sideline.service ← sideline.service (user, paths, node, port) → systemd-analyze verify
+  ├─ 6 /etc/sudoers.d/sideline: <dev> may run /usr/bin/systemctl restart sideline (visudo -c first)
+  └─ 7 ufw only if filtering → daemon-reload → enable sideline caddy → restart sideline → reload-or-restart caddy
+       → health: http://127.0.0.1:8780/api/health (required), https://<sslip>/ (required), https://<domain>/ (warns)
+
+deploy/update.sh [ref]          (as the developer; default main; --dry-run, --no-restart, --dir)
+  ref → commit in this repository → /srv/sideline: refuse local edits → git fetch origin (branches, tags)
+  → checkout --detach <sha> → mkdir data/runtime → pnpm install --frozen-lockfile → pnpm build
+  → sudo -n systemctl restart sideline → health on the Caddyfile's port, then each site name
+
+browser ─HTTPS→ Caddy (:443; :80 → 308) ─→ 127.0.0.1:8780 Node (§2) in /srv/sideline
+  Caddy: X-Forwarded-For = the real client (a client's own X-Forwarded-* ignored); static files compressed;
+  /api/* (and the SSE stream) passed through as written, flushed at once
+  systemd: User=<dev>, EnvironmentFile=/etc/sideline/sideline.env, read-only system and home,
+  writes only /srv/sideline/data/runtime; Restart=on-failure; SIGTERM → §1 shutdown
+```
+
+## 15. Recording the replay cache — BUILT (T7)
+
+```
+pnpm ai:record [--yes] [--fresh] [--out <dir>] [--provider scripted]          scripts/ai-record.ts
+  ├─ loads .env → loadConfig → createProvider (none → exit 1: nothing to record with)
+  ├─ plan: recordMoments(provider null, rows already in <dir>)                     scripts/lib/record.ts
+  │    buildRuntime(in-memory DB, hand-moved clock, replayDir <dir>) → for every match × persona:
+  │      play: session at the join point (60 s delay, 1x) → tick 5 s → settle → … until the clock stops (D-063)
+  │      jumps: a fresh session → pause → jump to each RECORDED_JUMPS target → settle (a catch-up if ≥ 12 balls)
+  │    → ai_calls: keys that fell back with "no provider" = the calls to make; replay hits = already recorded
+  ├─ no --yes: print the plan, exit 0 (nothing sent)
+  └─ --yes: the same walk with the provider → the gateway (dedupe, cache, budget, timeout, zod, guard)
+       → replayable rows: live answers + earlier rows, one per key, still valid, recorded skills only
+       → <dir>/<matchId>.jsonl (sorted, written through a temporary file) → report calls, tokens, cost, missing
+server boot (§1): loadReplayRows(data/ai-replay) → ai_cache source 'replay' → answers any model, with no key
+```

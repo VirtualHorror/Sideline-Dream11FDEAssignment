@@ -17,7 +17,11 @@ cached by moment so the cost scales with the match, not with the number of fans.
 The demo replays **real ball-by-ball data** (Cricsheet) of India vs Pakistan at the 2022 T20 World
 Cup, with the 2024 final as a second match to prove nothing is hardcoded.
 
-> Status: Tasks 1-6 complete and audited: foundation; cricket core (Cricsheet timeline, match
+**Live:** <https://sideline.nabhanyubm.xyz/> (once the domain's DNS is published) and
+<https://3-108-67-100.sslip.io/> (always): one EC2 host, Caddy with automatic HTTPS, the server under
+systemd (`deploy/README.md`).
+
+> Status: Tasks 1-7 complete and audited (Milestone A: the public link): foundation; cricket core (Cricsheet timeline, match
 > reducer, fantasy scoring, engine report); models (win probability, leverage and player priors
 > trained on 3,093 real men's T20Is, rebuilt byte for byte by one script); the moments engine (TV
 > clock and delay buffer, the four phase detectors, the entropy gate that keeps 233 of 266 events
@@ -28,8 +32,10 @@ Cup, with the 2024 final as a second match to prove nothing is hardcoded.
 > page with a ghost-text wordmark and a persona picker, a match room folded on the fan's own delayed TV
 > clock (big balls held under a dither veil until the fan's stream shows them, then revealed with a
 > floodlight outburst; catch-up reels; questions; a simulated watch-along chat), a control plane that
-> shows every decision and what it cost, and `/architecture`. See `docs/PLAN.md` for the build
-> sequence and status.
+> shows every decision and what it cost, and `/architecture`; and the deployment: Caddy and a
+> sandboxed systemd unit on this host, one-command install and redeploy, a replay recorder for keyless
+> demos, and the browser tests run against the live site. See `docs/PLAN.md` for the build sequence
+> and status.
 
 ## Quick start
 
@@ -41,7 +47,7 @@ pnpm verify          # typecheck, lint, unit tests, anti-hardcoding scan, data g
 pnpm test:e2e        # Playwright on system Chrome, desktop + 390 px mobile
 pnpm dev             # web on http://127.0.0.1:5173 (proxies /api to the server on :8787)
 SIDELINE_AI_PROVIDER=none pnpm dev   # the same without calling the AI provider in .env
-pnpm build && pnpm start   # production: server on :8787 serving apps/web/dist
+pnpm build && pnpm start   # the production build on :8787 (the deployed server uses :8780, below)
 
 # scorecard + fantasy points for a match, straight from the engine (--json for the oracle format)
 node scripts/engine-report.ts data/raw/cricsheet/1298150.json \
@@ -52,6 +58,15 @@ node scripts/build-models.ts            # or --zip <saved t20s_male_json.zip> fo
 
 # one real teaser call through the AI gateway with the provider in .env (spends a few thousand tokens)
 pnpm ai:smoke
+
+# the replay cache for keyless demos: the plan (sends nothing), then the recording (spends money)
+pnpm ai:record
+pnpm ai:record --yes
+
+# deploy on this EC2 host (deploy/README.md): once with sudo, then redeploys and rollbacks without
+deploy/install.sh --dry-run && sudo deploy/install.sh
+deploy/update.sh                      # main; or a tag such as t07-verified to roll back
+PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e   # the browser tests, live
 ```
 
 The API (Task 5): `GET /api/matches`, `POST /api/sessions`, `GET /api/sessions/:id/stream` (SSE),
@@ -61,8 +76,8 @@ The API (Task 5): `GET /api/matches`, `POST /api/sessions`, `GET /api/sessions/:
 Optional AI configuration: copy `.env.example` to `.env` and add an Anthropic key or an
 OpenAI-compatible key (+ `OPENAI_BASE_URL` and model names for non-OpenAI endpoints). The provider
 defaults to whichever key is present. Without a key Sideline runs on deterministic logic, and every
-AI card falls back to a labelled template built from the same facts (recorded AI output joins in
-Task 7).
+AI card falls back to a labelled template built from the same facts, or replays recorded AI output
+(`pnpm ai:record`, `data/ai-replay/`).
 
 For the demo round, `/architecture` presents this architecture, the live build plan and every
 decision inside the app, rendered at build time from the same docs in this repository. Open
