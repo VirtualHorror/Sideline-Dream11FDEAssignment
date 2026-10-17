@@ -11,25 +11,32 @@
  * wicket, the over's last ball); an answer to the fan shows at once.
  */
 import { randomUUID } from "node:crypto";
+import type { DatabaseSync } from "node:sqlite";
 import {
   type CatchUpFacts,
   catchUpKey,
+  type InspectorRequest,
+  type InspectorResult,
   type Lens,
   type LineupFacts,
   type Moment,
   MomentSchema,
   type MomentTrigger,
+  type Situation,
 } from "@sideline/engine";
 import type { Gateway } from "../ai/gateway.ts";
 import { bailoutSkill, bailoutSkillFacts } from "../ai/skills/bailout.ts";
 import { catchUpSkill, catchUpSkillFacts } from "../ai/skills/catchUp.ts";
 import { type ExplainerContext, explain, explainerKey } from "../ai/skills/explainer.ts";
 import type { TeamName } from "../ai/skills/format.ts";
+import { inspect } from "../ai/skills/inspector.ts";
 import { lineupSkill } from "../ai/skills/lineupPatch.ts";
 import { roomReadSkill } from "../ai/skills/roomRead.ts";
 import { teaserSkill } from "../ai/skills/spoilerNudge.ts";
+import { runStatBack, statBackKey } from "../ai/skills/statBack.ts";
 import type { MatchBundle } from "../data/bundle.ts";
 import type { Glossary } from "../data/glossary.ts";
+import { inspectorTables, statBackTables } from "../sql/views.ts";
 import type { Telemetry } from "../telemetry/collector.ts";
 
 /** A teaser may show this long before its ball on the fan's TV (nudgeAt = ball − 6 s). */
@@ -64,6 +71,24 @@ export interface Orchestrator {
     createdAt: number;
     revealAt: number | null;
   }): Promise<Moment>;
+  /** A fan's take checked against the deliveries their TV has shown: a personal take card. */
+  statBack(input: {
+    sessionId: string;
+    matchId: string;
+    take: string;
+    /** The fan's TV time and the last event it has shown (-1 before coverage starts). */
+    tvT: number;
+    tvSeq: number;
+    situation: Situation | null;
+    at: number;
+  }): Promise<Moment>;
+  /** The control plane's inspector, over the views at the fan's TV time (not a moment). */
+  inspect(input: {
+    sessionId: string;
+    matchId: string;
+    tvT: number;
+    request: InspectorRequest;
+  }): Promise<InspectorResult>;
   ask(input: {
     sessionId: string;
     matchId: string;
@@ -82,11 +107,18 @@ export function createOrchestrator(deps: {
   glossary: Glossary;
   telemetry: Telemetry;
   bundles: ReadonlyMap<string, MatchBundle>;
+  /** The server's database: the inspector's ai_calls view is read from it. */
+  db: DatabaseSync;
   newId?: () => string;
 }): Orchestrator {
   const newId = deps.newId ?? randomUUID;
   const teamsOf = (matchId: string): TeamName[] =>
     (deps.bundles.get(matchId)?.context.teams ?? []).map((t) => ({ code: t.code, name: t.name }));
+  const bundleOf = (matchId: string): MatchBundle => {
+    const bundle = deps.bundles.get(matchId);
+    if (!bundle) throw new Error(`no bundle for match ${matchId}`);
+    return bundle;
+  };
 
   return {
     async teaser({ sessionId, trigger, ballT, budgetMs, tvNow }) {
@@ -219,6 +251,40 @@ export function createOrchestrator(deps: {
         scope: "session",
         payload: result.payload,
       });
+    },
+
+    async statBack({ sessionId, matchId, take, tvT, tvSeq, situation, at }) {
+      const key = statBackKey(matchId, tvSeq, take);
+      deps.telemetry.recordKey(sessionId, key, "session");
+      const result = await runStatBack({
+        gateway: deps.gateway,
+        key,
+        take,
+        tables: statBackTables(bundleOf(matchId), tvT),
+        teams: teamsOf(matchId),
+        situation,
+        sessionId,
+      });
+      return MomentSchema.parse({
+        id: newId(),
+        key,
+        kind: "take_card",
+        phase: "any",
+        createdAt: at,
+        revealAt: null,
+        nudgeAt: null,
+        provenance: result.provenance,
+        traceId: result.trace.id,
+        scope: "session",
+        payload: result.payload,
+      });
+    },
+
+    async inspect({ sessionId, matchId, tvT, request }) {
+      const tables = inspectorTables(bundleOf(matchId), tvT, deps.db);
+      return "question" in request
+        ? inspect({ gateway: deps.gateway, tables, sessionId, question: request.question })
+        : inspect({ gateway: deps.gateway, tables, sessionId, sql: request.sql });
     },
 
     async ask({ sessionId, matchId, question, lens, tvSeq, context, at }) {

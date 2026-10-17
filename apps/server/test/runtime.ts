@@ -106,9 +106,18 @@ export function legalRoomAnswer(user: string) {
   };
 }
 
+/** The default script's query for stat-back and the inspector: what the views hold so far. */
+export const DELIVERIES_SQL =
+  "SELECT count(*) AS deliveries, max(seq) AS last FROM visible_deliveries";
+
 /** A valid answer for every skill, so the happy path is the default. */
 export const validScript: Script = (req) => {
   if (req.skill === "room_read") return legalRoomAnswer(req.user);
+  if (req.skill === "stat_back_query") return { sql: DELIVERIES_SQL, checks: "Deliveries so far." };
+  if (req.skill === "inspector") return { sql: DELIVERIES_SQL, explanation: "Deliveries so far." };
+  if (req.skill === "stat_back") {
+    return { verdict: "unclear", statLine: "Scripted verdict.", confidence: "low" };
+  }
   if (req.skill === "lineup_patch") return legalLineupAnswer(req.user);
   if (req.skill === "bailout") return legalBailoutAnswer(req.user);
   if (req.skill === "spoiler_nudge") return { nudge: "Everything rides on the next delivery." };
@@ -152,7 +161,7 @@ export function testRuntime(
     now: clock.now,
   });
   const glossary = loadGlossary(DATA_DIR);
-  const orchestrator = createOrchestrator({ gateway, glossary, telemetry, bundles: all });
+  const orchestrator = createOrchestrator({ gateway, glossary, telemetry, bundles: all, db });
   const manager = createSessionManager({
     bundles: all,
     orchestrator,

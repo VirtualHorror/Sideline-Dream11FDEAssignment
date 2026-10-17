@@ -80,7 +80,7 @@ export function buildRuntime(
     // A restart keeps what the provider last said: a failing key stays in replay mode (D-071).
     providerAnswering: traces.lastProviderAnswer(),
   });
-  const orchestrator = createOrchestrator({ gateway, glossary, telemetry, bundles });
+  const orchestrator = createOrchestrator({ gateway, glossary, telemetry, bundles, db });
   const manager = createSessionManager({
     bundles,
     orchestrator,
