@@ -77,7 +77,7 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 2 | Cricket core: timeline, reducer, fantasy scoring, engine report | Codex | `task/02-cricket-core` | ✅ done, tagged `t02-verified` |
 | 3 | Models: T20I archive pipeline, win probability, leverage, player priors | Claude (Codex unavailable) | `task/03-models` | ✅ done, tagged `t03-verified` |
 | 4 | Moments engine: clock, delay buffer, detectors, gate, quests, crowd, commentary | Claude (Codex unavailable) | `task/04-moments-engine` | ✅ done, tagged `t04-verified` |
-| 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Codex | `task/05-server-ai` | ⬜ |
+| 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Claude (Codex unavailable) | `task/05-server-ai` | ✅ done, tagged `t05-verified` |
 | 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Codex | `task/06-frontend-core` | ⬜ |
 | 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Codex + Nabhanyu | `task/07-deploy` | ⬜ |
 | 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | Codex | `task/08-ai-skills-2` | ⬜ |
@@ -470,6 +470,8 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
 - Sessions: one global ticker (100 ms) for all sessions; idle TTL 30 min; max 300 sessions; seek and
   jump refold state and send a fresh `snapshot`; crowd chat is generated per session with seed
   `<sessionId>`; `delay` changes do not refold (client-side buffer).
+  *Amended 2026-10-16 by D-050 (Nabhanyu, before T5): one crowd per match, seeded with the match id
+  and shared by every session, so the per-over room-read key cites messages every fan has.*
 - SQLite (`node:sqlite`, `data/runtime/sideline.db`): tables `ai_cache(key, prompt_version, model,
   payload_json, source, created_at, hits, PRIMARY KEY(key, prompt_version, model))`,
   `ai_calls(... AICallTrace columns ...)`, `deliveries(match_id, seq, innings, label, batter_id,
@@ -478,20 +480,30 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
   rebuilt at boot from the bundles.
 
 **Steps** (failing test → implement → pass for each; use the scripted provider and an injected clock)
-- [ ] **5.0** `config.test.ts` (extend): `OPENAI_API_KEY` + `OPENAI_BASE_URL` + both model vars → provider `openai` with that base URL; provider `openai` without `SIDELINE_MODEL_FAST/SMART` → throws naming the variable; both keys present → `anthropic` unless `SIDELINE_AI_PROVIDER=openai`; `publicConfigSummary` exposes `aiEndpointHost` (e.g. `api.proxy.pro`) and never a key.
-- [ ] **5.1** `bundle.test.ts`: both bundles load and validate; events equal `buildTimeline` output.
-- [ ] **5.2** `sessions.test.ts`: create a session for `late-from-work` → initial stadium time is the join point (after 14 overs of the chase) and the snapshot has every event ≤ it; advancing the fake clock at 8x releases the next events in order; `jump` backwards then forwards gives a snapshot equal to a fresh fold (Review focus 1); idle sessions are evicted after TTL.
-- [ ] **5.3** `stream.test.ts`: SSE output parses as `StreamMessage`s in order (`hello`, `snapshot`, …), with `id:` = seq; no API key or secret appears anywhere in the stream.
-- [ ] **5.4** `gateway.test.ts`: cache hit makes no provider call; two concurrent runs for one key make one provider call; timeout, refusal, schema-invalid output, guard failure, missing provider and exhausted budget each return the fallback payload with provenance `fallback`, a matching trace `outcome`, and counters updated (Review focus 2).
-- [ ] **5.5** `skills.test.ts`: the catch-up prompt for `late-from-work` contains `90/4`, `70` and `36` (facts reach the model); `spoilerLint` table test: **allowed** "Six balls, 16 to find, and a set batter facing the final over.", "Who comes out on top?", "Everything rides on the next delivery."; **rejected** "Kohli hits a six", "SIX!", "He's out!", "That's bowled him", "Caught at long-on", "India win it", "A wicket falls"; a rejected teaser falls back with provenance `fallback`; a catch-up slide citing an id outside the window fails the guard; "what is a free hit?" is answered from the glossary with zero provider calls; a prompt-injection question is wrapped in `<fan_question>` and the system prompt says to treat it as data.
-- [ ] **5.6** `orchestrator.test.ts`: two sessions on 1298150 reach innings-2 `18.6` (amended by D-043: `18.5` is below the nudge threshold): the first triggers a live call, the second gets provenance `cache` and the scripted provider call count stays 1 (thesis 1); a slow scripted call at 32x speed results in `nudgeAt: null` and `usedMs > budgetMs` in the trace (Review focus 3).
-- [ ] **5.7** `routes.test.ts`: `/api/matches`; session create/control validation (bad speed → 400); `/ask` with 281 characters → 400; 13 asks in a minute from one IP → 429; unknown session → 404 JSON (Review focus 5).
-- [ ] **5.8** `telemetry.test.ts`: after a full scripted replay, counters equal the gate's counters plus the gateway's; `projection.formula` contains the substituted numbers; `savedPct > 99` at 10 000 000 viewers.
-- [ ] **5.9** `scripts/ai-smoke.ts` (`pnpm ai:smoke`, loads `.env`): when a key is configured, one real teaser call through the gateway returns a schema-valid output that passes `spoilerLint`, and prints provider, endpoint host, model, latency, tokens and estimated cost; without a key it prints "skipped". Not part of `pnpm test`. With today's `.env` this exercises the proxy endpoint (costs a few thousand tokens).
-- [ ] **5.10** `pnpm verify` green; docs (F05, Flow §7-8 → BUILT, Architecture, Decisions incl. SDK versions, `.env.example`, TEST_CHECKLIST, ROLLBACK).
+- [x] **5.0** `config.test.ts` (extend): `OPENAI_API_KEY` + `OPENAI_BASE_URL` + both model vars → provider `openai` with that base URL; provider `openai` without `SIDELINE_MODEL_FAST/SMART` → throws naming the variable; both keys present → `anthropic` unless `SIDELINE_AI_PROVIDER=openai`; `publicConfigSummary` exposes `aiEndpointHost` (e.g. `api.proxy.pro`) and never a key.
+- [x] **5.1** `bundle.test.ts`: both bundles load and validate; events equal `buildTimeline` output.
+- [x] **5.2** `sessions.test.ts`: create a session for `late-from-work` → initial stadium time is the join point (after 14 overs of the chase) and the snapshot has every event ≤ it; advancing the fake clock at 8x releases the next events in order; `jump` backwards then forwards gives a snapshot equal to a fresh fold (Review focus 1); idle sessions are evicted after TTL.
+- [x] **5.3** `stream.test.ts`: SSE output parses as `StreamMessage`s in order (`hello`, `snapshot`, …), with `id:` = seq; no API key or secret appears anywhere in the stream.
+- [x] **5.4** `gateway.test.ts`: cache hit makes no provider call; two concurrent runs for one key make one provider call; timeout, refusal, schema-invalid output, guard failure, missing provider and exhausted budget each return the fallback payload with provenance `fallback`, a matching trace `outcome`, and counters updated (Review focus 2).
+- [x] **5.5** `skills.test.ts`: the catch-up prompt for `late-from-work` contains `90/4`, `70` and `36` (facts reach the model); `spoilerLint` table test: **allowed** "Six balls, 16 to find, and a set batter facing the final over.", "Who comes out on top?", "Everything rides on the next delivery."; **rejected** "Kohli hits a six", "SIX!", "He's out!", "That's bowled him", "Caught at long-on", "India win it", "A wicket falls"; a rejected teaser falls back with provenance `fallback`; a catch-up slide citing an id outside the window fails the guard; "what is a free hit?" is answered from the glossary with zero provider calls; a prompt-injection question is wrapped in `<fan_question>` and the system prompt says to treat it as data.
+- [x] **5.6** `orchestrator.test.ts`: two sessions on 1298150 reach innings-2 `18.6` (amended by D-043: `18.5` is below the nudge threshold): the first triggers a live call, the second gets provenance `cache` and the scripted provider call count stays 1 (thesis 1); a slow scripted call at 32x speed results in `nudgeAt: null` and `usedMs > budgetMs` in the trace (Review focus 3).
+- [x] **5.7** `routes.test.ts`: `/api/matches`; session create/control validation (bad speed → 400); `/ask` with 281 characters → 400; 13 asks in a minute from one IP → 429; unknown session → 404 JSON (Review focus 5).
+- [x] **5.8** `telemetry.test.ts`: after a full scripted replay, counters equal the gate's counters plus the gateway's; `projection.formula` contains the substituted numbers; `savedPct > 99` at 10 000 000 viewers.
+- [x] **5.9** `scripts/ai-smoke.ts` (`pnpm ai:smoke`, loads `.env`): when a key is configured, one real teaser call through the gateway returns a schema-valid output that passes `spoilerLint`, and prints provider, endpoint host, model, latency, tokens and estimated cost; without a key it prints "skipped". Not part of `pnpm test`. With today's `.env` this exercises the proxy endpoint (costs a few thousand tokens).
+- [x] **5.10** `pnpm verify` green; docs (F05, Flow §7-8 → BUILT, Architecture, Decisions incl. SDK versions, `.env.example`, TEST_CHECKLIST, ROLLBACK).
 
 **Audit hooks:** run the server and watch a full session with `curl -N`; run `pnpm ai:smoke` with a key
 if Nabhanyu has provided one; read every prompt for match-specific wording; test the budget cut-off.
+
+**Audit result (2026-10-17, Claude): accepted, `t05-verified`.** Implemented by Claude because Codex
+was unavailable, so this is a self-audit, after an independent spot-check of `t04-verified` in the same
+fresh session (two Task 4 test gaps pinned, D-051). 492 tests; `mutate.py` 18/18; 53 of 54 hand mutants
+of the new code killed (the survivor is equivalent); whole sessions over a holdout match (1298158) match
+an independent gate replay. Owner decisions: one crowd per match (D-050) and outcomes never in teaser
+prompts (D-055: the model writes the teaser, code writes the reveal). Beyond the PLAN's files:
+`runtime.ts`, `data/glossary.ts`, `providers/types.ts`, `skills/format.ts`, per-route files, and the
+engine's `situationOf` export. `pnpm ai:smoke` ran once with approval: the proxy account is out of
+credit (403), so it is to be repeated when topped up. Follow-ups: F05.
 
 ---
 

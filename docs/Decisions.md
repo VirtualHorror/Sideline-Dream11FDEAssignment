@@ -455,6 +455,7 @@
 - **Open for Task 5:** the PLAN seeds each session's crowd with the session id, but room keys are
   shared per match and over; a cached room read would cite another session's message ids. Recommended:
   seed the crowd per match (every fan sees the same synthetic room, as in a real watch-along).
+- **Update:** resolved by D-050 (Nabhanyu, before T5): one crowd per match, seeded with the match id.
 
 ### D-048 — Quest rules settle from deliveries, as early as the outcome is certain (2026-10-16, T4, Claude)
 - **Decision:** positions are 1-based legal balls; a wide or no-ball belongs to the legal ball still
@@ -479,3 +480,179 @@
   over; with no complete missed over yet, the previous innings' missed overs are the window.
 - Room reads: five-minute window, up to 60 messages deduplicated by text (latest kept); an innings
   that ends mid-over in the death overs closes that over's read.
+
+### D-050 — One synthetic crowd per match, seeded with the match id (2026-10-16, before T5, Nabhanyu)
+- **Context:** D-047's open question. PLAN Task 5 seeded each session's crowd with the session id,
+  but room-read keys are shared per match and over (`room:<match>:<innings>:<over>`, D-015), so a
+  cached room read (Task 8) would cite message ids and quote lines that other fans never saw.
+- **Decision:** Nabhanyu approved the recommendation: one crowd per match, `simulateCrowd({ …,
+  seed: matchId })`, computed once per match and shared by every session. Every fan in a match sees
+  the same synthetic watch-along room, as in a real watch-along, and the per-over room-read cache key
+  is honest: the messages it cites exist in every fan's chat. The PLAN's sessions rule carries an
+  amendment note; D-047's open question is closed.
+- **Consequences:** a seek or jump re-reads the same crowd (it is prefix-stable per seed, D-047);
+  the crowd costs one simulation per match instead of one per session. Fans' own messages (Task 9)
+  stay per session and never enter shared prompts (Constraint 11).
+- **Alternatives:** per-session seeds (the room read would need a per-session key, so one model call
+  per fan per over, against thesis 1); a seed per room window (rooms would disagree across windows).
+
+### D-051 — Spot-check of `t04-verified`: accepted, two test gaps pinned in Task 5 (2026-10-16, before T5, Claude)
+- **Context:** Task 4 was implemented and audited by the same agent; Nabhanyu asked for an independent
+  check in a fresh session before Task 5 (F05 log). Verify, E2E, the oracle diff, `mutate.py`, a Python
+  re-derivation of the teaser counts and catch-up facts, and two never-examined holdout matches all
+  agree with the Task 4 record. 16 of 18 fresh hand mutants were killed.
+- **Decision:** the two survivors are test gaps, not defects, so `t04-verified` stands and the gaps are
+  closed with tests on the Task 5 branch (no engine source change): nine minutes of chat history are
+  not enough for a spike (pins the ten-minute minimum of D-047), and an at-most dots quest settles as
+  won on the ball that makes it certain (pins D-048's "as early as certain" at its boundary). Each new
+  test fails on its mutant and passes on the merged code.
+
+### D-052 — The provider SDKs: `@anthropic-ai/sdk` 0.131.0 and `openai` 7.27.0 (2026-10-16, T5, Claude)
+- **Context:** PLAN Task 5 adds both providers (D-014, D-033). pnpm's `minimumReleaseAge` (D-007)
+  allows only versions published at least 14 days ago (on or before 2026-10-02).
+- **Decision:** `@anthropic-ai/sdk` **0.131.0** (published 2026-09-30) and `openai` **7.27.0**
+  (published 2026-10-01), exact pins in `apps/server/package.json`, the newest versions old enough.
+  New transitive packages: `json-schema-to-ts` 3.1.1, `ts-algebra` 2.0.0, `standardwebhooks` 1.1.1,
+  `@stablelib/base64` 1.0.1, `fast-sha256` 1.3.0 (Anthropic SDK); `openai` takes the existing
+  `undici` and `zod` as optional peers. No install scripts, no native code.
+- **Why these SDKs:** typed requests and errors (`Anthropic.RateLimitError`, `APIUserAbortError`, …,
+  never message matching), `AbortSignal` support, and the types for the features the PLAN names:
+  0.131.0 types `output_config: { effort, format: { type: "json_schema" } }`, `stop_reason:
+  "refusal"`, and on `client.beta.messages` the `fallbacks: "default"` parameter with the
+  `server-side-fallback-2026-07-01` beta; 7.27.0 types the Responses API's strict `json_schema`
+  text format, `output_text` and `usage.input_tokens/output_tokens`.
+- **Alternatives:** raw `fetch` against both HTTP APIs (we would re-implement retries, error classes
+  and types); the Anthropic SDK's `zodOutputFormat` helper and `messages.parse()` (provider-specific;
+  the gateway already converts zod 4 with `z.toJSONSchema()` and re-validates, so both providers share
+  one path); Vercel's AI SDK or LangChain (a large abstraction over two calls, and more supply chain).
+
+### D-053 — `AICallTrace` gains `costEstimated` and `detail` (2026-10-16, T5, Claude)
+- **Context:** PLAN Task 5 says a model without a built-in price has its cost "flagged `estimated` in
+  traces and shown as 'est.' in the UI", but `AICallTraceSchema` had no such field. And the PLAN asks
+  each failure path (timeout, refusal, invalid output, guard, no provider, budget) for "a matching
+  trace outcome" from a fixed enum of seven, where an invalid output and a network error both read
+  `error`, and a guard rejection and a missing provider both read `fallback`: the control plane could
+  not say why a card is a fallback.
+- **Decision (Constraint 8):** two required fields, added rather than changing any: `costEstimated:
+  boolean` and `detail: string | null` (at most 300 characters; null for a clean result). Outcomes
+  stay as the enum defines them; `detail` carries the specifics ("no answer within 9000 ms",
+  "invalid output: …", "guard: …", "no provider configured", "daily budget of $3.00 spent"). No
+  trace had been produced before Task 5, so nothing else changes. Contract tests pin both fields.
+- **Alternatives:** keep the reason only in SQLite (the control plane could not show it); new outcome
+  values (a breaking change to an enum the UI will switch on).
+
+### D-054 — The AI gateway and providers as built (2026-10-17, T5, Claude)
+- **Order (PLAN Task 5):** in-flight dedupe by prompt version and key → cache → budget → provider call
+  (an `AbortController` at the skill's timeout, and the call raced against it, so a provider that
+  ignores its signal cannot hang a run) → zod → the skill's guard → cache write. Every run writes one
+  `ai_calls` row and updates the counters; a run that joined another's in-flight call writes its own
+  trace (`cache: hit` when the shared result was usable, tokens and cost 0).
+- **One validation point:** providers return parsed JSON and the reported usage, and the gateway
+  validates with the skill's zod schema (the PLAN's `complete<T>` returned a typed `T`, which would
+  have put validation in every provider and in none of the tests of the gateway). The request carries
+  `meta: { skill, key }` for logs and the scripted provider; real providers never send it.
+- **What providers see:** `z.toJSONSchema()` of the skill's schema without `$schema`, length, count,
+  range and pattern keywords (strict structured-output modes reject several); zod enforces every
+  limit on the answer and the prompts state the limits in words.
+- **Outcomes:** timeout → `timeout`; refusal → `refused`; non-JSON, truncated or schema-invalid →
+  `error`; guard rejection → `fallback`; no provider → `fallback` with provider `none`; budget →
+  `budget`; any other provider error → `error` with the error class, the HTTP status and the body's
+  machine-readable error code, never the provider's message (`provider error: InternalServerError
+  (503, service_unavailable)`: an outage or an exhausted account reads from the trace alone). `detail`
+  says which (D-053). Fallbacks are never cached.
+- **Cache:** rows hold the validated *output*, keyed by key, prompt version and model; a live row
+  answers only for the configured model; recorded replay rows (Task 7) answer for any model and with
+  no key; a live row wins over a replay row.
+- **Budget:** daily spend starts from today's `ai_calls` rows (UTC), so a restart keeps it; the cap is
+  checked before a call, so the day's last call may overshoot by one call. A session's cap counts the
+  provider calls it started. Costs use reported usage; a call cut off by the timeout has none to
+  report and is recorded at 0 (it may still be billed).
+- **Pricing:** the PLAN's three models plus `claude-opus-5` and `claude-opus-4-8` (5/25), the targets
+  Anthropic's server-side fallback can serve a claude-opus-5-5 request with; any other model uses the
+  configured prices and is flagged `costEstimated`.
+- **Anthropic:** `client.beta.messages.create` with `output_config: { effort, format: json_schema }`,
+  `betas: ["server-side-fallback-2026-07-01"]`, `fallbacks: "default"` (the installed SDK types accept
+  both, so the PLAN's condition holds); no `thinking`, `budget_tokens` or `tool_choice`;
+  `stop_reason` checked before content; the served model reported. **OpenAI-compatible:** the
+  Responses API with a strict `json_schema` format named after the skill, `output_text`, no
+  `reasoning`. Both: `maxRetries: 0` (the gateway owns timeouts; a failed moment is retried by the
+  next fan's request), explicit base URLs so no stray `*_BASE_URL` variable redirects them.
+- **Alternatives:** validation inside providers; caching payloads instead of outputs (a payload change
+  would invalidate recorded rows); SDK retries (a retry inside a teaser's budget is usually too late).
+
+### D-055 — Teasers: the model writes only the teaser; the reveal is the scorecard (2026-10-17, T5, Nabhanyu + Claude)
+- **Context:** PLAN Task 5 gives the teaser skill an output of `{ nudge, reveal }`, but the reveal
+  states what happened, and Nabhanyu's instruction for this task is that outcomes are never passed to
+  teaser prompts (also D-045, D-046 and F04 follow-up 2).
+- **Decision:** the model's output is `{ nudge }` and sees only the ball's label, the pre-ball
+  situation, the batters and bowler, the free hit, team names and the pre-ball win chance (an
+  allow-list a test pins on every teaser of both matches). The payload's `reveal` is built by code
+  from `NudgeFacts.outcome`: the commentary line and where the innings stands after the ball. The model
+  cannot spoil what it was not told, the reveal cannot hallucinate a result, and `spoilerLint`
+  (outcome phrases, "decides it"-style phrasing, the score after the ball, the striker's possible runs
+  after it and the runs still needed after it, each only when it is not also a pre-ball number) checks
+  the teaser anyway.
+- **Timing:** `nudgeAt = ball − 6 s`, `revealAt = ball`. The budget is the wall time until the fan's TV
+  reaches the nudge: `(ball − 6 s + delay − stadium now) / speed`, at least 0, recorded on the trace and
+  the payload. The call's timeout is `min(15 s, max(budget − 1 s, 9 s))`: the PLAN's
+  `min(15000, budgetMs − 1000)` goes negative at high speed, and a call cut short is wasted for
+  everyone, while a late answer still serves the next fans from the cache. If the answer is ready
+  only after the fan's TV passed the nudge time, the moment goes out with `nudgeAt: null` (Review
+  focus 3) and the trace shows `latencyMs > budgetMs`.
+- **Alternatives:** a second, post-ball call for the reveal (one more call per big ball); passing the
+  outcome and trusting the linter (the owner ruled it out).
+
+### D-056 — Sessions, catch-ups and moments as built (2026-10-17, T5, Claude)
+- A session starts at its persona's join point (`joinSeq`, D-049), playing at 1x with the persona's
+  delay and lens unless the request overrides them; the events before it are folded without the gate.
+  Each tick folds the events the stadium clock reached through the session's own gate (D-045) with the
+  match's shared crowd (D-050); only teaser triggers reach the orchestrator until Task 8.
+- Seek and jump refold from the timeline and send a snapshot. Skipped events never pass the gate (the
+  fan did not watch them); a jump that skips at least 12 legal balls the fan never saw starts a
+  catch-up for them (the furthest point seen is remembered, so re-watching earns none). Produced
+  moments are kept and sent only once the clock is past their time: a jump back hides them, a jump
+  forward brings them back once, and the gate's remembered keys make re-watching free.
+- A catch-up reel reveals when the fan's TV reaches the point they joined at (`revealAt = createdAt =`
+  the join time), because its window ends at the stadium's join point and the last balls are still in
+  the fan's delay; the PLAN's literal key (`catchup:1298150:2:0-14:casual`) is kept.
+- The clock stops at the end of the match and its crowd. A session whose tick throws is stopped alone
+  and every stream, including a reconnecting one, is told (`error: session_failed`). Idle means no open
+  stream and no request for the TTL; at the cap the least recently active idle session makes room,
+  else creation answers 503.
+- Telemetry: every gate result and trace is counted per session and globally (an evicted session's
+  numbers stay global). The projection counts shared keys once and personal ones (a lineup patch keyed
+  by squad, a fan's model-answered question) per viewer at the observed rate: the conservative
+  reading. Its formula shows enough decimals never to round a saving below 100% up to "100.0000%".
+
+### D-057 — The explainer: glossary first, the fan's TV as the facts (2026-10-17, T5, Claude)
+- `data/glossary.json` (46 authored terms, DOMAIN's definitions, optional analogies per lens) answers
+  any question that just names a term, after trimming filler words ("what's a …", "explain the …"),
+  as a `deterministic` moment with no model call.
+- Anything else goes to the model with facts folded to the fan's **TV time** (never the stadium's head
+  start, so a question cannot spoil a ball still in the delay): teams, the situation on screen and the
+  last six commentary lines, plus the definition of a glossary term the question mentions. The key is
+  `explain:<match>:<seq on TV>:<lens>:<hash of the question>`, so everything in the prompt is in the
+  key (Constraint 11). The question sits inside `<fan_question>` with `&`, `<` and `>` escaped, and the
+  system prompt says to treat it as data. The fallback (provenance `fallback`) is the mentioned term's
+  definition, else where the match stands on the fan's screen; its `source` stays `ai` (the path), and
+  provenance says it is not model text.
+- **Residual risk:** a model that recognises a famous match may know its result; every prompt tells it
+  to use only the facts, and the teaser linter rejects outcome statements, but the explainer has no
+  outcome linter (its legitimate answers use words like "win").
+
+### D-058 — Smaller Task 5 choices (2026-10-17, T5, Claude)
+- **Config:** the model variables are shared by both providers, so a non-Claude name with the Anthropic
+  provider fails the boot (today's `.env` names gpt-6.1-sol; adding an Anthropic key must not send that
+  to Anthropic). Two existing config tests gained the model names the OpenAI provider now requires;
+  their assertions did not change.
+- **HTTP:** JSON bodies are read with a 16 KB cap enforced while reading (413), so a 10,000-character
+  question is refused by its schema (400) as Review focus 5 expects. Questions are rate-limited per
+  address before anything else (token bucket, 12 a minute, burst 4, `Retry-After`); X-Forwarded-For is
+  trusted only from a loopback peer (the reverse proxy of Task 7). Errors keep the one
+  `{ error: { code, message } }` shape. `GET /api/matches` returns personas' id, label, blurb, lens and
+  delay only. `GET /api/telemetry` defaults to the global scope and 10,000,000 viewers.
+- **Bundles:** loaded from the manifest, every persona's join point checked at boot; the match's crowd
+  is simulated once per match.
+- **Engine:** `situationOf` is exported (the explainer's facts); no contract changed except D-053.
+- **Smoke:** `pnpm ai:smoke` uses an in-memory database, so its call never lands in the app's traces or
+  daily budget.

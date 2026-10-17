@@ -14,12 +14,12 @@
 
 ## 1. Every change, every task (must all pass)
 
-| # | Command | Expected (baseline after Task 4) |
+| # | Command | Expected (baseline after Task 5) |
 | --- | --- | --- |
 | 1 | `pnpm typecheck` | `packages/engine typecheck: Done`, `apps/server typecheck: Done`, `apps/web typecheck: Done`, then no output from root `tsc`; exit 0 |
 | 2 | `pnpm lint` | `Checked N files in …ms. No fixes applied.` and no `×` or `!` diagnostics; exit 0 |
-| 3 | `pnpm test` | `Test Files  25 passed (25)` and `Tests  337 passed (337)`; no failed, no skipped |
-| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (51 source files, 209 terms)` (counts grow with code/data) |
+| 3 | `pnpm test` | `Test Files  37 passed (37)` and `Tests  492 passed (492)`; no failed, no skipped |
+| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (86 source files, 209 terms)` (counts grow with code/data) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
 | 7 | `pnpm test:e2e` (any UI-visible change) | `8 passed` (desktop + mobile) |
@@ -27,6 +27,8 @@
 | 9 | `git status --short` | only files the task intended to change |
 | 10 | `node scripts/engine-report.ts <raw.json> --players <players.json> --rules <rules.json> --json` | JSON scorecard, fall-of-wicket ids and fantasy report; compare with the Python oracle on both fixtures |
 | 11 | `node scripts/build-models.ts --zip <saved t20s_male_json.zip>` (Task 3+, when `scripts/build-models.ts`, `scripts/lib/archive.ts`, the engine or `data/` change) | `build-models: … used (train …, test …)` and `wrote …`; then `git status --short data/models` prints nothing when the zip's sha256 equals the one in `data/models/README.md` (2026-10-16: `95305bc2…860a`, 3,093 used, threshold 0.18437). A new archive changes the files: review the diff |
+| 12 | `pnpm ai:smoke` (Task 5+, with a key in `.env`; spends a few thousand tokens and sends one ball's facts to the provider: ask Nabhanyu first) | `ai-smoke: provider …, endpoint <host>, model …`, `ai-smoke: outcome ok, provenance live, …, latency … ms, tokens … in / … out, cost $… (est.)`, `ai-smoke: spoilerLint ok`, `ai-smoke: OK`; with no provider (or `SIDELINE_AI_PROVIDER=none`): `ai-smoke: skipped (…)`. The key is never printed. 2026-10-17: `FAILED (error: provider error: PermissionDeniedError (403))`: the proxy account was out of credit (Nabhanyu); re-run when it is topped up |
+| 13 | Server by hand (Task 5+): `PORT=8788 node apps/server/src/index.ts` (no `--env-file`: keyless, aiMode `replay`), then `curl -s -X POST -H 'content-type: application/json' -d '{"matchId":"1298150","personaId":"late-from-work"}' :8788/api/sessions` and `curl -N :8788/api/sessions/<id>/stream` | the boot line with `aiMode: 'replay'`, `analyticsRows: 502`; the stream starts `event: hello`, `event: snapshot` (249 events and 2 catch-up reels after a jump to 18 overs), then `events`, `chat`, `telemetry` frames with `id:` rising by one; SIGTERM prints `shutting down` and frees the port |
 
 `pnpm verify` runs rows 1-6 in order and stops at the first failure.
 
@@ -64,6 +66,13 @@ vice-captain, give every player an audit-only priors entry (no appearances, one 
 the crowd, replay every event through `createGate` with all four detectors, and check that every
 one of the biggest |WP swings| has a teaser, that the match's last ball is `match_decided`, that
 bailouts follow only cheap early dismissals, and that the deterministic share stays above 0.80.
+From Task 5 on, also run whole sessions over a holdout: copy `data/` to a scratch dir, add the
+match's raw file and `gen_fixtures.py` fixtures to its manifest with two audit personas (pre-match
+with the first strikers as captain and vice-captain; joining after 14 overs of the chase) and
+audit-only priors, then drive the server modules with the scripted provider: the session's teaser
+keys must equal an independent `createGate` replay, no teaser prompt may contain the outcome, the
+late joiner's catch-up prompt must carry the raw file's situation, telemetry must equal the gate's
+counters, and keyless every teaser must be a fallback that passes `spoilerLint` (Task 5 audit: 1298158).
 From Task 3 on, rebuild `data/models` from the recorded zip (row 11) and plot or print a holdout
 match's win-probability trajectory: it should start near the first-innings base rate, move with
 wickets and boundaries, and end at 1 for the winner.
@@ -85,7 +94,9 @@ An implementer may try any single match; the sweep covers the ones they did not.
   mutate new code by hand (Task 3's audit: winprob terminal rules, leverage spectacle, priors
   formula, archive filters; Task 4's: 48 mutants over the clocks, buffer, commentary, join points,
   every detector, the gate, quests, crowd and PRNG, 47 killed, the survivor equivalent in practice,
-  listed in F04's audit notes).
+  listed in F04's audit notes; Task 5's: 54 mutants over the gateway, budget, pricing, cache, skills,
+sessions, manager, orchestrator, telemetry, HTTP limits, providers and config, 53 killed, the survivor
+equivalent, listed in F05's audit notes).
 
 ### E. Docs currency
 Feature file complete (scope, what was tried, what worked, verification output), Flow.md flows
@@ -100,7 +111,11 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
   and, after Task 7, in `/etc/sideline/sideline.env`).
 - The key value never appears in logs: grep server output for the first 8 characters of the key
   (read from `.env` in a subshell, never echoed) → no matches.
-- Rate limit and budget behaviour exercised by tests; oversized input rejected with 400.
+- Rate limit and budget behaviour exercised by tests; oversized input rejected with 400 (a 281- or
+  10,000-character question) or 413 (a body over 16 KB); X-Forwarded-For counts only from a loopback
+  peer (Task 5: `routes.test.ts`).
+- Prompts: no teaser prompt carries a ball's outcome, no shared prompt a fan's squad, and fan text
+  sits escaped inside `<fan_question>` (Task 5: `skills.test.ts`, and the holdout run above).
 - NL→SQL: write statements, `ATTACH`, `PRAGMA`, recursive CTEs and multi-statements are refused (Task 8).
 
 ### G. UI review (UI tasks)
@@ -116,3 +131,4 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 | T2 Cricket core | 2026-10-16 | pass | pass (78 files) | 13 files / 106 tests | OK (32 files, 209 terms) | OK (2 matches) | 239 ms | 8 passed |
 | T3 Models | 2026-10-16 | pass | pass (89 files) | 18 files / 183 tests | OK (36 files, 209 terms) | OK (2 matches) | 270 ms | 8 passed |
 | T4 Moments engine | 2026-10-16 | pass | pass (113 files) | 25 files / 337 tests | OK (51 files, 209 terms) | OK (2 matches) | 641 ms | 8 passed |
+| T5 Server runtime + AI | 2026-10-17 | pass | pass (165 files) | 37 files / 492 tests | OK (86 files, 209 terms) | OK (2 matches) | 292 ms | 8 passed |

@@ -34,6 +34,7 @@ You implement **exactly one task** from `docs/PLAN.md` per session.
 | `pnpm dev` | Vite on :5173 + server on :8787 |
 | `pnpm lint:fix` | apply Biome formatting and safe fixes |
 | `node scripts/verify-data.ts`, `node scripts/check-no-hardcode.ts` | data gate, anti-hardcoding scan |
+| `pnpm ai:smoke` | one real teaser call through the gateway with the `.env` provider (spends tokens: ask Nabhanyu first; `SIDELINE_AI_PROVIDER=none` skips) |
 
 ## How to work
 

@@ -962,4 +962,33 @@ describe("room detector (phase 4: the watch-along chat)", () => {
       }
     },
   );
+
+  // Task 4 spot-check carry-over: the same pattern over nine minutes (2,4,2,4,2,4,2,4,2: mean
+  // 26/9, population SD about 0.99, bar about 4.88) puts a burst of 6 above the bar, yet nine
+  // minutes are too little history for a spike (D-047 needs ten). Pins MIN_HISTORY_MINUTES.
+  it("needs ten minutes of this innings' chat before anything counts as a spike", () => {
+    const events = timelineOf("1298150");
+    const ball = events.filter(chaseBall("5.2")).at(-1) as DeliveryEvent;
+    const now = ball.t;
+    const chat: ChatMessage[] = [];
+    const add = (t: number) =>
+      chat.push({
+        id: `test:${chat.length}`,
+        t,
+        handle: "silly_point",
+        affinity: "neutral",
+        text: `line ${chat.length}`,
+        lang: "en",
+        stance: "neutral",
+        synthetic: true,
+        fromYou: false,
+      });
+    for (let k = 1; k <= 9; k += 1) {
+      for (let i = 0; i < (k % 2 === 0 ? 4 : 2); i += 1) add(now - 60_000 * k - 1_000 * (i + 1));
+    }
+    for (let i = 0; i < 6; i += 1) add(now - 1_000 * (i + 1));
+    const steps = replay("1298150", preMatch("1298150"), [roomDetector], { chat, events });
+    const verdict = steps.find((s) => s.input.event.id === ball.id)?.verdicts[0]?.verdict;
+    expect(verdict).toEqual({ outcome: "deterministic", reason: "quiet" });
+  });
 });

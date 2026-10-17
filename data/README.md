@@ -12,9 +12,9 @@ Everything Sideline knows about cricket comes from here, never from code.
 | `rules/t20-fantasy.json` | Team rules and points table (illustrative Dream11-style values) | commonly cited Dream11 T20 table; see its `disclaimer` | hand |
 | `models/` (Task 3) | Trained win-probability model, leverage threshold, player priors, and a generated README with every count and exclusion | Cricsheet men's T20I archive (`t20s_male_json.zip`, sha256 in the files) | `scripts/build-models.ts` only (byte-reproducible; Biome-excluded) |
 | `crowd/corpus.json` (Task 4) | Synthetic watch-along chat: 303 lines over 16 triggers, made-up handles, reaction rates; placeholders only, no real names (rules in `crowd/README.md`) | authored, labelled synthetic | hand; `CrowdCorpusSchema` and `crowd.test.ts` check it |
-| `glossary.json` (Task 5) | Cricket terms in plain English | authored | hand |
+| `glossary.json` (Task 5) | 46 cricket and fantasy terms in plain English, optional analogies per lens; a question that just names a term is answered from here with no model call | authored from `docs/DOMAIN.md` | hand; `GlossaryFileSchema` (apps/server/src/data/glossary.ts) checks it at boot and in tests |
 | `ai-replay/` (Task 7) | Recorded real model outputs for keyless demos | `pnpm ai:record` | script only |
-| `runtime/` | SQLite database at run time (git-ignored) | server | server |
+| `runtime/` | SQLite at run time (git-ignored): the AI cache, one row per AI attempt, and the analytics tables (deliveries, players) rebuilt from the bundles at every boot | server (Task 5) | server |
 
 Matches shipped:
 - **1298150**: Pakistan vs India, ICC Men's T20 World Cup 2022, Melbourne Cricket Ground, 23 Oct 2022 (primary demo).
