@@ -117,7 +117,8 @@ if ((DRY_RUN)); then
   exit 0
 fi
 # install.sh wrote both into the Caddyfile: the site, and the loopback port it proxies to.
-port=$(sed -n 's/^[[:space:]]*reverse_proxy 127\.0\.0\.1:\([0-9][0-9]*\)[[:space:]]*$/\1/p' "$CADDYFILE" 2>/dev/null | head -n 1)
+port=$(sed -n 's/^[[:space:]]*reverse_proxy 127\.0\.0\.1:\([0-9][0-9]*\)[[:space:]]*$/\1/p' "$CADDYFILE" 2>/dev/null || true)
+port=${port%%$'\n'*}
 [[ -n $port ]] || die "no 'reverse_proxy 127.0.0.1:<port>' in $CADDYFILE: run sudo deploy/install.sh first"
 say "health: http://127.0.0.1:$port/api/health"
 if ! healthy "http://127.0.0.1:$port/api/health" 30; then

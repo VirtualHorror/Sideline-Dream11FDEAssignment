@@ -202,8 +202,9 @@ if [[ ! -f $CADDY_SOURCES ]]; then
     curl -fsSL --proto '=https' --tlsv1.2 -o "$tmp/gpg.key" "$CADDY_REPO/gpg.key"
     gpg --homedir "$tmp" --batch --yes --dearmor -o "$CADDY_KEYRING" "$tmp/gpg.key"
     chmod 644 "$CADDY_KEYRING"
+    # awk reads to the end: a reader that quits early can kill gpg with SIGPIPE under pipefail.
     fingerprint=$(gpg --homedir "$tmp" --batch --show-keys --with-colons "$CADDY_KEYRING" |
-      awk -F: '$1 == "fpr" { print $10; exit }')
+      awk -F: '$1 == "fpr" && !done { print $10; done = 1 }')
     say "  signing key $fingerprint in $CADDY_KEYRING"
     curl -fsSL --proto '=https' --tlsv1.2 -o "$tmp/caddy.list" "$CADDY_REPO/debian.deb.txt"
     install -m 644 -o root -g root "$tmp/caddy.list" "$CADDY_SOURCES"
@@ -212,7 +213,7 @@ if [[ ! -f $CADDY_SOURCES ]]; then
     apt-get update -qq
   fi
 fi
-if dpkg-query -W -f='${Status}' caddy 2>/dev/null | grep -q 'install ok installed'; then
+if [[ $(dpkg-query -W -f='${Status}' caddy 2>/dev/null || true) == "install ok installed" ]]; then
   say "  caddy is installed: $(dpkg-query -W -f='${Version}' caddy)"
 else
   run env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq caddy
@@ -247,7 +248,7 @@ put_file "$SUDOERS_FILE" 440 "$sudoers" validate_sudoers
 say "7/7 firewall, services and health"
 if ((EUID != 0)); then
   say "  would open 80/tcp and 443/tcp in ufw if ufw is filtering (checking needs root)"
-elif command -v ufw >/dev/null && ufw status | grep -q '^Status: active'; then
+elif command -v ufw >/dev/null && [[ $(ufw status) == *"Status: active"* ]]; then
   run ufw allow 80/tcp
   run ufw allow 443/tcp
 else
