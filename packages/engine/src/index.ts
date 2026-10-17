@@ -13,7 +13,7 @@
  *   util/       FNV-1a hash (Task 2), seeded PRNG (Task 4)
  *   models/     logistic regression, win probability, leverage, player priors (Task 3);
  *               the trained weights and priors are data (data/models/), passed in by callers
- *   detectors/  lineup, collapse, nudge, room detectors, catch-up facts (Task 4)
+ *   detectors/  lineup, collapse, nudge, room detectors, catch-up facts (Task 4); situationOf (Task 5)
  *   gate/       the entropy gate that runs them on every event         (Task 4)
  *   quests/     prediction rules resolved from real deliveries         (Task 4)
  *   crowd/      seeded synthetic watch-along chat                       (Task 4)
@@ -32,6 +32,8 @@ export * from "./cricket/timing.ts";
 export * from "./crowd/simulate.ts";
 export * from "./detectors/catchup.ts";
 export * from "./detectors/collapse.ts";
+// Where an innings stands (score, required rate, …): public from Task 5 for the server's explainer.
+export { situationOf, situationOfInnings } from "./detectors/facts.ts";
 export * from "./detectors/lineup.ts";
 export * from "./detectors/nudge.ts";
 export * from "./detectors/room.ts";
