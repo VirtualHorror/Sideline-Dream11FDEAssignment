@@ -142,6 +142,18 @@ describe("orchestrator (PLAN 5.6)", () => {
     });
   });
 
+  // A glossary answer costs nothing, so the projection counts only model-answered questions.
+  it("counts a model-answered question as a personal moment, a glossary answer not", async () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    await rt.manager.settle();
+    const personal = () => rt.telemetry.snapshot("session", session.id).projection.formula;
+    await session.ask("what is a free hit?");
+    expect(personal()).toContain("0.00 personal moments per viewer");
+    await session.ask("why is everyone so tense right now?");
+    expect(personal()).toContain("1.00 personal moments per viewer");
+  });
+
   // The explainer's facts are the fan's TV, never the stadium's head start (no spoiler by question).
   it("grounds a contextual question in what the fan's TV has shown", async () => {
     const rt = testRuntime();

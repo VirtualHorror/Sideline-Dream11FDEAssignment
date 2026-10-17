@@ -143,9 +143,10 @@ describe("Anthropic provider (@anthropic-ai/sdk, D-014, D-052)", () => {
     const provider = createAnthropicProvider({ apiKey: "k", fetch: net.fetch });
     const result = await gatewayWith(provider).run(teaserSkill, "nudge:test", teaserFacts());
     expect(result.provenance).toBe("fallback");
+    // The class, the status and the body's machine-readable error type: never the message text.
     expect(result.trace).toMatchObject({
       outcome: "error",
-      detail: "provider error: RateLimitError (429)",
+      detail: "provider error: RateLimitError (429, rate_limit_error)",
     });
     expect(net.calls).toHaveLength(1); // no hidden retries: the gateway owns the policy
   });
@@ -238,6 +239,27 @@ describe("OpenAI-compatible provider (openai SDK, Responses API, D-033)", () => 
     const error = await provider.complete(request()).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(ProviderRefusalError);
     expect(error).toMatchObject({ message: "refused by the model", usage: { tokensIn: 4440 } });
+  });
+
+  // Seen on 2026-10-17 (F05): the endpoint answered 403, then 503 `service_unavailable`. The trace
+  // keeps the provider's error code so an outage can be told from a bad key without a new request.
+  it("records the endpoint's error code on the trace, not its message", async () => {
+    const net = fakeFetch({
+      status: 503,
+      body: {
+        error: {
+          message: "The service is temporarily unavailable. Please try again later.",
+          type: "proxy_error",
+          code: "service_unavailable",
+        },
+      },
+    });
+    const provider = createOpenAiProvider({ apiKey: "k", baseURL: null, fetch: net.fetch });
+    const result = await gatewayWith(provider).run(teaserSkill, "nudge:test", teaserFacts());
+    expect(result.trace.detail).toBe(
+      "provider error: InternalServerError (503, service_unavailable)",
+    );
+    expect(result.trace.detail).not.toContain("temporarily");
   });
 
   it("treats an incomplete response as unusable output", async () => {

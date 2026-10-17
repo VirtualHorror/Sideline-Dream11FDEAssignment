@@ -72,6 +72,11 @@ describe("sessions (PLAN 5.2)", () => {
     expect(back.events).toEqual(events.filter((e) => e.t <= tenOvers.t));
     expect(back.chat.every((m) => m.t <= tenOvers.t)).toBe(true);
     expect(back.moments.every((m) => m.createdAt <= tenOvers.t)).toBe(true);
+    // Nor does the next tick stream them: the teasers and the reel are later than 10 overs.
+    const afterJump = messages.length;
+    rt.clock.advance(1_000);
+    rt.manager.tick();
+    expect(messages.slice(afterJump).filter((m) => m.type === "moment")).toEqual([]);
 
     session.control({ action: "jump", target: { kind: "over", innings: 2, afterOvers: 19 } });
     const forward = lastSnapshot(messages);

@@ -114,6 +114,18 @@ describe("telemetry after a full scripted replay (PLAN 5.8)", () => {
   });
 });
 
+describe("telemetry without a key", () => {
+  it("counts every keyless teaser as a fallback, as the gateway does", async () => {
+    const rt = testRuntime({ noProvider: true });
+    const session = rt.manager.create({ matchId: "1298150", personaId: "babar-believer" });
+    session.control({ action: "speed", value: 32 });
+    await playUntil(rt, session, b.events.at(-1)?.t ?? 0, 10_000);
+    const counters = rt.telemetry.snapshot("session", session.id).counters;
+    expect(counters).toMatchObject({ aiCallsLive: 0, aiCacheHits: 0, aiFallbacks: 23, costUsd: 0 });
+    expect(rt.gateway.counters()).toMatchObject({ aiCallsLive: 0, aiFallbacks: 23 });
+  });
+});
+
 describe("scaleProjection", () => {
   it("substitutes every number into the formula", () => {
     const p = scaleProjection({

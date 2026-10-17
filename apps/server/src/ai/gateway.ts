@@ -141,11 +141,28 @@ function describeIssues(error: ZodError): string {
     .join("; ");
 }
 
-/** Error class and HTTP status only: provider messages are not echoed into traces. */
+/** A provider's machine-readable error code ("service_unavailable"), never free text. */
+const ERROR_CODE = /^[A-Za-z0-9_.-]{1,48}$/;
+
+/**
+ * Error class, HTTP status and the body's error code (the SDKs expose `code` and `type`): enough to
+ * tell an outage or an exhausted account from a bad key in the trace alone. Provider messages are
+ * not echoed into traces.
+ */
 function errorLabel(error: unknown): string {
   const name = error instanceof Error ? error.constructor.name : typeof error;
-  const status = (error as { status?: unknown } | null)?.status;
-  return typeof status === "number" ? `${name} (${status})` : name;
+  const { status, code, type } = (error ?? {}) as {
+    status?: unknown;
+    code?: unknown;
+    type?: unknown;
+  };
+  const errorCode = [code, type].find(
+    (v): v is string => typeof v === "string" && ERROR_CODE.test(v),
+  );
+  const parts = [typeof status === "number" ? String(status) : null, errorCode ?? null].filter(
+    (part): part is string => part !== null,
+  );
+  return parts.length > 0 ? `${name} (${parts.join(", ")})` : name;
 }
 
 /** Rejects as soon as `signal` aborts, so a provider that ignores its signal cannot hang a run. */
