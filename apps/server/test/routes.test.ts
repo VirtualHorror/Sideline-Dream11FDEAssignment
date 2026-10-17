@@ -210,6 +210,18 @@ describe("POST /api/sessions/:id/ask (Review focus 5)", () => {
     const res = await testApp().post("/api/sessions/nope/ask", { text: "what is a wide?" });
     expect(res.status).toBe(404);
   });
+
+  // Task 6 step 6.0 (D-059): the 409 path had no test; the UI shows the session as paused on it.
+  it("answers 409 for a session an internal error stopped", async () => {
+    const t = testApp();
+    const id = await newSession(t);
+    t.manager.get(id)?.fail(new Error("stopped by the test"));
+    const res = await t.post(`/api/sessions/${id}/ask`, { text: "what is a wide?" });
+    expect(res.status).toBe(409);
+    expect(await json(res)).toEqual({
+      error: { code: "session_failed", message: "This session was paused." },
+    });
+  });
 });
 
 describe("GET /api/telemetry", () => {

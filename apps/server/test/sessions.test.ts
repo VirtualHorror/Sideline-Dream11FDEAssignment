@@ -237,3 +237,71 @@ describe("sessions (PLAN 5.2)", () => {
     ).toThrow(/unknown event/);
   });
 });
+
+// Task 6 step 6.0, the independent spot-check of t05-verified (D-059): each of these failed on a hand
+// mutant that every Task 5 test let through, and passes on the code as merged.
+describe("sessions: behaviour the t05-verified spot-check found unpinned", () => {
+  it("streams the teasers again, once each, when play passes them after a jump back (Review focus 1)", async () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const messages = listen(session);
+    session.control({ action: "speed", value: 8 });
+    const nineteenOne = delivery(events, 2, "19.1");
+    await playUntil(rt, session, nineteenOne.t);
+    const teasers = session.moments().filter((m) => m.kind === "spoiler_nudge");
+    expect(teasers.map((m) => m.createdAt)).toEqual([delivery(events, 2, "18.6").t, nineteenOne.t]);
+
+    session.control({ action: "jump", target: { kind: "over", innings: 2, afterOvers: 18 } });
+    const afterJump = messages.length;
+    await playUntil(rt, session, nineteenOne.t);
+    const replayed = ofType(messages.slice(afterJump), "moment").map((m) => m.data.moment.id);
+    expect(replayed).toEqual(teasers.map((m) => m.id));
+  });
+
+  it("never streams an event or a chat line before the stadium clock reaches it", () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const messages = listen(session);
+    session.control({ action: "speed", value: 8 });
+    const until = delivery(events, 2, "19.1").t;
+    let checked = 0;
+    while (session.stadiumNow() < until) {
+      rt.clock.advance(100);
+      const before = messages.length;
+      rt.manager.tick();
+      const now = session.stadiumNow();
+      for (const message of messages.slice(before)) {
+        const stamped =
+          message.type === "events"
+            ? message.data.events
+            : message.type === "chat"
+              ? message.data.messages
+              : [];
+        for (const item of stamped) {
+          expect(item.t).toBeLessThanOrEqual(now);
+          checked += 1;
+        }
+      }
+    }
+    expect(checked).toBeGreaterThan(100);
+  });
+
+  it("keeps the clock running after the last event until the crowd's last reaction", () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const end = events.at(-1);
+    const lastChat = b.crowd.at(-1);
+    if (!end || !lastChat) throw new Error("no events or crowd");
+    expect(lastChat.t).toBeGreaterThan(end.t);
+    session.control({ action: "jump", target: { kind: "event", eventId: end.id } });
+    const messages = listen(session);
+    rt.clock.advance(1_000);
+    rt.manager.tick();
+    expect(session.clock().playing).toBe(true);
+    rt.clock.advance(lastChat.t - end.t);
+    rt.manager.tick();
+    expect(session.clock().playing).toBe(false);
+    const streamed = ofType(messages, "chat").flatMap((m) => m.data.messages);
+    expect(streamed.at(-1)).toEqual(lastChat);
+  });
+});
