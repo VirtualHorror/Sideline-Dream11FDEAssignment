@@ -45,7 +45,7 @@ SIGINT / SIGTERM → stop the ticker → closeAllConnections (SSE streams) → s
 request
   └─ secureHeaders (CSP default-src 'self', no inline scripts, frame-ancestors 'none', DENY, nosniff)
        ├─ GET  /api/health            → {ok, service, version, uptimeSec, node, nodeEnv, aiProvider,
-       │                                 aiModelFast, aiModelSmart, aiEndpointHost (host only)}
+       │                                 aiModelFast, aiModelSmart, aiEndpoint (kind only, D-068)}
        ├─ only with a runtime (src/index.ts; the T1 tests run without):        http/routes/*.ts
        │    ├─ GET  /api/matches                  bundles → summary + personas {id,label,blurb,lens,delayMs}
        │    ├─ GET  /api/matches/:matchId         bundle → {match, players, rules, winprob} | 404 (T6, D-060)

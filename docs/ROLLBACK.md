@@ -23,7 +23,7 @@
 | Model files edited or rebuilt from a different archive (Task 3+) | `git checkout tNN-verified -- data/models`, or rebuild from the recorded zip: `node scripts/build-models.ts --zip <zip whose sha256 matches data/models/README.md>` | `git status --short data/models` empty, then `pnpm test` |
 | Authored fixtures broke | `git checkout tNN-verified -- data/matches data/rules` | `pnpm check:data && pnpm test` |
 | TypeScript 7 incompatibility in some tool | set `"typescript": "6.0.3"` in every package.json, `pnpm install` | `pnpm typecheck` |
-| `.env` lost, or the AI key rotated | recreate from `.env.example`; the key comes from `proxy_API_KEY` in `~/.bashrc` (written without echoing, mode 600, see D-033); after Task 7 re-run `sudo deploy/install.sh` | `pnpm ai:smoke` (Task 5+) |
+| `.env` lost, or the AI key rotated | recreate from `.env.example`; the key comes from the variable Codex uses in `~/.bashrc` (written without echoing, mode 600, see D-033); after Task 7 re-run `sudo deploy/install.sh` | `pnpm ai:smoke` (Task 5+) |
 | The runtime database is wrong or corrupt (Task 5+): AI cache, traces, analytics | stop the server, `rm -f data/runtime/sideline.db*` (git-ignored; the analytics tables are rebuilt at boot; the AI cache, the traces and today's spend start empty) | start the server; `curl -fsS :8787/api/health` |
 | AI replay cache is wrong (Task 7+) | `git checkout tNN-verified -- data/ai-replay` or delete it and re-run `pnpm ai:record` | `pnpm test` |
 | A deploy is broken (Task 7+) | `deploy/update.sh tNN-verified` (checks out the tag, installs, builds, restarts) | `curl -fsS https://<host>/api/health` |

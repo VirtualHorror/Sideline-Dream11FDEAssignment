@@ -51,7 +51,7 @@ T20 World Cup game, with the 2024 final as a second match that proves nothing is
  │  ├ companion │        │                           ├─ Session manager + one tick loop for all sessions          │
  │  └ control   │        │                           ├─ @sideline/engine (pure): timeline, reducer, detectors     │
  │    plane     │        │                           ├─ AI gateway ──────────────────────────────────────────────┼──► Anthropic or an OpenAI-compatible
- └──────────────┘        │                           │   (cache → provider → validate → fallback)                 │    API (today: proxy); optional,
+ └──────────────┘        │                           │   (cache → provider → validate → fallback)                 │    API (today: a proxy); optional,
                          │                           └─ node:sqlite: ai cache, AI traces, analytics tables        │    replay mode works without a key
                          │  data/ (raw Cricsheet, fixtures, rules, models, crowd corpus, AI replay cache)          │
                          └─────────────────────────────────────────────────────────────────────────────────────────┘
@@ -204,8 +204,8 @@ Providers (D-033): both Anthropic and any OpenAI-compatible endpoint, chosen by 
 (Anthropic if `ANTHROPIC_API_KEY` is set, else OpenAI-compatible if `OPENAI_API_KEY` is set,
 `SIDELINE_AI_PROVIDER` overrides). Anthropic default: `claude-opus-5-5` with per-skill `effort`
 (low for teasers and classification, medium for synthesis; `claude-haiku-5-5` for a cheaper fast
-lane). **Currently configured:** the OpenAI-compatible proxy endpoint
-(`https://api.proxy.pro/v1`, `gpt-6.1-sol`, Responses API), verified to return strict
+lane). **Currently configured:** an OpenAI-compatible proxy endpoint
+(base URL in `.env`, `gpt-6.1-sol`, Responses API), verified to return strict
 JSON-schema output in 4-8.5 s, with ~4.4k hidden input tokens per call. On 2026-10-17 the account was out
 of credit (the Task 5 smoke call got a 403, F05): until it is topped up, every AI card is a
 labelled fallback and the trace says why. Structured outputs

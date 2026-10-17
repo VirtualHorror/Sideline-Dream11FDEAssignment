@@ -84,7 +84,7 @@ exports `situationOf` (test first).
   rewrite); every later check ran under `set -o pipefail`.
 - 2026-10-16, step 5.0: 12 new config cases failed on the missing fields, then passed. Two existing
   OpenAI tests now name the model variables the provider requires (assertions unchanged). One of my own
-  cases was wrong (it spread the proxy env, model names included, into the "both keys" case) and
+  cases was wrong (it spread the proxy's env, model names included, into the "both keys" case) and
   showed a real footgun: today's `.env` names gpt-6.1-sol, so adding an Anthropic key would send that
   name to Anthropic. A non-Claude name with the Anthropic provider now fails the boot (D-058); its test
   was shown to fail with the check neutered.
@@ -139,9 +139,9 @@ exports `situationOf` (test first).
   fallbacks, none rejected by `spoilerLint`.
 - 2026-10-17: `pnpm ai:smoke` against the real proxy endpoint, once, with Nabhanyu's approval: the
   gateway fell back correctly, but the endpoint answered **403** in 365 ms (0 tokens). Local evidence (no
-  request): base URL, key (the same as Codex's `proxy_API_KEY`, compared by hash) and models were
+  request): base URL, key (the same as Codex's, compared by hash) and models were
   right. With a second approval, two zero-token listings (`GET /v1/models`, the SDK and plain `fetch`)
-  both got **503** `proxy_error` / `service_unavailable`, so the cause was not our client; Nabhanyu
+  both got **503** `service_unavailable`, so the cause was not our client; Nabhanyu
   then confirmed the proxy account is **out of credit** and asked to keep the same key. The trace had
   said only `PermissionDeniedError (403)`: it now keeps the body's machine-readable error code too
   (test first). The smoke run is to be repeated when the account is topped up.
@@ -202,7 +202,7 @@ IDENTICAL: 0 differences; compared 2 innings, 18 batter lines, 11 bowler lines, 
 IDENTICAL: 0 differences; compared 2 innings, 18 batter lines, 12 bowler lines, 15 wickets, 22 fantasy players   (1415755)
 
 pnpm ai:smoke                   (real endpoint, 2026-10-17, approved by Nabhanyu)
-ai-smoke: provider openai, endpoint api.proxy.pro, model gpt-6.1-sol
+ai-smoke: provider openai, endpoint <proxy host, removed by D-068>, model gpt-6.1-sol
 ai-smoke: teaser for 1298150 innings 2, ball 19.4 (leverage 1.000)
 ai-smoke: nudge "India need 13 off 3. Kohli (76 off 51) faces Nawaz."
 ai-smoke: outcome error, provenance fallback, model gpt-6.1-sol, latency 365 ms, tokens 0 in / 0 out, cost $0.0000

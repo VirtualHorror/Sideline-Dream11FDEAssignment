@@ -8,7 +8,7 @@
  * Provider selection, in order: SIDELINE_AI_PROVIDER if set, else Anthropic if its key is
  * present, else OpenAI if its key is present, else "none" (deterministic + replay only), D-033.
  * Model names: Anthropic defaults to claude-opus-5-5 for both tiers; an OpenAI-compatible endpoint
- * names its models its own way (proxy: gpt-6.1-sol), so both tiers must be set for it.
+ * names its models its own way (today's proxy: gpt-6.1-sol), so both tiers must be set for it.
  */
 import { join } from "node:path";
 import { z } from "zod";
@@ -148,27 +148,34 @@ export function loadConfig(env: EnvInput, repoRoot: string): AppConfig {
   };
 }
 
-/** The base URL the configured provider's SDK client talks to; null without a provider. */
-export function aiEndpoint(config: AppConfig): string | null {
-  if (config.ai.provider === "anthropic") return ANTHROPIC_BASE_URL;
-  if (config.ai.provider === "openai") return config.ai.openaiBaseUrl ?? OPENAI_DEFAULT_BASE_URL;
-  return null;
+/**
+ * What kind of endpoint the provider calls: the vendor's own API, or "openai-compatible" for any
+ * other OpenAI base URL. Its host is configuration and is never published (D-068).
+ */
+export type AiEndpointKind = "anthropic" | "openai" | "openai-compatible";
+
+export function aiEndpointKind(config: AppConfig): AiEndpointKind | null {
+  if (config.ai.provider === "anthropic") return "anthropic";
+  if (config.ai.provider !== "openai") return null;
+  const base = config.ai.openaiBaseUrl;
+  return base === null || new URL(base).hostname === new URL(OPENAI_DEFAULT_BASE_URL).hostname
+    ? "openai"
+    : "openai-compatible";
 }
 
-/** The only view of config that may leave the process. No secrets, ever; a host name, no path. */
+/** The only view of config that may leave the process: no secrets, no hosts, no paths, ever. */
 export function publicConfigSummary(config: AppConfig): {
   nodeEnv: string;
   aiProvider: AiProviderChoice;
   aiModelFast: string | null;
   aiModelSmart: string | null;
-  aiEndpointHost: string | null;
+  aiEndpoint: AiEndpointKind | null;
 } {
-  const endpoint = aiEndpoint(config);
   return {
     nodeEnv: config.nodeEnv,
     aiProvider: config.ai.provider,
     aiModelFast: config.ai.models?.fast ?? null,
     aiModelSmart: config.ai.models?.smart ?? null,
-    aiEndpointHost: endpoint ? new URL(endpoint).hostname : null,
+    aiEndpoint: aiEndpointKind(config),
   };
 }

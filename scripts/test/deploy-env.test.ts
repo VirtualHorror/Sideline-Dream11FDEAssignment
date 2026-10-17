@@ -30,7 +30,7 @@ describe("the production environment file (deploy/install.sh, D-066)", () => {
         SIDELINE_AI_DAILY_BUDGET_USD: "2",
         SIDELINE_DATA_DIR: "/home/dev/elsewhere",
         AWS_SECRET_ACCESS_KEY: "do-not-copy",
-        proxy_API_KEY: "do-not-copy-either",
+        CODEX_PROXY_KEY: "do-not-copy-either",
         SIDELINE_ASK_PER_MINUTE: "",
       },
       { repoRoot, port },
@@ -42,7 +42,7 @@ describe("the production environment file (deploy/install.sh, D-066)", () => {
       "SIDELINE_MODEL_FAST",
       "SIDELINE_MODEL_SMART",
     ]);
-    expect(out.skipped).toEqual(["AWS_SECRET_ACCESS_KEY", "proxy_API_KEY", "SIDELINE_DATA_DIR"]);
+    expect(out.skipped).toEqual(["AWS_SECRET_ACCESS_KEY", "CODEX_PROXY_KEY", "SIDELINE_DATA_DIR"]);
     expect(out.text).not.toMatch(/do-not-copy|elsewhere|SIDELINE_ASK_PER_MINUTE/);
     expect(out.text).toContain('\nOPENAI_API_KEY="sk-test-not-a-real-key"\n');
     expect(out.summary).toEqual({
@@ -50,7 +50,7 @@ describe("the production environment file (deploy/install.sh, D-066)", () => {
       aiProvider: "openai",
       aiModelFast: "model-a",
       aiModelSmart: "model-b",
-      aiEndpointHost: "llm.example.test",
+      aiEndpoint: "openai-compatible",
     });
   });
 

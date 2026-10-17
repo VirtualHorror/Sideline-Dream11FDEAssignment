@@ -44,7 +44,7 @@ try {
   console.error(`deploy-env: copied ${list(out.copied)}`);
   console.error(`deploy-env: not copied ${list(out.skipped)}`);
   console.error(
-    `deploy-env: the server will run with provider ${out.summary.aiProvider}, models ${out.summary.aiModelFast ?? "none"} / ${out.summary.aiModelSmart ?? "none"}, endpoint ${out.summary.aiEndpointHost ?? "none"}`,
+    `deploy-env: the server will run with provider ${out.summary.aiProvider}, models ${out.summary.aiModelFast ?? "none"} / ${out.summary.aiModelSmart ?? "none"}, endpoint ${out.summary.aiEndpoint ?? "none"}`,
   );
 } catch (error) {
   console.error(`deploy-env: ${(error as Error).message}`);

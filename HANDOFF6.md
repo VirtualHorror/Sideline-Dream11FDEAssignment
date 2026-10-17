@@ -89,7 +89,7 @@ do not merge.
 overconfidence (F03), room reads only on deliveries (none after the match ends).
 
 **Uncommitted Changes**: none. `task/04-moments-engine` still exists (merged). A local **`.env` holds a
-real API key** (proxy, OpenAI-compatible, D-033): only `pnpm ai:smoke` (5.9) and the provider adapters
+real API key** (an OpenAI-compatible proxy, D-033): only `pnpm ai:smoke` (5.9) and the provider adapters
 may use it; never open, print, copy or commit it.
 
 ## Files to Know

@@ -1,10 +1,10 @@
 /**
  * The OpenAI-compatible provider (openai 7.27.0, D-033, D-052): any endpoint that speaks the
- * Responses API, today proxy (`https://api.proxy.pro/v1`, gpt-6.1-sol).
+ * Responses API; today an OpenAI-compatible proxy whose base URL is in .env (gpt-6.1-sol).
  *
  * Called by ai/gateway.ts only. `client.responses.create` with a system and a user input item and a
  * strict `json_schema` text format named after the skill; the answer is `output_text`, the usage
- * `usage.input_tokens/output_tokens` as reported (proxy adds a hidden ~4.4k-token prompt, which
+ * `usage.input_tokens/output_tokens` as reported (the proxy adds a hidden ~4.4k-token prompt, which
  * the reported usage includes, D-033). No `reasoning` options are sent. A refusal item or an
  * incomplete response is a typed failure; the model's refusal wording is not copied into traces.
  * Retries are off, as for Anthropic: the gateway owns the timeout and the fallback.

@@ -127,7 +127,7 @@
 - **Notes for implementers:** Claude Opus 5.5 rejects forced `tool_choice` (any/tool) and
   `budget_tokens`; thinking is adaptive and cannot be disabled; control depth with `effort`.
 - **Update:** provider configuration refined by D-033 (both providers via `.env`, OpenAI-compatible
-  base URL, the current key is a proxy proxy key).
+  base URL, the current key is an OpenAI-compatible proxy's key).
 
 ### D-015 — Moment keys and cohort keys for caching (2026-10-16, T1, Claude)
 - **Decision:** Cache AI results by moment key: `nudge:<match>:<eventId>`,
@@ -225,13 +225,13 @@
 ### D-033 — Both AI providers via .env; the current key is an OpenAI-compatible proxy (2026-10-16, after T1, Nabhanyu + Claude)
 - **Context:** Nabhanyu asked for OpenAI (`OPENAI_API_KEY`) and Anthropic (`ANTHROPIC_API_KEY`)
   support through `.env`, defaulting to whichever key is present, and to use the key Codex uses.
-  Codex is configured (`~/.codex/config.toml`) with a custom provider, **proxy**
-  (`https://api.proxy.pro/v1`, Responses API, model `gpt-6.1-sol`), key in `proxy_API_KEY`.
+  Codex is configured (`~/.codex/config.toml`) with a custom provider, **an OpenAI-compatible proxy**
+  (Responses API, model `gpt-6.1-sol`; its base URL is in `.env`), key in an environment variable set in `~/.bashrc`.
 - **Decision:** config reads `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `OPENAI_BASE_URL` (any
   OpenAI-compatible endpoint), `SIDELINE_MODEL_FAST` / `SIDELINE_MODEL_SMART`, and an optional
   `SIDELINE_AI_PROVIDER` override. Auto-detection: Anthropic if its key is set, else the
   OpenAI-compatible provider, else none. The local `.env` (git-ignored, mode 600) was created from
-  `proxy_API_KEY` with `OPENAI_BASE_URL=https://api.proxy.pro/v1` and `gpt-6.1-sol` for both tiers.
+  the key Codex uses (from `~/.bashrc`), with the proxy's `OPENAI_BASE_URL` and `gpt-6.1-sol` for both tiers.
 - **Probe findings (2026-10-16):** `/v1/models` lists `gpt-5.5, gpt-5.6-luna, gpt-5.6-sol,
   gpt-5.6-terra, gpt-6-astra, gpt-6-luna, gpt-6-sol, gpt-6.1-sol`. Responses API with a strict
   `json_schema` format works. Tiny calls take 4-8.5 s. Every request reports about 4,440 input tokens

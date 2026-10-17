@@ -3,6 +3,14 @@ import { loadConfig, publicConfigSummary } from "../src/config.ts";
 
 const ROOT = "/srv/sideline";
 
+// An OpenAI-compatible proxy, like the one today's .env names.
+const PROXY = {
+  OPENAI_API_KEY: "sk-proxy-SECRET-456",
+  OPENAI_BASE_URL: "https://llm-proxy.example.test/v1",
+  SIDELINE_MODEL_FAST: "gpt-6.1-sol",
+  SIDELINE_MODEL_SMART: "gpt-6.1-sol",
+};
+
 describe("loadConfig", () => {
   it("defaults to localhost:8787, repo-relative paths and no AI provider", () => {
     const config = loadConfig({}, ROOT);
@@ -50,17 +58,10 @@ describe("loadConfig", () => {
 });
 
 describe("AI configuration (PLAN 5.0)", () => {
-  const proxy = {
-    OPENAI_API_KEY: "sk-kk-SECRET-456",
-    OPENAI_BASE_URL: "https://api.proxy.pro/v1",
-    SIDELINE_MODEL_FAST: "gpt-6.1-sol",
-    SIDELINE_MODEL_SMART: "gpt-6.1-sol",
-  };
-
   it("uses an OpenAI-compatible endpoint with its base URL and both model names", () => {
-    const { ai } = loadConfig(proxy, ROOT);
+    const { ai } = loadConfig(PROXY, ROOT);
     expect(ai.provider).toBe("openai");
-    expect(ai.openaiBaseUrl).toBe("https://api.proxy.pro/v1");
+    expect(ai.openaiBaseUrl).toBe("https://llm-proxy.example.test/v1");
     expect(ai.models).toEqual({ fast: "gpt-6.1-sol", smart: "gpt-6.1-sol" });
   });
 
@@ -78,14 +79,14 @@ describe("AI configuration (PLAN 5.0)", () => {
     expect(ai.models).toEqual({ fast: "claude-opus-5-5", smart: "claude-opus-5-5" });
     const overridden = loadConfig({ ...both, SIDELINE_MODEL_FAST: "claude-haiku-5-5" }, ROOT);
     expect(overridden.ai.models).toEqual({ fast: "claude-haiku-5-5", smart: "claude-opus-5-5" });
-    const forced = { ...proxy, ANTHROPIC_API_KEY: "sk-ant-test", SIDELINE_AI_PROVIDER: "openai" };
+    const forced = { ...PROXY, ANTHROPIC_API_KEY: "sk-ant-test", SIDELINE_AI_PROVIDER: "openai" };
     expect(loadConfig(forced, ROOT).ai.provider).toBe("openai");
   });
 
-  // Today's .env names gpt-6.1-sol for proxy: adding an Anthropic key must not send that name to
+  // Today's .env names the proxy's gpt-6.1-sol: adding an Anthropic key must not send that name to
   // Anthropic (a 404 on every call); boot fails and says what to change.
   it("refuses a non-Claude model name for the Anthropic provider and names the variable", () => {
-    expect(() => loadConfig({ ...proxy, ANTHROPIC_API_KEY: "sk-ant-test" }, ROOT)).toThrow(
+    expect(() => loadConfig({ ...PROXY, ANTHROPIC_API_KEY: "sk-ant-test" }, ROOT)).toThrow(
       /SIDELINE_MODEL_FAST.*gpt-6\.1-sol/,
     );
   });
@@ -134,35 +135,33 @@ describe("publicConfigSummary", () => {
     expect(JSON.parse(summary)).toMatchObject({ aiProvider: "anthropic" });
   });
 
-  it("shows models and the endpoint's host name only: no key, no path", () => {
-    const config = loadConfig(
-      {
-        OPENAI_API_KEY: "sk-kk-SECRET-456",
-        OPENAI_BASE_URL: "https://api.proxy.pro/v1",
-        SIDELINE_MODEL_FAST: "gpt-6.1-sol",
-        SIDELINE_MODEL_SMART: "gpt-6.1-sol",
-      },
-      ROOT,
-    );
-    const summary = publicConfigSummary(config);
+  // D-068: a custom base URL is configuration, not something /api/health publishes.
+  it("shows the models and the kind of endpoint only: no key, no host, no path", () => {
+    const summary = publicConfigSummary(loadConfig(PROXY, ROOT));
     expect(summary).toEqual({
       nodeEnv: "development",
       aiProvider: "openai",
       aiModelFast: "gpt-6.1-sol",
       aiModelSmart: "gpt-6.1-sol",
-      aiEndpointHost: "api.proxy.pro",
+      aiEndpoint: "openai-compatible",
     });
-    expect(JSON.stringify(summary)).not.toMatch(/SECRET|sk-|\/v1/);
+    expect(JSON.stringify(summary)).not.toMatch(/SECRET|sk-|\/v1|llm-proxy|example/);
   });
 
   it.each([
-    [{ ANTHROPIC_API_KEY: "sk-ant-test" }, "api.anthropic.com"],
+    [{ ANTHROPIC_API_KEY: "sk-ant-test" }, "anthropic"],
+    [{ OPENAI_API_KEY: "sk-test", SIDELINE_MODEL_FAST: "m", SIDELINE_MODEL_SMART: "m" }, "openai"],
     [
-      { OPENAI_API_KEY: "sk-test", SIDELINE_MODEL_FAST: "m", SIDELINE_MODEL_SMART: "m" },
-      "api.openai.com",
+      {
+        OPENAI_API_KEY: "sk-test",
+        OPENAI_BASE_URL: "https://api.openai.com/v1",
+        SIDELINE_MODEL_FAST: "m",
+        SIDELINE_MODEL_SMART: "m",
+      },
+      "openai",
     ],
     [{}, null],
-  ])("names the default endpoint host for %j", (env, host) => {
-    expect(publicConfigSummary(loadConfig(env, ROOT)).aiEndpointHost).toBe(host);
+  ])("names the kind of endpoint for %j", (env, kind) => {
+    expect(publicConfigSummary(loadConfig(env, ROOT)).aiEndpoint).toBe(kind);
   });
 });

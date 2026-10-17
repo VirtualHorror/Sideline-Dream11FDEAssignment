@@ -90,7 +90,7 @@ const provider = createProvider(config);
 if (!provider) fail("no AI provider is configured (.env.example): there is nothing to record with");
 const summary = publicConfigSummary(config);
 log(
-  `provider ${summary.aiProvider}, endpoint ${summary.aiEndpointHost}, models ${summary.aiModelFast} / ${summary.aiModelSmart}`,
+  `provider ${summary.aiProvider}, endpoint ${summary.aiEndpoint}, models ${summary.aiModelFast} / ${summary.aiModelSmart}`,
 );
 log(
   `daily budget $${config.ai.dailyBudgetUsd} (SIDELINE_AI_DAILY_BUDGET_USD): calls stop when this run has spent it`,

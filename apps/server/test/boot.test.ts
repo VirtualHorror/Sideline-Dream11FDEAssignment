@@ -35,7 +35,7 @@ describe("buildRuntime: what src/index.ts boots", () => {
     [
       {
         OPENAI_API_KEY: "sk-test",
-        OPENAI_BASE_URL: "https://api.proxy.pro/v1",
+        OPENAI_BASE_URL: "https://llm-proxy.example.test/v1",
         SIDELINE_MODEL_FAST: "gpt-6.1-sol",
         SIDELINE_MODEL_SMART: "gpt-6.1-sol",
       },

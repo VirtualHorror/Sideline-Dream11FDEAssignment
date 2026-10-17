@@ -398,7 +398,8 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
   `openai`, since OpenAI-compatible endpoints name models differently), `SIDELINE_PRICE_IN_PER_MTOK` /
   `SIDELINE_PRICE_OUT_PER_MTOK`, `SIDELINE_AI_DAILY_BUDGET_USD`, `SIDELINE_ASK_PER_MINUTE`,
   `SIDELINE_SESSION_AI_CAP`; keep the existing provider detection (D-033). `publicConfigSummary`
-  gains `aiModelFast`, `aiModelSmart` and `aiEndpointHost` (host name only, never keys or paths).
+  gains `aiModelFast`, `aiModelSmart` and `aiEndpointHost` (host name only, never keys or paths; Task 7 replaced it
+  with `aiEndpoint`, the kind of endpoint without its host, D-068).
 - Modify `src/http/app.ts`, `src/index.ts`, `apps/server/package.json` (add `@anthropic-ai/sdk`, `openai`; Decisions entry with versions ≥ 14 days old)
 - Test `apps/server/test/{bundle,sessions,stream,gateway,skills,orchestrator,routes,telemetry}.test.ts`
 
@@ -438,7 +439,7 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
   content: user }], text: { format: { type: "json_schema", name: <skill name>, schema, strict: true } },
   max_output_tokens })`; read `output_text`; usage from `usage.input_tokens` / `usage.output_tokens`;
   same zod validation. Do not send `reasoning` options by default. **Verified on 2026-10-16 against
-  the configured endpoint** (proxy, `https://api.proxy.pro/v1`, `gpt-6.1-sol`): strict
+  the configured endpoint** (an OpenAI-compatible proxy, base URL in `.env`, `gpt-6.1-sol`): strict
   `json_schema` works; tiny calls take 4-8.5 s; each call reports ~4,440 input tokens because of a
   hidden upstream prompt (D-033). The local `.env` already holds this configuration.
 - Replay provider: serves only cache rows loaded from `data/ai-replay/*.jsonl` (none exist until
@@ -480,7 +481,7 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
   rebuilt at boot from the bundles.
 
 **Steps** (failing test → implement → pass for each; use the scripted provider and an injected clock)
-- [x] **5.0** `config.test.ts` (extend): `OPENAI_API_KEY` + `OPENAI_BASE_URL` + both model vars → provider `openai` with that base URL; provider `openai` without `SIDELINE_MODEL_FAST/SMART` → throws naming the variable; both keys present → `anthropic` unless `SIDELINE_AI_PROVIDER=openai`; `publicConfigSummary` exposes `aiEndpointHost` (e.g. `api.proxy.pro`) and never a key.
+- [x] **5.0** `config.test.ts` (extend): `OPENAI_API_KEY` + `OPENAI_BASE_URL` + both model vars → provider `openai` with that base URL; provider `openai` without `SIDELINE_MODEL_FAST/SMART` → throws naming the variable; both keys present → `anthropic` unless `SIDELINE_AI_PROVIDER=openai`; `publicConfigSummary` exposes the kind of endpoint (`aiEndpoint`, D-068) and never a key or host.
 - [x] **5.1** `bundle.test.ts`: both bundles load and validate; events equal `buildTimeline` output.
 - [x] **5.2** `sessions.test.ts`: create a session for `late-from-work` → initial stadium time is the join point (after 14 overs of the chase) and the snapshot has every event ≤ it; advancing the fake clock at 8x releases the next events in order; `jump` backwards then forwards gives a snapshot equal to a fresh fold (Review focus 1); idle sessions are evicted after TTL.
 - [x] **5.3** `stream.test.ts`: SSE output parses as `StreamMessage`s in order (`hello`, `snapshot`, …), with `id:` = seq; no API key or secret appears anywhere in the stream.
@@ -489,7 +490,7 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
 - [x] **5.6** `orchestrator.test.ts`: two sessions on 1298150 reach innings-2 `18.6` (amended by D-043: `18.5` is below the nudge threshold): the first triggers a live call, the second gets provenance `cache` and the scripted provider call count stays 1 (thesis 1); a slow scripted call at 32x speed results in `nudgeAt: null` and `usedMs > budgetMs` in the trace (Review focus 3).
 - [x] **5.7** `routes.test.ts`: `/api/matches`; session create/control validation (bad speed → 400); `/ask` with 281 characters → 400; 13 asks in a minute from one IP → 429; unknown session → 404 JSON (Review focus 5).
 - [x] **5.8** `telemetry.test.ts`: after a full scripted replay, counters equal the gate's counters plus the gateway's; `projection.formula` contains the substituted numbers; `savedPct > 99` at 10 000 000 viewers.
-- [x] **5.9** `scripts/ai-smoke.ts` (`pnpm ai:smoke`, loads `.env`): when a key is configured, one real teaser call through the gateway returns a schema-valid output that passes `spoilerLint`, and prints provider, endpoint host, model, latency, tokens and estimated cost; without a key it prints "skipped". Not part of `pnpm test`. With today's `.env` this exercises the proxy endpoint (costs a few thousand tokens).
+- [x] **5.9** `scripts/ai-smoke.ts` (`pnpm ai:smoke`, loads `.env`): when a key is configured, one real teaser call through the gateway returns a schema-valid output that passes `spoilerLint`, and prints provider, endpoint kind, model, latency, tokens and estimated cost; without a key it prints "skipped". Not part of `pnpm test`. With today's `.env` this exercises the proxy endpoint (costs a few thousand tokens).
 - [x] **5.10** `pnpm verify` green; docs (F05, Flow §7-8 → BUILT, Architecture, Decisions incl. SDK versions, `.env.example`, TEST_CHECKLIST, ROLLBACK).
 
 **Audit hooks:** run the server and watch a full session with `curl -N`; run `pnpm ai:smoke` with a key

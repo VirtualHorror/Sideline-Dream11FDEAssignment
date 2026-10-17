@@ -7,7 +7,7 @@
  * Not part of `pnpm test`: it spends real tokens (a few thousand with today's endpoint, D-033) and
  * sends match facts to the provider. It picks the highest-leverage teaser of the first manifest
  * match (from data, not a literal), runs it through the real gateway with an in-memory database (no
- * trace or spend lands in data/runtime), and prints the provider, endpoint host, model, latency,
+ * trace or spend lands in data/runtime), and prints the provider, endpoint kind, model, latency,
  * tokens and cost. Exit 1 unless the answer is live, schema-valid and passes spoilerLint. The key is
  * never printed; only publicConfigSummary's fields are.
  */
@@ -71,7 +71,7 @@ if (!best) throw new Error(`${matchId} has no teaser triggers`);
 
 const teams = bundle.context.teams.map((t) => ({ code: t.code, name: t.name }));
 console.log(
-  `ai-smoke: provider ${summary.aiProvider}, endpoint ${summary.aiEndpointHost}, model ${summary.aiModelFast}`,
+  `ai-smoke: provider ${summary.aiProvider}, endpoint ${summary.aiEndpoint}, model ${summary.aiModelFast}`,
 );
 console.log(
   `ai-smoke: teaser for ${matchId} innings ${best.facts.innings}, ball ${best.facts.label} (leverage ${best.facts.leverage.value.toFixed(3)})`,
