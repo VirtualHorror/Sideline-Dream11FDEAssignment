@@ -61,7 +61,7 @@ export function PlaybackControls({
               checked={shownSpeed === value}
               onChange={() => send({ action: "speed", value }, { speed: value })}
             />
-            <span>{value}x</span>
+            <span className="segmented__text">{value}x</span>
           </label>
         ))}
       </fieldset>

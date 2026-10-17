@@ -29,7 +29,7 @@ function Budget({ trace }: { trace: AICallTrace }) {
   return (
     <span className="trace__budget" data-late={late}>
       <span className="trace__budget-bar" aria-hidden="true">
-        <span style={{ width: `${Math.round(share * 100)}%` }} />
+        <span className="trace__budget-fill" style={{ width: `${Math.round(share * 100)}%` }} />
       </span>
       {formatMs(trace.latencyMs)} of a {formatMs(trace.budgetMs)} budget
       {late ? ", too late to tease" : ""}

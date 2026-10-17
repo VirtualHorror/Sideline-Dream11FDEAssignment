@@ -324,7 +324,7 @@ describe("sessions: the end of the match reaches the fan's TV (BUG-004)", () => 
     const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
     const end = events.at(-1);
     const lastChat = b.crowd.at(-1);
-    if (!end || end.kind !== "match_end" || !lastChat) throw new Error("no match end or crowd");
+    if (end?.kind !== "match_end" || !lastChat) throw new Error("no match end or crowd");
     // A feed further behind than the crowd's last reaction to the result (22 s here; 25 s for the
     // babar-believer persona, where the Task 6 UI found it).
     const delay = 30_000;

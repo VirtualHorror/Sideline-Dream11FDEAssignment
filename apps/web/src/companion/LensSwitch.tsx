@@ -44,7 +44,7 @@ export function LensSwitch({
             checked={lens === value}
             onChange={() => onChange(value)}
           />
-          <span>{LENS_LABELS[value]}</span>
+          <span className="segmented__text">{LENS_LABELS[value]}</span>
         </label>
       ))}
     </fieldset>

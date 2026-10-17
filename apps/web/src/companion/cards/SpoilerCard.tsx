@@ -55,7 +55,12 @@ export function SpoilerCard({
   const showTeaser = visibility === "teaser" || (visibility === "revealed" && teased);
 
   return (
-    <article className="card card--spoiler" data-kind="spoiler_nudge" data-visibility={visibility}>
+    <article
+      className="card card--spoiler"
+      data-kind="spoiler_nudge"
+      data-visibility={visibility}
+      data-ball={ballLabel}
+    >
       <header className="card__head">
         <h3 className="card__title">{TITLES[visibility]}</h3>
         {ballLabel && visibility !== "hidden" ? (
