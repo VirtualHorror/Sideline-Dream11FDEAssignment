@@ -682,3 +682,30 @@
 - **Alternatives:** adding the fields to `hello` (a contract change, and the same 40 KB resent on every
   reconnect); importing `data/` into the web bundle at build time (match data baked into the client, a
   rebuild per match, and every match shipped to every fan).
+
+### D-061 — `/architecture` renders the docs with `markdown-it` 15.0.2, as React elements (2026-10-17, T6, Claude)
+- **Context:** D-034 and PLAN Task 6 need a markdown renderer with raw HTML disabled, added with a
+  Decisions entry and a version published at least 14 days ago (D-007; pnpm enforces it).
+- **Decision:** `markdown-it` **15.0.2** (published 2026-09-11; MIT; ships its own types), exact pin in
+  `apps/web/package.json`. New transitive packages: `argparse` 3.0.2 (2026-09-10), `linkify-it` 6.1.0,
+  `mdurl` 2.1.0, `uc.micro` 3.0.0 (2026-07-22) and `punycode.js` 2.3.1 (2023-10-30); `entities` 8.1.0 was
+  already in the lockfile. None has an install script; nothing native. It runs with `html: false` (raw
+  HTML stays text). `src/lib/markdown.ts` walks its token stream and builds React elements from a fixed
+  tag list, so no HTML string is ever injected (`dangerouslySetInnerHTML` is not used anywhere): web
+  links open in a new tab, in-page anchors stay, repository paths become plain text, wide tables and code
+  blocks scroll inside their own box. The page is a separate chunk (`React.lazy`), so the landing page
+  and the match room do not carry the docs or the parser.
+- **Alternatives:** `marked` (no switch to disable raw HTML; needs an escaping renderer and a sanitiser
+  for its HTML string); `react-markdown` with `remark-gfm` (safe by default, but about 50 packages);
+  `micromark` (safe, but tables need extensions); a hand-written parser (the PLAN asks for a library, and
+  CommonMark has many edge cases).
+
+### D-062 — A 60-line router instead of a routing library (2026-10-17, T6, Claude)
+- **Context:** Task 6 brings three routes (`/`, `/match/:matchId`, `/architecture`); the server already
+  answers every non-API path with `index.html` (Flow §2).
+- **Decision:** `src/router.tsx`: `parseRoute(pathname)`, `useRoute()` (`useSyncExternalStore` over
+  `popstate` and a custom navigate event), `navigate(to, { replace })` and `Link` (modified clicks and
+  new tabs left to the browser). Match ids must look like Cricsheet ids (`MatchIdSchema`), anything else
+  is "not found". The persona travels as `?persona=<id>`, so a match link without one shows the picker.
+- **Alternatives:** React Router or TanStack Router (a dependency and its supply chain for three routes,
+  D-019's "no kit" spirit); hash routing (ugly shareable links for the demo round).
