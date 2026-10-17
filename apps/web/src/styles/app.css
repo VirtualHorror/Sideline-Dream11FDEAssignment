@@ -626,6 +626,18 @@
     max-width: 72rem;
   }
 
+  .ai-use__more {
+    margin: clamp(1.5rem, 3vw, 2.25rem) 0 0;
+    color: var(--ink-muted);
+  }
+
+  .ai-use__more a {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
   .ai-use__item p {
     margin: 0;
     max-width: 34rem;
@@ -2890,6 +2902,18 @@
 
     .pipeline--down {
       display: block;
+    }
+  }
+
+  /* The picker's room, kept while the matches load, so nothing below it jumps when it arrives
+     (Task 9.5: Lighthouse counted the jump as a layout shift). Its height with both demo matches. */
+  .start--loading {
+    min-height: 37.5rem;
+  }
+
+  @media (max-width: 640px) {
+    .start--loading {
+      min-height: 70rem;
     }
   }
 

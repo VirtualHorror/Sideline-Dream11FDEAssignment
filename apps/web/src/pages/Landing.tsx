@@ -49,7 +49,7 @@ export function Landing() {
         </div>
       </section>
 
-      <section className="start" aria-label="Start watching">
+      <section className={matches ? "start" : "start start--loading"} aria-label="Start watching">
         {matches ? (
           <PersonaPicker
             matches={matches}

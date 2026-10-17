@@ -3,18 +3,20 @@
  * footer with the attribution line, which therefore appears on every route (Constraint 17).
  *
  * Routes (router.tsx): `/` the landing page, `/match/:matchId` the match room, `/architecture` the
- * shareable architecture and plan page (loaded on demand: it carries the docs and the markdown
- * renderer, which the landing and the match room do not need).
+ * shareable architecture and plan page. The room and the docs page are loaded on demand: the landing
+ * page needs neither, and its first paint is the one most fans wait for (Task 9.5, Lighthouse).
  */
 import { lazy, Suspense } from "react";
 import { AttributionFooter } from "./components/AttributionFooter.tsx";
 import { Landing } from "./pages/Landing.tsx";
-import { MatchRoom } from "./pages/MatchRoom.tsx";
 import { Link, useRoute } from "./router.tsx";
 import { ThemeControl } from "./theme/ThemeControl.tsx";
 
 const Architecture = lazy(() =>
   import("./pages/Architecture.tsx").then((module) => ({ default: module.Architecture })),
+);
+const MatchRoom = lazy(() =>
+  import("./pages/MatchRoom.tsx").then((module) => ({ default: module.MatchRoom })),
 );
 
 function NotFound() {
@@ -53,7 +55,11 @@ export function App() {
 
       <main id="main" className="shell__main">
         {route.name === "landing" ? <Landing /> : null}
-        {route.name === "match" ? <MatchRoom matchId={route.matchId} /> : null}
+        {route.name === "match" ? (
+          <Suspense fallback={<p className="page-loading">Loading the match…</p>}>
+            <MatchRoom matchId={route.matchId} />
+          </Suspense>
+        ) : null}
         {route.name === "architecture" ? (
           <Suspense fallback={<p className="page-loading">Loading the architecture…</p>}>
             <Architecture />
