@@ -6,7 +6,7 @@
 - **Task:** 05 in `docs/PLAN.md`
 - **Branch:** `task/05-server-ai`
 - **Owner / session:** Claude, implementing in place of Codex at Nabhanyu's request, then auditing, 2026-10-16
-- **Status:** ready for audit
+- **Status:** audited and merged (`t05-verified`)
 
 ## Scope
 
@@ -237,3 +237,50 @@ ai-smoke: OK
 6. `spoilerLint` checks digits only; number words ("five balls left") are left to the phrase list.
 
 ## Audit notes (filled by the auditor)
+
+**Audit, 2026-10-17, Claude, on the branch head. Verdict: accepted; merged `--no-ff`, tagged
+`t05-verified`.** Caveat first: Codex was unavailable, so the same agent implemented and audited this
+task (as with Tasks 3 and 4); the session began with an independent spot-check of `t04-verified` (log,
+D-051). Every check below ran on real output; an independent re-audit can repeat them with
+TEST_CHECKLIST §2 and this file.
+
+- **Verification (fresh runs):** `pnpm install --frozen-lockfile`; `pnpm verify` → 3× `typecheck: Done`,
+  `Checked 165 files … No fixes applied.`, `Test Files  37 passed (37)`, `Tests  492 passed (492)`,
+  `check-no-hardcode: OK (86 source files, 209 terms)`, `verify-data: OK (2 matches)`, built;
+  `pnpm test:e2e` → `8 passed`.
+- **Read-only files:** since `t04-verified`, `packages/engine/test/golden`, `scripts/oracle`, `data/models`
+  and `data/raw` are unchanged. The engine changed only by the `AICallTrace` fields (D-053, contract
+  tests first) and the `situationOf` export (test first).
+- **Anti-hardcoding (§2A):** scan OK; no `hardcode-ok`; no `.skip`/`.only`; no comparison with a label,
+  seq number or id in server source. Numbers in it are schema limits (160 is the payload's teaser cap),
+  token caps, HTTP statuses and decision numbers in comments. Every system prompt, the lens
+  instructions and the glossary were read for match-specific wording: none; facts are interpolated.
+- **Engine vs oracle (§2B):** both demo matches IDENTICAL (`compare.py`).
+- **Holdout (§2C):** the detectors on 1298158 and 1512763 in the spot-check (log), and whole sessions over
+  1298158 through the server modules: the engine gate's 23 teaser keys exactly, no outcome in any teaser
+  prompt, telemetry equal to the gate's counters, the late joiner's reel citing the raw file's 88/5 and 43
+  off 36, keyless fallbacks all passing the linter.
+- **Test quality (§2D):** expectations come from DOMAIN, the raw file and the spot-check's independent
+  Python lists (90/4 and 70 off 36; 138/4 with Kohli on 68 before the 18.6 six, 74 and 144/4 after it;
+  89/4 on a 15-second-delayed TV after 13.5; 23 teasers; 251 deliveries a match), never from the code under
+  test. `mutate.py` → `18 killed, 0 survived`. 54 hand mutants of the new code: 53 killed (three after
+  their gap tests landed). The survivor removes the catch-up skill's `squadImpact` destructuring; the
+  prompt builder copies an explicit field list and never reads it, so it is equivalent, and the sentinel
+  test still guards a builder that would serialise the whole facts. The two guards, written before their
+  tests, fail 5 of 5 neutered variants.
+- **Shortcut review:** no test weakened, skipped or deleted (two config tests gained the model variables
+  that 5.0 makes required; their assertions are unchanged); no golden or oracle edit; nothing keyed to
+  labels; the scripted provider replaces only the model (gateway, skills, sessions and both SDKs are
+  real; the providers are tested through their SDKs with a fake `fetch`); fallbacks are labelled
+  templates from the same facts, used on failure or without a key; the glossary is authored,
+  deterministic and labelled as such (`source: glossary`, provenance `deterministic`).
+- **Security (§2F):** CSP, `nosniff` and `DENY` on API responses of the live server; `.env` untracked,
+  mode 600, unchanged; no key-shaped strings in `apps/web/dist`; the key's first 8 characters in none of
+  the captured outputs (server log, stream, verify, E2E); 400, 413 and 429 tested; X-Forwarded-For
+  counts only from loopback; provider messages never copied into traces (codes only).
+- **Task 5 hooks:** the server watched keyless with `curl -N` (log); every prompt read; the budget
+  cut-off tested (carried daily spend, the session cap); `pnpm ai:smoke` run once with Nabhanyu's
+  approval: the proxy account is out of credit (403, then 503 on two approved zero-token listings),
+  the gateway fell back correctly, and traces now carry the provider's error code.
+- **Open (not defects of Task 5):** re-run `pnpm ai:smoke` once the account is topped up (Task 7's
+  `ai:record` needs a working provider); follow-ups 1-6.

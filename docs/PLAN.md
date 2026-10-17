@@ -77,7 +77,7 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 2 | Cricket core: timeline, reducer, fantasy scoring, engine report | Codex | `task/02-cricket-core` | ✅ done, tagged `t02-verified` |
 | 3 | Models: T20I archive pipeline, win probability, leverage, player priors | Claude (Codex unavailable) | `task/03-models` | ✅ done, tagged `t03-verified` |
 | 4 | Moments engine: clock, delay buffer, detectors, gate, quests, crowd, commentary | Claude (Codex unavailable) | `task/04-moments-engine` | ✅ done, tagged `t04-verified` |
-| 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Codex | `task/05-server-ai` | ⬜ |
+| 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Claude (Codex unavailable) | `task/05-server-ai` | ✅ done, tagged `t05-verified` |
 | 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Codex | `task/06-frontend-core` | ⬜ |
 | 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Codex + Nabhanyu | `task/07-deploy` | ⬜ |
 | 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | Codex | `task/08-ai-skills-2` | ⬜ |
@@ -494,6 +494,16 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
 
 **Audit hooks:** run the server and watch a full session with `curl -N`; run `pnpm ai:smoke` with a key
 if Nabhanyu has provided one; read every prompt for match-specific wording; test the budget cut-off.
+
+**Audit result (2026-10-17, Claude): accepted, `t05-verified`.** Implemented by Claude because Codex
+was unavailable, so this is a self-audit, after an independent spot-check of `t04-verified` in the same
+fresh session (two Task 4 test gaps pinned, D-051). 492 tests; `mutate.py` 18/18; 53 of 54 hand mutants
+of the new code killed (the survivor is equivalent); whole sessions over a holdout match (1298158) match
+an independent gate replay. Owner decisions: one crowd per match (D-050) and outcomes never in teaser
+prompts (D-055: the model writes the teaser, code writes the reveal). Beyond the PLAN's files:
+`runtime.ts`, `data/glossary.ts`, `providers/types.ts`, `skills/format.ts`, per-route files, and the
+engine's `situationOf` export. `pnpm ai:smoke` ran once with approval: the proxy account is out of
+credit (403), so it is to be repeated when topped up. Follow-ups: F05.
 
 ---
 
