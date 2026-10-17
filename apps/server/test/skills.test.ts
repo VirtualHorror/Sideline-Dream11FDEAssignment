@@ -10,6 +10,7 @@ import {
   nudgeDetector,
   type Persona,
   SpoilerNudgePayloadSchema,
+  seqAfterOvers,
 } from "@sideline/engine";
 import { describe, expect, it } from "vitest";
 import { createBudget } from "../src/ai/budget.ts";
@@ -180,6 +181,57 @@ describe("catch-up skill (PLAN 5.5)", () => {
     expect(payload.situation).toContain("90/4");
     expect(payload.situation).toContain("need 70 off 36");
     expect(payload).toMatchObject({ innings: 2, fromLabel: "0.1", toLabel: "13.6" });
+  });
+
+  // Nabhanyu, from the Task 6 screenshots: the reel for late-from-work's jump to 18 overs of the chase
+  // read "1 balls without a run" and "From 15.1 to 15.1".
+  it("counts the longest scoreless spell in the singular when it is one ball", () => {
+    // The raw file's overs 15-18 of the chase: 15.1, 15.3, 15.5, 16.3 and 16.5 are dot balls, none
+    // back to back, so the longest spell is one ball, the first at 15.1.
+    const jumped = buildCatchUpFacts({
+      events: b.events,
+      fromSeq: joinSeq(b.events, late.joinAt) + 1,
+      toSeq: seqAfterOvers(b.events, 2, 18),
+      ctx: ctxFor(b, late),
+      lens: "casual",
+    });
+    const payload = catchUpSkill.fallback(catchUpSkillFacts(jumped, teams(b)));
+    expect(payload).toMatchObject({ fromLabel: "14.1", toLabel: "17.6" });
+    expect(payload.slides.find((s) => s.kind === "plot_twist")).toMatchObject({
+      headline: "1 ball without a run",
+      body: "At 15.1, nothing was scored.",
+    });
+    // The join window's longest spell in the raw file is four balls, 1.4 to 2.1.
+    expect(
+      catchUpSkill
+        .fallback(catchUpSkillFacts(facts, teams(b)))
+        .slides.find((s) => s.kind === "plot_twist"),
+    ).toMatchObject({
+      headline: "4 balls without a run",
+      body: "From 1.4 to 2.1, nothing was scored.",
+    });
+  });
+
+  it("counts overs, runs and wickets in the singular in the brief reel", () => {
+    const [first] = facts.overs;
+    if (!first) throw new Error("no overs in the window");
+    const brief = catchUpSkill.fallback(
+      catchUpSkillFacts(
+        {
+          ...facts,
+          biggestSwings: [],
+          anomalies: [],
+          longestRunless: null,
+          overs: [{ ...first, runs: 1, wickets: 1 }],
+        },
+        teams(b),
+      ),
+    );
+    expect(brief.slides[0]).toMatchObject({
+      kind: "plot_twist",
+      headline: "1 over in brief",
+      body: "1 run and 1 wicket from 0.1 to 13.6.",
+    });
   });
 });
 
