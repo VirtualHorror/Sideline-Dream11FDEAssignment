@@ -83,6 +83,7 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | Claude (Codex unavailable), with Task 9 (D-069) | `task/08-09-skills-frontend` | ✅ done, tagged `t08-verified` |
 | 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | Claude (Codex unavailable), with Task 8 (D-069) | `task/08-09-skills-frontend` | ✅ done, tagged `t09-verified` |
 | 10 | Final audit, holdout match, security review, submission note, demo script, GitHub push (D-069) | Claude | `main` | ✅ done, tagged `t10-verified` (the live AI smoke waits for a key with credit; the zip and the push follow the tag, D-078) |
+| 11 | The AI chain (Groq, Gemini, then the proxy's key), the key scanner, the replay recording, the README's second version | Claude, at Nabhanyu's request | `main` | ✅ done (production's env file takes the keys with one `sudo deploy/install.sh`; the rotated Gemini key authenticates and waits on a per-link check, D-079, D-081) |
 
 ---
 
@@ -704,7 +705,7 @@ explains the engineering.
 - [x] **9.5** Polish: keyboard pass, focus order, `aria-live` for new moments (polite), contrast check, landing Lighthouse ≥ 90 for performance and accessibility (record the numbers).
 - [x] **9.6** `pnpm verify` + `pnpm test:e2e` green; docs (F09 etc.).
 
-**Audit result (2026-10-18, Claude): accepted, `t09-verified`.** Implemented by Claude (Codex unavailable), a self-audit,
+**Audit result (2026-10-17, Claude): accepted, `t09-verified`.** Implemented by Claude (Codex unavailable), a self-audit,
 in the same session as Task 8 (D-069, D-075). 739 tests, 26 E2E (story mode end to end on desktop and 390 px); 10 of 10
 hand mutants killed after two test gaps were pinned; the story plan checked on a holdout match. Beyond the PLAN's files:
 the engine's `buildStoryPlan` and the `StoryPlan` contract with `GET /api/matches/:matchId/story` (beats from personas
@@ -728,7 +729,7 @@ passes (26). Follow-ups: F09.
   *Decided 2026-10-17 by D-072 (Nabhanyu): scrub the forbidden word from every old commit and commit message,
   keep the commit trail, re-point `t01-verified` to `t10-verified` at the rewritten commits, back up first, then
   push; the pushed history must be 100% clean.*
-- [ ] Submission zip (Nabhanyu's request, 2026-10-18): an archive of the repository at `t10-verified` from
+- [ ] Submission zip (Nabhanyu's request, 2026-10-17): an archive of the repository at `t10-verified` from
   `git archive` (tracked files only: no `.env`, no `node_modules`, no runtime database), with its sha256 noted in
   `docs/SUBMISSION.md`.
   *The push and the zip are made from the tag, after it, so the tagged tree cannot record them; the zip's sha256 sits
@@ -742,6 +743,37 @@ and on a holdout no code had seen (1512772, the 2026 semi-final, India v England
 mutants 18 of 18 killed. The security review found that the SQL sandbox's 2 s stop left the query computing (BUG-005):
 fixed test first, the query now runs in a child process that is killed (D-078). Submission note, demo script, README.
 Not run: the live AI smoke and the replay recording (no credit). Follow-ups: F10.
+
+---
+
+## Task 11: The AI chain, the replay recording and the README (Claude, at Nabhanyu's request, 2026-10-17)
+
+After the submission, the proxy's key still had no credit, so the live site showed only labelled fallbacks.
+Nabhanyu brought free-tier Groq and Gemini keys and three requests: an ordered AI chain with the proxy's key
+last, the README in the shape of his Aegis README with the old one kept, and one sync to production and to
+the public repository. Record: `docs/features/F11-ai-chain-and-readme.md`.
+
+- [x] 11.1 The AI chain (D-079): `ai/providers/chat.ts` (Groq and Gemini through Chat Completions),
+  `ai/providers/chain.ts` (order, cooldowns, the daily cap, waits, shares of the time), migration 3 (the
+  cache's served model, `ai_link_requests`), the config (`GROQ_API_KEY`, `GEMINI_API_KEY`, `SIDELINE_AI_CHAIN`),
+  the providers `groq`, `gemini` and `chain` in the trace contract, the chain's models priced; test first.
+- [x] 11.2 Keys only in `.env` (and production's env file); `pnpm check:hardcode` fails on key-shaped strings in
+  tracked files (Constraint 13).
+- [x] 11.3 `pnpm ai:smoke` live through the chain, and `--each-link` for every link (Groq answers; Gemini 401; the
+  proxy 403); then `pnpm ai:record --yes` (the replay cache, F11).
+- [x] 11.4 The README's second version, the first kept as `docs/README.v1.md` (D-080).
+- [x] 11.5 Docs current, `pnpm verify` and `pnpm test:e2e`, one commit on `main` here and the same tracked changes
+  as one commit on the public repository; `deploy/update.sh`, then the public E2E.
+- [ ] 11.6 Nabhanyu: `sudo deploy/install.sh` once, so `/etc/sideline/sideline.env` gets the Groq and Gemini keys
+  (until then production runs the proxy's key, and recorded answers).
+- [ ] 11.7 Nabhanyu: a Gemini key Google accepts (every endpoint answered the first `AQ.` key with 401, D-079; the
+  rotated key authenticates, and `pnpm ai:smoke --each-link` shows whether both Gemini links answer, D-081); nothing
+  in the code changes when it does.
+- [x] 11.8 The keys rotated (Nabhanyu revoked the first pair), in `.env` only; `pnpm check:hardcode` also fails on the
+  start of this project's keys, revoked or live (D-081); `pnpm ai:smoke` reads no recorded rows, so it asks the
+  provider again (test first), and it answered live from Groq.
+- [x] 11.9 The README polish (D-080's update): plain headings in place of the Aegis README's phrases; the four moments
+  by feature, the scope task by task, the command list and the submission links back from `docs/README.v1.md`.
 
 ## Stretch (only after Milestone B)
 

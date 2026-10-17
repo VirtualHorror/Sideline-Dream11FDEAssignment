@@ -18,6 +18,7 @@ audit updates this page.
 | F08 | AI skills II: lineup patch (illegal swaps dropped, fan requests until the first ball), bailout (comeback quests the engine settles), room read, stat-back and the NL inspector over a read-only SQL sandbox (worker, in-memory views, SQLite's authorizer, 2 s kill); lineup-intent, chat and inspector routes; the TV chip follows the provider (D-071); the domain (D-070); Task 10's history scrub recorded (D-072) | audited and merged, `t08-verified` | [F08](features/F08-ai-skills-2.md) |
 | F09 | Frontend II: a card for every moment (lineup ledger, comeback quest with its shareable banter card, room-read pods, take card), the fan's chat line and stat-back, the inspector in the control plane, story mode from the data (the engine's plan, a pure director, stops on the fan's TV clock), the `/architecture` polish (theses, pipeline SVG, live AI-usage table, timeline, credits), the landing performance pass (D-077) | audited and merged, `t09-verified` | [F09](features/F09-frontend-complete.md) |
 | F10 | Final audit and submission: TEST_CHECKLIST §2 across the repository with a holdout (1512772) and the archive sweep, the security review (BUG-005: the sandbox's query now runs in a process killed at 2 s, D-078), the submission note and the demo script, the README's clone-and-run steps, the two copies of the repository (D-078) | audited, `t10-verified` | [F10](features/F10-final-audit.md) |
+| F11 | The AI chain (Groq's and Gemini's free tiers, then the proxy's key: cooldowns, a daily cap, served models in the cache, D-079), the key scan, `pnpm ai:smoke --each-link`, the first replay recording, the README's second version (D-080); the follow-up: the rotated keys' prefixes in the key scan and a smoke that asks the provider (D-081), the README polish | done and self-audited (Claude implemented it; production's keys wait on one `sudo deploy/install.sh`) | [F11](features/F11-ai-chain-and-readme.md) |
 
 ## Bugs
 
@@ -72,3 +73,13 @@ Fixed while Task 7 was being implemented (logged in F07, no bug file):
 Closed by tests in Task 7 (the `t06-verified` spot-check, D-065, no bug file):
 - Nothing pinned a teaser's trace staying held while its card only teases, a question's trace showing at once, or
   a seek past the end clamping to the crowd's last reaction; the merged code was right, and all three now have tests.
+
+Fixed while Task 11 was being implemented (logged in F11, no bug file):
+- The new key scan found one key-shaped literal in a tracked file: a deploy test's fake OpenAI-style key. It is now
+  assembled at run time, so the test still proves the key never reaches the env file's report.
+
+Fixed in Task 11's follow-up (logged in F11, no bug file):
+- Once the replay cache was recorded, `pnpm ai:smoke` answered its teaser from the recording (`provenance replay`)
+  and reported `FAILED` without asking the provider: its runtime loaded `data/ai-replay`. It now reads no recorded
+  rows (D-081); a test runs the real script against a stand-in endpoint on loopback (it failed first: no request
+  reached the endpoint).

@@ -11,6 +11,10 @@
  * Migration 2 (D-071): `ai_calls.called`, whether the run reached the provider, so a restart knows
  * the provider's last answer; rows written before it are filled in from the shape of the gateway's
  * traces (a cache miss by a real provider that was neither a budget stop nor a shared result).
+ * Migration 3 (D-079, the AI chain): `ai_cache.served_model`, the model that wrote a live row when it
+ * is not the configured one (a chain's link, an Anthropic fallback; null before it, the configured
+ * model wrote those), and `ai_link_requests`, each chain link's requests per quota day (its cap).
+ * An older build runs on a newer database: it never reads the new column or table.
  */
 import type { DatabaseSync } from "node:sqlite";
 
@@ -78,6 +82,15 @@ export const MIGRATIONS: readonly string[] = [
   UPDATE ai_calls SET called = 1
    WHERE cache = 'miss' AND provider NOT IN ('none', 'replay') AND outcome <> 'budget'
      AND (detail IS NULL OR detail NOT LIKE 'shared result:%');
+  `,
+  `
+  ALTER TABLE ai_cache ADD COLUMN served_model TEXT;
+  CREATE TABLE ai_link_requests (
+    day      TEXT NOT NULL,
+    link     TEXT NOT NULL,
+    requests INTEGER NOT NULL,
+    PRIMARY KEY (day, link)
+  );
   `,
 ];
 

@@ -15,6 +15,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs, parseEnv } from "node:util";
+import { describeAiChain } from "../apps/server/src/config.ts";
 import { renderProductionEnv } from "./lib/deploy-env.ts";
 
 const repoRoot = resolve(import.meta.dirname, "..");
@@ -46,6 +47,9 @@ try {
   console.error(
     `deploy-env: the server will run with provider ${out.summary.aiProvider}, models ${out.summary.aiModelFast ?? "none"} / ${out.summary.aiModelSmart ?? "none"}, endpoint ${out.summary.aiEndpoint ?? "none"}`,
   );
+  if (out.summary.aiChain) {
+    console.error(`deploy-env: AI chain ${describeAiChain(out.summary.aiChain)}`);
+  }
 } catch (error) {
   console.error(`deploy-env: ${(error as Error).message}`);
   process.exit(1);

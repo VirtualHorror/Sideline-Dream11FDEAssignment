@@ -939,7 +939,7 @@
   multi-option predictions (one rule can only say yes or no); a discriminated union in the model's schema (strict
   structured-output modes handle unions unevenly).
 
-### D-076 — Story mode and the Task 9 surfaces as built (2026-10-18, T9, Claude)
+### D-076 — Story mode and the Task 9 surfaces as built (2026-10-17, T9, Claude)
 - **Story plan:** the engine's `buildStoryPlan` (contract `StoryPlan`, `contracts/story.ts`) picks the story's fan as
   the first pre-match persona with a team and the catch-up point as the first late joiner's join point; every other
   beat is a trigger the gate raises (all four detectors, the match's crowd) when that fan watches the whole match:
@@ -972,7 +972,7 @@
   file (hand-picked moments, the opposite of beats from triggers); the diagram as a raster image (no theme colours, no
   text alternative); a separate route for the story (the room is the story; `story=1` keeps links shareable).
 
-### D-077 — The landing's performance pass, and how it was measured (2026-10-18, T9 step 9.5, Claude)
+### D-077 — The landing's performance pass, and how it was measured (2026-10-17, T9 step 9.5, Claude)
 - **Measured first:** Lighthouse 13.5.0 (published 2026-09-18, run with `npx` from a scratch directory, not a
   dependency) on the landing page served the way production serves it (the built app behind a local Caddy with
   the production site block's `encode zstd gzip`): accessibility 100, best practices 96, performance 50 on the
@@ -992,7 +992,7 @@
   2.3 s, layout shift 0.007), desktop 79-98; accessibility 100 and best practices 96 in every run (the 4 points: a
   content-security-policy note in Chrome's Issues panel with no detail; no console error). The PLAN's "≥ 90" is met
   on a quiet run of each form factor, not reliably on this busy host; Task 10 measures again (F09 follow-up 1).
-  *After the deploy (2026-10-18, `t09-verified`, production's own Caddy, load average 5-6):* phone performance 92
+  *After the deploy (2026-10-17, `t09-verified`, production's own Caddy, load average 5-6):* phone performance 92
   (first paint 2.1 s, blocking 230 ms, layout shift 0), desktop 90 (0.4 s, 260 ms, 0.007), accessibility 100 and best
   practices 96 on both.
 - **Alternatives:** dropping the floodlight's animation on GPU-less browsers (it would also hide it from the headless
@@ -1028,3 +1028,102 @@
   in the validator (a CTE repeats a table without naming it again), a smaller row limit (a `count(*)` reads every row
   anyway); (copies) rewriting the working copy too (the deploy checkout and every local branch would follow it for no
   gain, and the unrewritten history never leaves this host).
+
+### D-079 — The AI chain: Groq's and Gemini's free tiers first, the proxy's key last (2026-10-17, T11, Nabhanyu + Claude; amends D-033, D-052 and D-067)
+- **Context:** the proxy's account has had no credit since 2026-10-17 (403 `key_expired`), so every AI card on the live
+  site was a labelled fallback and the replay cache was never recorded (D-078). Nabhanyu brought a Groq key and a
+  Gemini key, both on free tiers with rate limits, and set the order: Groq's Qwen3.8 27B, Groq's GPT-OSS 20B, Gemini 3.5
+  Flash-Lite, Groq's GPT-OSS 120B, Gemini 3.5 Flash (20 requests a day on the free tier: guard it), then the proxy's
+  key, then the labelled fallback; the same code in the public repository, keys only in `.env` and production's env file.
+- **Decision (as built):** a new provider, the **AI chain** (`ai/providers/chain.ts`), whose links are the existing
+  adapters plus one for Chat Completions (`ai/providers/chat.ts`), which serves both Groq (`api.groq.com/openai/v1`) and
+  Gemini (its OpenAI-compatible endpoint) with a bearer key, a strict `json_schema` response format and each model
+  family's reasoning options (Groq's Qwen one step below the skill's effort, `none` at low effort, its reasoning hidden;
+  GPT-OSS at the skill's effort without its reasoning; Gemini at the skill's effort). A request goes to the links in
+  order and the first answer wins. A link is passed over while it cools down (429: its `retry-after`, else 30 s; 401,
+  403, 404: 10 minutes; 5xx, a network failure or no answer within its share of the time: 15 s, unless the share was
+  under 2 s, cut short by the deadline; 400, 413, 422: this request only), once it has used its daily cap (`@20`, counted per Pacific-time day as Google counts quotas, in a new
+  table so a restart keeps the count, every request sent counting), and while a later link could still answer it gets
+  at most half the time left. When every link is cooling down, the chain waits for the soonest if 2 s of the skill's
+  time remain after it (Groq's free tier allows 8,000 tokens a minute per model, as its headers say, so a 429 clears in
+  seconds); otherwise it throws a provider error naming every link's reason. An answer the link could not get right (a
+  refusal, text that is not JSON) ends the request, recorded against that link as for a single provider. One run is
+  still one trace: the provider and model that answered, the links passed over in `detail`, the answering model's cost;
+  a run no link answered is a provider error (`provider error: no link answered: groq qwen/qwen3.8-27b (429,
+  rate_limit_exceeded); …`), so the TV's chip follows the chain as it followed one provider (D-071). The cache keeps
+  each live row under the configured model, the chain's first link, and remembers the model that wrote it (migration
+  3, `ai_cache.served_model`): a cache hit and every recorded replay row name the model that really answered.
+- **Configuration:** `GROQ_API_KEY` or `GEMINI_API_KEY` makes the chain the default provider (before Anthropic and
+  OpenAI; `SIDELINE_AI_PROVIDER=chain` names it). `SIDELINE_AI_CHAIN` changes the order as
+  `provider:model[@requests a day]` entries; `openai` alone is the OpenAI-compatible key with `SIDELINE_MODEL_FAST` and
+  `SIDELINE_MODEL_SMART`. In the default order a link without its key is left out (a clone with only a Groq key gets
+  the three Groq links); in a written order a missing key fails the boot, naming the link. `/api/health` adds
+  `aiChain` (each link's endpoint kind, models and cap; never a key or host) and `aiEndpoint` reads `chain`.
+- **Model ids, checked against the providers on 2026-10-17:** the owner's `gwen/qwen3.8-27b` is `qwen/qwen3.8-27b` in
+  Groq's model list (the `gwen/` id answers 404 `model_not_found`). `gemini-3.5-flash` is no longer selectable in AI
+  Studio and Google serves its requests with `gemini-3.6-flash` (the deprecations page); it stays as the owner wrote it,
+  and the trace names whichever model answered. Prices: each model's paid-tier list price (Groq's model pages, Gemini's
+  pricing page) is built in, so costs are no longer estimates; the free tiers bill nothing, so for them a cost says what
+  the same traffic would cost on a paid key, which is what the scale projection needs.
+- **The Gemini key does not work yet:** the key is of Google's new `AQ.` kind, and every Gemini endpoint answers 401
+  (`ACCESS_TOKEN_TYPE_UNSUPPORTED` with the documented `x-goog-api-key` header or `?key=`, the OpenAI-compatible endpoint
+  with a bearer key, and Vertex AI's express endpoint alike), a problem Google's developer forum has many open reports
+  of in October 2026. The chain passes over both Gemini links (10 minutes after each 401) and answers from Groq; a working
+  key needs no change here (Follow-up 1 in F11).
+- **Keys:** only in `.env` (mode 600) and `/etc/sideline/sideline.env` (written by `sudo deploy/install.sh`, which
+  copies the new variables because the server reads them). `pnpm check:hardcode` gains a third pass that fails on
+  anything shaped like a Groq (`gsk_`), Google (`AIza`, `AQ.`), OpenAI or Anthropic (`sk-`) key in a tracked file and
+  prints where, never the key; the tests' placeholders are short, and one test's long fake key is now assembled at run
+  time. `pnpm ai:smoke --each-link` asks every link once with the same teaser.
+- **Alternatives:** the fallbacks in the gateway, one trace per attempt (it would change the counters, the recorder's
+  accounting and every gateway test, for a detail the trace already carries); Gemini's native API (a second adapter;
+  the OpenAI-compatible endpoint does the same through the SDK already in use, so no new dependency, Constraint 10);
+  retrying the same link (a per-minute limit makes the next link the faster answer); counting caps in memory (a restart
+  would hand the 20-request link a fresh day).
+- **Consequences:** live AI on the public site without a paid key once production's env file has the keys (one `sudo
+  deploy/install.sh`). An older build still boots on the new `.env` (it ignores the new variables, and
+  `SIDELINE_AI_PROVIDER` stays empty so it picks the proxy's key) and on the migrated database (it never reads the new
+  column or table): `docs/ROLLBACK.md`.
+
+### D-080 — The README's second version, the first one kept (2026-10-17, T11, Nabhanyu)
+- **Context:** the README was accurate but read as a list; Nabhanyu pointed at his Aegis README as the bar: a clear
+  thesis, a live link with what to press, a system picture, a short quickstart, the incidents and how they were found,
+  the AI boundary, honest numbers, what is simulated and how to check every claim.
+- **Decision:** a new `README.md` in that shape, with Sideline's own content: every number in it comes from a command,
+  a test or a doc in this repository (the scoreboard says where), and the incidents are the bug files'. The previous
+  README is kept, unchanged, as `docs/README.v1.md`. The README still ends with "Credits and licences" and the
+  attribution line, because `/architecture` renders that section from it.
+- **Alternatives:** editing the old README section by section (it keeps the list shape the owner wanted to leave).
+- **Update (Nabhanyu, after Task 11):** the shape stays, the borrowed wording goes. The headings and phrases the first
+  draft took from the Aegis README are replaced with plain ones: "What broke, and how I got out" is now "Engineering
+  findings from the build and its audits" (its items labelled "The problem", "The fix", "Current provider status"),
+  "The honest scoreboard" is "Verification & scale metrics" with its "Notes and known limits", and the lines pointing
+  readers at a section are gone. From `docs/README.v1.md` it takes back the four moments by feature, the scope task by
+  task with the milestones, the full command list ("More commands") and the links to the submission note and the demo
+  script. `docs/README.v1.md` stays unchanged.
+
+### D-081 — The rotated keys: this project's own key prefixes in the key scan, and a smoke that asks the provider (T11 follow-up, Nabhanyu + Claude; amends D-079)
+- **Context:** Nabhanyu revoked the first Groq and Gemini keys and brought new ones, which live only in `.env`, as
+  before. D-079's scan catches a whole key by its shape, not a fragment: a note quoting a key's first few characters
+  (`gsk_` and four more) is too short for any shape. And `pnpm ai:smoke`, run to check the new Groq key, answered its
+  teaser from the replay recording (`provenance replay`, then `FAILED (ok)`) without asking the provider: the smoke's
+  runtime loaded `data/ai-replay`, whose rows a cache look-up serves for any model, and Task 11 had recorded that
+  teaser after its own live smoke.
+- **Decision:** `pnpm check:hardcode`'s third pass also fails on the start of each of this project's keys, the revoked
+  pair and the live one (`KEY_PREFIXES`: `gsk_` and the next four characters of each Groq key, the eight characters
+  after `AQ.` of each Google key), case-sensitively, in any tracked file, printing the file, the line and the kind of
+  key, never the characters. The scanner keeps them reversed, like the proxy's name (D-068), and the tests build theirs
+  from parts, so neither file holds one. A rotation adds the new key's prefix and keeps the old one. `pnpm ai:smoke`
+  builds its runtime without the recorded rows (`replayDir: null`), so its teaser always reaches the provider; a test
+  runs the real script, with the recording in place, against an OpenAI-compatible stand-in on loopback (no key, no
+  spend, Constraint 26).
+- **Alternatives:** hashes of the prefixes instead of the reversed text (eight characters of a 50-plus-character key
+  leave the rest as unguessable as before, and a hash would have to be computed for every eight-character window of
+  every tracked file); a smoke that picks a moment with no recording (a different, lower-leverage teaser, and none
+  left once every moment is recorded).
+- **Consequences:** with the rotated keys, `pnpm ai:smoke` answered live from Groq's `qwen/qwen3.8-27b` (342 ms, 368
+  tokens in, 34 out, spoilerLint ok). The rotated Gemini key authenticates where the first one got 401: Google's model
+  listings, on the OpenAI-compatible endpoint the chain uses and on the native one, answer 200 (zero tokens, no match
+  facts sent); whether both Gemini links answer a teaser is for `pnpm ai:smoke --each-link`, with Nabhanyu's go-ahead.
+  `.env` also records the Gemini key's Cloud project (`GEMINI_PROJECT_ID`), which the server does not read
+  (`install.sh` reports it as skipped). Production's env file holds neither pair until `sudo deploy/install.sh`.

@@ -78,10 +78,13 @@ the new build and the restart (the server keeps `index.html` in memory), a secon
 
 **AI key rotation or new AI settings:** update the key where it lives (`~/.bashrc` for Codex,
 `.env` for Sideline: D-033), then `sudo deploy/install.sh` to rewrite `/etc/sideline/sideline.env`
-and restart. With a key whose account has no credit, every AI card is a labelled fallback ("Fallback:
-AI unavailable") and the control plane's trace says why (`PermissionDeniedError (403)`); topping the
-account up is enough, no redeploy. Recorded AI (`data/ai-replay/`, from `pnpm ai:record`) is served
-to everyone once it is committed and deployed, with or without a key.
+and restart. That is also how production gets the AI chain's keys (`GROQ_API_KEY`, `GEMINI_API_KEY`,
+Task 11, D-079): `deploy/update.sh` changes the code only, so after it the server keeps the env file it
+had; the dry run's report lists the names it will copy and the chain's order. With a key whose account
+has no credit, its cards are labelled fallbacks ("Fallback: AI unavailable") and the control plane's
+trace says why (`PermissionDeniedError (403)`); with the chain, the next link answers instead.
+Recorded AI (`data/ai-replay/`, from `pnpm ai:record`) is served to everyone once it is committed and
+deployed, with or without a key.
 
 ## When something is wrong
 

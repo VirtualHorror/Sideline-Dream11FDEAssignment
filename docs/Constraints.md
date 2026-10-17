@@ -52,7 +52,11 @@
 ## C. Security and data
 
 13. **Never commit or log secrets.** `.env` is git-ignored; use `.env.example` for names only.
-    Only `publicConfigSummary()` may leave the process.
+    Only `publicConfigSummary()` may leave the process. `pnpm check:hardcode` fails on anything shaped
+    like an AI provider's key (Groq `gsk_`, Google `AIza` and `AQ.`, OpenAI and Anthropic `sk-`) in any
+    tracked file (D-079), and on the start of any of this project's own keys, revoked or live (D-081): a test
+    that needs a long fake key assembles it at run time, and a key rotation adds the new key's prefix to
+    `KEY_PREFIXES` (reversed) in `scripts/check-no-hardcode.ts`.
 14. **`data/raw/` changes only via `scripts/fetch-cricsheet.ts`.** Checksums must match the manifest.
     Likewise **`data/models/` changes only via `scripts/build-models.ts`** (never by hand), and a rebuild
     from the zip recorded in `data/models/README.md` must leave it byte-identical (D-039).
@@ -94,7 +98,8 @@
     (`main` or a `tNN-verified` tag); a task branch only during its own audit.
 26. **No test spends money.** `pnpm test` uses the scripted provider and the E2E's local server is forced
     keyless. `pnpm ai:smoke` and `pnpm ai:record --yes` run only with Nabhanyu's go-ahead
-    (`pnpm ai:record` without `--yes` only plans and sends nothing).
+    (`pnpm ai:record` without `--yes` only plans and sends nothing). A free-tier key (the AI chain's Groq
+    and Gemini keys, D-079) spends its daily quota instead of money: the same rule holds.
 27. **The AI proxy's name never appears in a tracked file** (D-068), in code, docs, handoffs or commit
     messages: call it "the proxy". Its base URL lives only in `.env` and the production environment
     file. `pnpm check:hardcode` fails on it.

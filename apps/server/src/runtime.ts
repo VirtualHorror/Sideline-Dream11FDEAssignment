@@ -10,14 +10,16 @@
  */
 import { join } from "node:path";
 import type { Detector } from "@sideline/engine";
-import { createBudget } from "./ai/budget.ts";
+import { createBudget, createLinkLedger } from "./ai/budget.ts";
 import { createCache } from "./ai/cache.ts";
 import { createGateway } from "./ai/gateway.ts";
 import { createAnthropicProvider } from "./ai/providers/anthropic.ts";
+import { type ChainLink, createChainProvider, type LinkLedger } from "./ai/providers/chain.ts";
+import { createChatProvider } from "./ai/providers/chat.ts";
 import { createOpenAiProvider } from "./ai/providers/openai.ts";
 import { loadReplayRows } from "./ai/providers/replay.ts";
 import type { LlmProvider } from "./ai/providers/types.ts";
-import type { AppConfig } from "./config.ts";
+import { type AppConfig, type ChainLinkConfig, GEMINI_BASE_URL, GROQ_BASE_URL } from "./config.ts";
 import { loadMatchBundles } from "./data/bundle.ts";
 import { loadGlossary } from "./data/glossary.ts";
 import { openDatabase, rebuildAnalytics } from "./db/database.ts";
@@ -25,14 +27,48 @@ import { createOrchestrator } from "./orchestrator/orchestrator.ts";
 import { createSessionManager } from "./sessions/manager.ts";
 import { createTelemetry, createTraceSink } from "./telemetry/collector.ts";
 
-/** The provider the config selected, or null (no key: replay rows and labelled fallbacks). */
-export function createProvider(config: AppConfig): LlmProvider | null {
+/**
+ * The AI chain's links (D-079), one adapter each, in the config's order. Called by createProvider
+ * and by `pnpm ai:smoke --each-link`, which asks every link once.
+ */
+export function createChainLinks(config: AppConfig): ChainLink[] {
+  const { ai } = config;
+  const adapter = (name: ChainLinkConfig["provider"]): LlmProvider | null => {
+    if (name === "groq" && ai.groqApiKey) {
+      return createChatProvider({ name, apiKey: ai.groqApiKey, baseURL: GROQ_BASE_URL });
+    }
+    if (name === "gemini" && ai.geminiApiKey) {
+      return createChatProvider({ name, apiKey: ai.geminiApiKey, baseURL: GEMINI_BASE_URL });
+    }
+    if (name === "openai" && ai.openaiApiKey) {
+      return createOpenAiProvider({ apiKey: ai.openaiApiKey, baseURL: ai.openaiBaseUrl });
+    }
+    return null;
+  };
+  return (ai.chain ?? []).flatMap((link) => {
+    const provider = adapter(link.provider);
+    return provider ? [{ provider, models: link.models, dailyCap: link.dailyCap }] : [];
+  });
+}
+
+/**
+ * The provider the config selected, or null (no key: replay rows and labelled fallbacks). The AI
+ * chain counts its daily caps in `ledger`: the server passes its database's, so a restart keeps the
+ * counts; scripts get one in memory.
+ */
+export function createProvider(
+  config: AppConfig,
+  opts: { ledger?: LinkLedger } = {},
+): LlmProvider | null {
   const { ai } = config;
   if (ai.provider === "anthropic" && ai.anthropicApiKey) {
     return createAnthropicProvider({ apiKey: ai.anthropicApiKey });
   }
   if (ai.provider === "openai" && ai.openaiApiKey) {
     return createOpenAiProvider({ apiKey: ai.openaiApiKey, baseURL: ai.openaiBaseUrl });
+  }
+  if (ai.provider === "chain") {
+    return createChainProvider({ links: createChainLinks(config), ledger: opts.ledger });
   }
   return null;
 }
@@ -65,7 +101,10 @@ export function buildRuntime(
     eventsPerMatch: new Map([...bundles].map(([id, bundle]) => [id, bundle.events.length])),
   });
   const gateway = createGateway({
-    provider: opts.provider === undefined ? createProvider(config) : opts.provider,
+    provider:
+      opts.provider === undefined
+        ? createProvider(config, { ledger: createLinkLedger(db) })
+        : opts.provider,
     cache,
     budget: createBudget({
       db,

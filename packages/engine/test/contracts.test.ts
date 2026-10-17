@@ -235,6 +235,15 @@ describe("AICallTraceSchema", () => {
     expect(AICallTraceSchema.safeParse(noDetail).success).toBe(false);
     expect(AICallTraceSchema.safeParse({ ...trace, detail: "x".repeat(301) }).success).toBe(false);
   });
+
+  // D-079: a run the AI chain served names the link's provider; a cache hit it served, or a run no
+  // link answered, names the chain.
+  it("names the AI chain and the providers its links call", () => {
+    for (const provider of ["groq", "gemini", "chain"]) {
+      expect(AICallTraceSchema.safeParse({ ...trace, provider }).success).toBe(true);
+    }
+    expect(AICallTraceSchema.safeParse({ ...trace, provider: "mistral" }).success).toBe(false);
+  });
 });
 
 describe("InspectorRequestSchema and InspectorResultSchema (Task 8 addition, D-073)", () => {

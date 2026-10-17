@@ -25,7 +25,14 @@ const FORCED = new Set(["HOST", "NODE_ENV", "PORT"]);
 const CHECKOUT_PATHS = new Set(["SIDELINE_DATA_DIR", "SIDELINE_WEB_DIST"]);
 
 /** What `--keyless` leaves out; it then sets SIDELINE_AI_PROVIDER=none, so no model is ever called. */
-const AI_CHOICE = new Set(["ANTHROPIC_API_KEY", "OPENAI_API_KEY", "SIDELINE_AI_PROVIDER"]);
+const AI_CHOICE = new Set([
+  "ANTHROPIC_API_KEY",
+  "OPENAI_API_KEY",
+  "GROQ_API_KEY",
+  "GEMINI_API_KEY",
+  "SIDELINE_AI_CHAIN",
+  "SIDELINE_AI_PROVIDER",
+]);
 
 const HEADER = [
   "# Sideline's production settings, read by systemd for sideline.service (EnvironmentFile=).",

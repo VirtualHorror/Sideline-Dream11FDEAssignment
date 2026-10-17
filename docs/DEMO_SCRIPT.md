@@ -7,8 +7,10 @@
 **Before the call:** open <https://sideline.nabhanyubm.tech/> and `/architecture` in two tabs; `curl -fsS
 https://sideline.nabhanyubm.tech/api/health` should say `"ok":true`. The tour runs the 2022 T20 World Cup match,
 India v Pakistan at the MCG (India won by 4 wickets), as **Captain Babar**: a fan who made Babar Azam captain and
-watches a stream 25 s behind the stadium. If the AI provider has no credit, the TV's chip says "No live AI" and the
-AI cards are labelled fallbacks: say so up front, it is part of the design (questions below).
+watches a stream 25 s behind the stadium. The tour's AI cards are real recorded answers ("Replayed AI", recorded through
+the AI chain, D-079); with the Groq key in production's env file, anything else is answered live by the chain. If every
+link is down, the TV's chip says "No live AI" and the cards are labelled fallbacks: say so up front, it is part of the
+design (questions below).
 
 ## The walkthrough
 
@@ -40,13 +42,16 @@ by cohort or squad. The control plane projects it from live counters: for a Capt
 call per event per fan at 10 million viewers is 2,660,000,000 calls; Sideline is its shared keys plus one personal
 lineup patch per viewer, about 99.6% fewer, and 99.999999% fewer with no personal moments (§6).
 
-**What does it cost?** Each call's cost comes from the tokens the provider reports, priced from `.env`; the control
-plane adds it up live. Two caps hold it: a global daily budget (`SIDELINE_AI_DAILY_BUDGET_USD`, $3 by default) and
+**What does it cost?** Each call's cost comes from the tokens the provider reports, at the model's list price (built
+in for the chain's models, from `.env` for any other); the control plane adds it up live. On Groq's free tier the bill
+is $0: recording 87 moments took 124 calls and would have cost $0.10 on a paid key. Two caps hold it: a global daily budget (`SIDELINE_AI_DAILY_BUDGET_USD`, $3 by default) and
 80 model calls per session; past either, cards fall back, labelled. Questions are rate-limited per address.
 
 **What happens with no key, a failing key or a slow model?** No key: recorded answers (`pnpm ai:record`) or labelled
-fallbacks; nothing spins. A failing key (today's case): the TV's chip turns to "No live AI" after the provider's
-error and back to live on its first answer, with no restart (D-071). A slow model: if a teaser arrives after the
+fallbacks; nothing spins. A failing or rate-limited provider: the AI chain passes over it to the next link (Groq's
+three models, Gemini's two, then the proxy's key), cools it down for its retry-after, waits only if the deadline allows,
+and the trace names the link that answered and the ones passed over (D-079). When no link answers, the TV's chip turns
+to "No live AI" and back to live on the first answer, with no restart (D-071). A slow model: if a teaser arrives after the
 fan's TV has passed the ball, it is dropped, the card reveals normally and the trace records the miss.
 
 **How do you know the cricket is right?** The engine's scorecards and fantasy points match an independent Python

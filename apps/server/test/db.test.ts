@@ -27,10 +27,10 @@ describe("SQLite schema (PLAN Task 5)", () => {
       .prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
       .all()
       .map((row) => row.name);
-    expect(tables).toEqual(["ai_cache", "ai_calls", "deliveries", "players"]);
-    expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 2 });
+    expect(tables).toEqual(["ai_cache", "ai_calls", "ai_link_requests", "deliveries", "players"]);
+    expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 3 });
     const again = openDatabase(":memory:");
-    expect(again.prepare("PRAGMA user_version").get()).toEqual({ user_version: 2 });
+    expect(again.prepare("PRAGMA user_version").get()).toEqual({ user_version: 3 });
   });
 });
 
@@ -89,7 +89,33 @@ describe("migration 2: each ai_calls row says whether its run reached the provid
       guard: 1,
       answered: 1,
     });
-    expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 2 });
+    expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 3 });
+  });
+});
+
+describe("migration 3: what the AI chain records (D-079)", () => {
+  it("keeps the model that wrote each cache row, and counts each link's requests per day", () => {
+    // A version-2 database as production holds it, with one live row.
+    const db = new DatabaseSync(":memory:");
+    db.exec(MIGRATIONS[0] ?? "");
+    db.exec(MIGRATIONS[1] ?? "");
+    db.exec("PRAGMA user_version = 2");
+    db.prepare(
+      `INSERT INTO ai_cache (key, prompt_version, model, payload_json, source, created_at, hits)
+       VALUES ('k', 'v1', 'gpt-6.1-sol', '{}', 'live', '2026-10-17T10:00:00.000Z', 0)`,
+    ).run();
+    migrate(db);
+    // Rows written before it name no other model: the configured one wrote them.
+    expect(db.prepare("SELECT model, served_model FROM ai_cache").get()).toEqual({
+      model: "gpt-6.1-sol",
+      served_model: null,
+    });
+    const count = db.prepare(
+      "INSERT INTO ai_link_requests (day, link, requests) VALUES ('2026-10-17', 'gemini:gemini-3.5-flash', 1)",
+    );
+    count.run();
+    expect(() => count.run()).toThrow(/UNIQUE/);
+    expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 3 });
   });
 });
 

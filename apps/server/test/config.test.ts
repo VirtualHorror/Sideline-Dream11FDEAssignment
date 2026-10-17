@@ -127,12 +127,128 @@ describe("AI configuration (PLAN 5.0)", () => {
   });
 });
 
+// The owner's free-tier keys (Groq, Gemini) with today's proxy key last (D-079).
+const CHAIN_KEYS = { GROQ_API_KEY: "gsk_SECRET_groq", GEMINI_API_KEY: "SECRET-gemini", ...PROXY };
+const one = (model: string, dailyCap: number | null = null) => ({
+  models: { fast: model, smart: model },
+  dailyCap,
+});
+
+describe("the AI chain (D-079)", () => {
+  it("is the provider when a Groq or Gemini key is set: the owner's order, the proxy key last", () => {
+    const { ai } = loadConfig(CHAIN_KEYS, ROOT);
+    expect(ai.provider).toBe("chain");
+    expect(ai.chain).toEqual([
+      { provider: "groq", ...one("qwen/qwen3.8-27b") },
+      { provider: "groq", ...one("openai/gpt-oss-20b") },
+      { provider: "gemini", ...one("gemini-3.5-flash-lite") },
+      { provider: "groq", ...one("openai/gpt-oss-120b") },
+      { provider: "gemini", ...one("gemini-3.5-flash", 20) },
+      { provider: "openai", ...one("gpt-6.1-sol") },
+    ]);
+    // The first link's models are the configured ones (the cache's key, /api/health).
+    expect(ai.models).toEqual({ fast: "qwen/qwen3.8-27b", smart: "qwen/qwen3.8-27b" });
+    expect(ai).toMatchObject({ groqApiKey: "gsk_SECRET_groq", geminiApiKey: "SECRET-gemini" });
+  });
+
+  it("leaves out the default chain's links whose key is missing", () => {
+    expect(loadConfig({ GROQ_API_KEY: "gsk_test" }, ROOT).ai.chain).toEqual([
+      { provider: "groq", ...one("qwen/qwen3.8-27b") },
+      { provider: "groq", ...one("openai/gpt-oss-20b") },
+      { provider: "groq", ...one("openai/gpt-oss-120b") },
+    ]);
+    expect(loadConfig({ GEMINI_API_KEY: "g-test" }, ROOT).ai.chain).toEqual([
+      { provider: "gemini", ...one("gemini-3.5-flash-lite") },
+      { provider: "gemini", ...one("gemini-3.5-flash", 20) },
+    ]);
+  });
+
+  it("reads SIDELINE_AI_CHAIN: provider:model, a daily cap after @, openai with the tier models", () => {
+    const { ai } = loadConfig(
+      {
+        ...CHAIN_KEYS,
+        SIDELINE_MODEL_FAST: "gpt-fast",
+        SIDELINE_MODEL_SMART: "gpt-smart",
+        SIDELINE_AI_CHAIN: " gemini:gemini-3.6-flash@15 ,openai, groq:openai/gpt-oss-120b",
+      },
+      ROOT,
+    );
+    expect(ai.chain).toEqual([
+      { provider: "gemini", ...one("gemini-3.6-flash", 15) },
+      { provider: "openai", models: { fast: "gpt-fast", smart: "gpt-smart" }, dailyCap: null },
+      { provider: "groq", ...one("openai/gpt-oss-120b") },
+    ]);
+  });
+
+  it.each([
+    ["an unknown provider", "mistral:large"],
+    ["a Groq link without a model", "groq"],
+    ["a cap that is not a whole number of requests", "gemini:gemini-3.5-flash@1.5"],
+    ["an empty link", "groq:openai/gpt-oss-20b,,openai"],
+    ["the same link twice", "groq:openai/gpt-oss-20b,groq:openai/gpt-oss-20b"],
+  ])("refuses SIDELINE_AI_CHAIN with %s, naming the variable", (_name, chain) => {
+    expect(() => loadConfig({ ...CHAIN_KEYS, SIDELINE_AI_CHAIN: chain }, ROOT)).toThrow(
+      /^SIDELINE_AI_CHAIN/,
+    );
+  });
+
+  it("refuses a link the owner named explicitly when its key is missing", () => {
+    expect(() =>
+      loadConfig({ GROQ_API_KEY: "gsk_test", SIDELINE_AI_CHAIN: "gemini:gemini-3.5-flash" }, ROOT),
+    ).toThrow("SIDELINE_AI_CHAIN link 1 (gemini) needs GEMINI_API_KEY");
+  });
+
+  it("refuses the chain's openai link without both model names", () => {
+    expect(() => loadConfig({ GROQ_API_KEY: "gsk_test", OPENAI_API_KEY: "sk-test" }, ROOT)).toThrow(
+      "SIDELINE_MODEL_FAST",
+    );
+  });
+
+  it("refuses SIDELINE_AI_PROVIDER=chain when no link has a key", () => {
+    expect(() => loadConfig({ SIDELINE_AI_PROVIDER: "chain" }, ROOT)).toThrow(
+      "SIDELINE_AI_PROVIDER=chain but no link has a key (GROQ_API_KEY, GEMINI_API_KEY or OPENAI_API_KEY)",
+    );
+  });
+
+  it("stays out of the way of an explicit provider, and of a configuration without its keys", () => {
+    const forced = loadConfig({ ...CHAIN_KEYS, SIDELINE_AI_PROVIDER: "openai" }, ROOT).ai;
+    expect([forced.provider, forced.chain]).toEqual(["openai", null]);
+    expect(loadConfig(PROXY, ROOT).ai.chain).toBeNull();
+  });
+});
+
 describe("publicConfigSummary", () => {
   it("never includes API key values", () => {
     const config = loadConfig({ ANTHROPIC_API_KEY: "sk-ant-SECRET-123" }, ROOT);
     const summary = JSON.stringify(publicConfigSummary(config));
     expect(summary).not.toContain("SECRET");
     expect(JSON.parse(summary)).toMatchObject({ aiProvider: "anthropic" });
+  });
+
+  it("shows the chain's links and kinds of endpoint, never a key or a host", () => {
+    const summary = publicConfigSummary(loadConfig(CHAIN_KEYS, ROOT));
+    const link = (endpoint: string, model: string, dailyCap: number | null = null) => ({
+      endpoint,
+      fast: model,
+      smart: model,
+      dailyCap,
+    });
+    expect(summary).toEqual({
+      nodeEnv: "development",
+      aiProvider: "chain",
+      aiModelFast: "qwen/qwen3.8-27b",
+      aiModelSmart: "qwen/qwen3.8-27b",
+      aiEndpoint: "chain",
+      aiChain: [
+        link("groq", "qwen/qwen3.8-27b"),
+        link("groq", "openai/gpt-oss-20b"),
+        link("gemini", "gemini-3.5-flash-lite"),
+        link("groq", "openai/gpt-oss-120b"),
+        link("gemini", "gemini-3.5-flash", 20),
+        link("openai-compatible", "gpt-6.1-sol"),
+      ],
+    });
+    expect(JSON.stringify(summary)).not.toMatch(/SECRET|gsk_|sk-|llm-proxy|example|googleapis/);
   });
 
   // D-068: a custom base URL is configuration, not something /api/health publishes.
@@ -144,6 +260,7 @@ describe("publicConfigSummary", () => {
       aiModelFast: "gpt-6.1-sol",
       aiModelSmart: "gpt-6.1-sol",
       aiEndpoint: "openai-compatible",
+      aiChain: null,
     });
     expect(JSON.stringify(summary)).not.toMatch(/SECRET|sk-|\/v1|llm-proxy|example/);
   });

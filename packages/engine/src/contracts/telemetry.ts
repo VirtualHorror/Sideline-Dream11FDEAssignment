@@ -22,7 +22,21 @@ export const GateDecisionSchema = z.object({
 });
 export type GateDecision = z.infer<typeof GateDecisionSchema>;
 
-export const AiProviderNameSchema = z.enum(["anthropic", "openai", "replay", "scripted", "none"]);
+/**
+ * Who answered an AI attempt. Task 11 addition (D-079): "groq" and "gemini" are the AI chain's
+ * links; "chain" names the chain itself where no single link did (a cache hit it served, a run no
+ * link answered).
+ */
+export const AiProviderNameSchema = z.enum([
+  "anthropic",
+  "openai",
+  "groq",
+  "gemini",
+  "chain",
+  "replay",
+  "scripted",
+  "none",
+]);
 export type AiProviderName = z.infer<typeof AiProviderNameSchema>;
 
 export const AICallTraceSchema = z.object({

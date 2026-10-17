@@ -176,6 +176,54 @@ describe("gateway: what providers see, and which rows answer", () => {
     expect([both.provenance, both.payload.text]).toEqual(["cache", "live row"]);
     expect(provider.requests).toHaveLength(1);
   });
+
+  // D-079: a chain's link, or Anthropic's server-side fallback, can answer with another model than
+  // the configured one. The row stays keyed by the configured model and remembers the one that wrote it.
+  it("remembers which model wrote a cached answer, and a cache hit names it", async () => {
+    const clock = fakeClock();
+    const db = openDatabase(":memory:");
+    const gateway = createGateway({
+      provider: {
+        name: "anthropic",
+        complete: async () => ({
+          output: { text: "ok" },
+          tokensIn: 10,
+          tokensOut: 1,
+          model: "claude-opus-5",
+        }),
+      },
+      cache: createCache(db, clock.now),
+      budget: createBudget({ db, dailyUsd: 3, sessionCap: 80, now: clock.now }),
+      traces: createTraceSink(db),
+      models: { fast: "claude-opus-5-5", smart: "claude-opus-5-5" },
+      pricing: { inPerMTok: 5, outPerMTok: 20 },
+      now: clock.now,
+    });
+    const live = await gateway.run(echoSkill, "echo:served", { word: "served" });
+    expect(live.trace.model).toBe("claude-opus-5");
+    const hit = await gateway.run(echoSkill, "echo:served", { word: "served" });
+    expect([hit.provenance, hit.trace.model]).toEqual(["cache", "claude-opus-5"]);
+    expect(db.prepare("SELECT model, served_model FROM ai_cache").all()).toEqual([
+      { model: "claude-opus-5-5", served_model: "claude-opus-5" },
+    ]);
+  });
+});
+
+describe("pricing the AI chain's models (D-079)", () => {
+  // Paid-tier list prices per million tokens (Groq's model pages and Gemini's pricing page, read
+  // 2026-10-19); the free tiers bill nothing, so these say what the traffic would cost if paid.
+  it.each([
+    ["qwen/qwen3.8-27b", 0.8 + 4],
+    ["openai/gpt-oss-20b", 0.075 + 0.3],
+    ["openai/gpt-oss-120b", 0.15 + 0.6],
+    ["gemini-3.5-flash-lite", 0.3 + 2.5],
+    ["gemini-3.5-flash", 0.75 + 3.75],
+    ["gemini-3.6-flash", 0.75 + 3.75],
+  ])("prices %s at its list price, not as an estimate", (model, perMillionEach) => {
+    const cost = costOf(model, 1_000_000, 1_000_000, { inPerMTok: 5, outPerMTok: 20 });
+    expect(cost.usd).toBeCloseTo(perMillionEach, 10);
+    expect(cost.estimated).toBe(false);
+  });
 });
 
 describe("gateway: every failure falls back, labelled, with one matching trace (Review focus 2)", () => {

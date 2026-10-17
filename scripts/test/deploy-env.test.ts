@@ -51,7 +51,46 @@ describe("the production environment file (deploy/install.sh, D-066)", () => {
       aiModelFast: "model-a",
       aiModelSmart: "model-b",
       aiEndpoint: "openai-compatible",
+      aiChain: null,
     });
+  });
+
+  // D-079: the Groq and Gemini keys and the chain's order reach production like the other settings;
+  // the report shows the chain the server will run, never a key.
+  it("copies the AI chain's keys and order, and reports the chain without a key", () => {
+    const out = renderProductionEnv(
+      {
+        GROQ_API_KEY: "gsk_test_groq",
+        GEMINI_API_KEY: "gemini-test",
+        SIDELINE_AI_CHAIN: "groq:openai/gpt-oss-20b,gemini:gemini-3.5-flash@20",
+      },
+      { repoRoot, port },
+    );
+    expect(out.copied).toEqual(["GEMINI_API_KEY", "GROQ_API_KEY", "SIDELINE_AI_CHAIN"]);
+    expect(out.text).toContain('\nGROQ_API_KEY="gsk_test_groq"\n');
+    expect(out.summary).toMatchObject({
+      aiProvider: "chain",
+      aiChain: [
+        {
+          endpoint: "groq",
+          fast: "openai/gpt-oss-20b",
+          smart: "openai/gpt-oss-20b",
+          dailyCap: null,
+        },
+        { endpoint: "gemini", fast: "gemini-3.5-flash", smart: "gemini-3.5-flash", dailyCap: 20 },
+      ],
+    });
+    expect(JSON.stringify(out.summary)).not.toMatch(/gsk_|gemini-test/);
+  });
+
+  it("leaves the Groq and Gemini keys out with --keyless too", () => {
+    const out = renderProductionEnv(
+      { GROQ_API_KEY: "gsk_test_groq", GEMINI_API_KEY: "gemini-test", SIDELINE_AI_CHAIN: "groq:m" },
+      { repoRoot, port, keyless: true },
+    );
+    expect(out.text).not.toMatch(/gsk_|gemini-test|SIDELINE_AI_CHAIN/);
+    expect(out.skipped).toEqual(["GEMINI_API_KEY", "GROQ_API_KEY", "SIDELINE_AI_CHAIN"]);
+    expect(out.summary.aiProvider).toBe("none");
   });
 
   // systemd's double-quoted form keeps every character once \ " ` $ are escaped (checked against

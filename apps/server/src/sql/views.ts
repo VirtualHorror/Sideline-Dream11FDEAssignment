@@ -100,7 +100,11 @@ export const AI_CALLS: SqlView = {
       "TEXT",
       "spoiler_nudge, catch_up, explainer, lineup_patch, bailout, room_read, stat_back, inspector",
     ),
-    col("provider", "TEXT", "anthropic, openai, replay, scripted or none"),
+    col(
+      "provider",
+      "TEXT",
+      "anthropic, openai, groq, gemini, chain (the AI chain itself), replay, scripted or none",
+    ),
     col("model", "TEXT", "the model that answered, or null"),
     col("cache", "TEXT", "hit, miss or bypass"),
     col("outcome", "TEXT", "ok, repaired, fallback, refused, error, timeout or budget"),

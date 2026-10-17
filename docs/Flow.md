@@ -7,7 +7,7 @@
 
 ---
 
-## 1. Server boot — BUILT (T1, T5)
+## 1. Server boot — BUILT (T1, T5; the AI chain T11)
 
 ```
 node apps/server/src/index.ts                       (`pnpm start`; `pnpm dev` adds --env-file-if-exists=.env;
@@ -18,10 +18,13 @@ node apps/server/src/index.ts                       (`pnpm start`; `pnpm dev` ad
        ├─ loadConfig(process.env, repoRoot)                      apps/server/src/config.ts
        │    ├─ drop empty env values ("KEY=" means unset)
        │    ├─ EnvSchema.safeParse  → throws "Invalid environment: PORT: …" on bad input
-       │    ├─ pick AI provider: SIDELINE_AI_PROVIDER > ANTHROPIC_API_KEY > OPENAI_API_KEY > "none"
-       │    │    (explicit provider without its key → throws)
+       │    ├─ pick AI provider: SIDELINE_AI_PROVIDER > GROQ_API_KEY or GEMINI_API_KEY ("chain", D-079)
+       │    │    > ANTHROPIC_API_KEY > OPENAI_API_KEY > "none" (explicit provider without its key → throws)
+       │    ├─ chain: SIDELINE_AI_CHAIN or DEFAULT_AI_CHAIN → links provider:model[@cap]; the default drops
+       │    │    a link without its key, a written chain throws naming it (§18); none left → throws
        │    └─ models: anthropic → claude-opus-5-5 unless SIDELINE_MODEL_FAST/SMART (a non-Claude
-       │         name → throws); openai → both SIDELINE_MODEL_* required (throws naming the missing one)
+       │         name → throws); openai (and the chain's openai link) → both SIDELINE_MODEL_* required;
+       │         chain → its first link's models
        ├─ buildRuntime(config)                                   apps/server/src/runtime.ts
        │    ├─ loadMatchBundles(dataDir)                         data/bundle.ts
        │    │    manifest → every file through its engine schema (errors name the file) → buildTimeline
@@ -30,13 +33,15 @@ node apps/server/src/index.ts                       (`pnpm start`; `pnpm dev` ad
        │    ├─ openDatabase(data/runtime/sideline.db) → migrate (PRAGMA user_version)   db/*.ts
        │    ├─ rebuildAnalytics(db, bundles): deliveries (with the engine's leverage) + players
        │    ├─ loadReplayRows(data/ai-replay/*.jsonl) → ai_cache source 'replay'   ai/providers/replay.ts
-       │    ├─ createProvider(config) → anthropic | openai | null (keyless: aiMode "replay")
+       │    ├─ createProvider(config, {ledger: the database's}) → anthropic | openai | chain (§18) | null
+       │    │    (keyless: aiMode "replay")
        │    └─ gateway (cache, budget, traces) → telemetry → orchestrator → session manager
        ├─ startTicker(manager, 100 ms)                           sessions/ticker.ts
        ├─ createApp({config, version, startedAt, runtime})       apps/server/src/http/app.ts
        └─ serve({fetch: app.fetch, port, hostname})              @hono/node-server
             └─ logs "[sideline] v… listening …" + publicConfigSummary(config)   (never secrets)
-               + { matches, analyticsRows, replayRows, aiMode }
+               + { matches, analyticsRows, replayRows, aiMode }; with the chain, "[sideline] AI chain
+               groq qwen/qwen3.8-27b → … → openai-compatible gpt-6.1-sol" (models and caps only)
 SIGINT / SIGTERM → stop the ticker → closeAllConnections (SSE streams) → server.close → db.close → exit 0
 ```
 
@@ -210,7 +215,7 @@ POST /api/sessions/:id/control                                             http/
 AI work resolves → deliver(moment): kept; sent now if its time has come (else when it does)
 ```
 
-## 8. AI gateway call — BUILT (T5; Task 8 skills, repair and the mode T8)
+## 8. AI gateway call — BUILT (T5; Task 8 skills, repair and the mode T8; the chain T11)
 
 ```
 orchestrator.teaser({trigger, ballT, budgetMs, tvNow})                   orchestrator/orchestrator.ts
@@ -237,22 +242,26 @@ orchestrator.statBack / orchestrator.inspect                                  (�
 gateway.run(skill, key, facts, {deadlineMs?, sessionId?})                ai/gateway.ts
   ├─ in-flight map by (promptVersion, key): a second run awaits the first, then writes its own trace
   ├─ cache.get(key, promptVersion, model)    live row for this model, else a replay row  ai/cache.ts
-  │     zod re-check → payload, provenance "cache" | "replay", trace cache "hit"
+  │     zod re-check → payload, provenance "cache" | "replay", trace cache "hit"; the trace's model is the
+  │     one that wrote the row (served_model, migration 3)
   ├─ no provider → fallback ("no provider configured and no recorded output")
   ├─ budget.admit(sessionId)                 daily USD cap, per-session call cap        ai/budget.ts
   │     refused → fallback, outcome "budget"
   ├─ skill.buildPrompt(facts) → {system, user};  timeout = skill.timeoutMs(facts, deadlineMs)
-  ├─ provider.complete({system, user, jsonSchema (limits stripped), model, effort, maxTokens,
-  │     signal}) raced against the abort                     ai/providers/{anthropic,openai}.ts
-  │     abort → "timeout" | ProviderRefusalError → "refused" | ProviderOutputError → "error"
-  │     | other → "error" (class, status and the body's error code; never its message)
+  ├─ provider.complete({system, user, jsonSchema (limits stripped), model, tier, effort, maxTokens,
+  │     timeoutMs, signal}) raced against the abort          ai/providers/{anthropic,openai,chain}.ts
+  │     the chain (§18) answers as the link that served: result.provider, result.model, result.route
+  │     abort → "timeout" | ProviderRefusalError → "refused" | ProviderOutputError → "error" (a chain's
+  │     error names its link: error.served) | other → "error" (class, status and the body's error code;
+  │     never its message; the chain's: "no link answered: <each link (reason)>")
   ├─ costOf(served model, reported usage) → budget.charge                    ai/pricing.ts
   ├─ any answer at all → the provider is answering; a provider error → it is not (mode, D-071)
   ├─ skill.outputSchema.safeParse → invalid → "error"
   ├─ skill.repair?(output, facts) → drops what a rule forbids on its own (an illegal lineup swap)
   ├─ skill.guard(output, facts) → rejected → "fallback" ("guard: …")   ai/guards/{spoilerLint,citations}.ts
-  ├─ ok → cache.putLive → payload = skill.toPayload(output, facts), provenance "live"; outcome
-  │     "repaired" (with what was dropped) if the repair dropped anything, else "ok"
+  ├─ ok → cache.putLive(key, version, model, output, served model) → payload = skill.toPayload(output,
+  │     facts), provenance "live"; outcome "repaired" (with what was dropped) if the repair dropped
+  │     anything, else "ok" (detail: the links the chain passed over, if any)
   └─ else payload = skill.fallback(facts) (labelled, provenance "fallback"; never cached)
   every run: one AICallTrace → traces.record → ai_calls row (with `called`) + telemetry listener;
   gateway counters
@@ -261,8 +270,12 @@ gateway.mode() = "live" while a provider is configured, the budget holds and its
 ```
 
 The scripted provider (`ai/providers/scripted.ts`) stands in for a model in every test; nothing in
-`pnpm test` needs a key or the network. `pnpm ai:smoke` (`scripts/ai-smoke.ts`) makes one real
-teaser call through the gateway with the configured provider and an in-memory database.
+`pnpm test` needs a key or a network beyond loopback (the chain's tests run the real adapters and SDK over a
+scripted fetch; the smoke's test runs the real script against a stand-in endpoint on 127.0.0.1).
+`pnpm ai:smoke` (`scripts/ai-smoke.ts`) makes one real teaser call through the gateway with the
+configured provider, an in-memory database and none of the recorded replay rows, which would answer the
+teaser from the cache (D-081); `--each-link` then sends the same teaser to every link of the chain on its
+own.
 
 ## 9. The match room on the fan's TV clock — BUILT (T4 logic, T6 UI)
 
@@ -436,7 +449,9 @@ sudo deploy/install.sh [--keyless] [--ref <ref>] [--domain <host>] [--dir <path>
   ├─ 2 Caddy: the official apt key and source (dl.cloudsmith.io), apt-get install caddy (once)
   ├─ 3 /etc/caddy/Caddyfile ← Caddyfile.template (sslip.io name, domain, port 8780) → caddy validate → mv
   ├─ 4 /etc/sideline/sideline.env (root 600) ← scripts/deploy-env.ts --env-file .env --port 8780 [--keyless]
-  │      Node's .env parser → only SERVER_ENV_NAMES → HOST/PORT/NODE_ENV forced → loadConfig → "NAME=\"value\""
+  │      Node's .env parser → only SERVER_ENV_NAMES (the chain's GROQ_API_KEY, GEMINI_API_KEY and
+  │      SIDELINE_AI_CHAIN too, T11; --keyless leaves every key out) → HOST/PORT/NODE_ENV forced → loadConfig
+  │      → "NAME=\"value\""; the report names variables and prints the chain's order, never a value
   ├─ 5 /etc/systemd/system/sideline.service ← sideline.service (user, paths, node, port) → systemd-analyze verify
   ├─ 6 /etc/sudoers.d/sideline: <dev> may run /usr/bin/systemctl restart sideline (visudo -c first)
   └─ 7 ufw only if filtering → daemon-reload → enable sideline caddy → restart sideline → reload-or-restart caddy
@@ -467,7 +482,8 @@ pnpm ai:record [--yes] [--fresh] [--out <dir>] [--provider scripted]          sc
   │    → ai_calls: keys that fell back with "no provider" = the calls to make; replay hits = already recorded
   ├─ no --yes: print the plan, exit 0 (nothing sent)
   └─ --yes: the same walk with the provider → the gateway (dedupe, cache, budget, timeout, zod, guard)
-       → replayable rows: live answers + earlier rows, one per key, still valid, recorded skills only
+       → replayable rows: live answers + earlier rows, one per key, still valid, recorded skills only,
+         each named after the model that wrote it (COALESCE(served_model, model): a chain's link, T11)
        → <dir>/<matchId>.jsonl (sorted, written through a temporary file) → report calls, tokens, cost, missing
 server boot (§1): loadReplayRows(data/ai-replay) → ai_cache source 'replay' → answers any model, with no key
 ```
@@ -544,4 +560,37 @@ ControlPlaneDrawer → InspectorQuery: GET /api/inspector/views once; POST /insp
   ?raw at build time: docs/Architecture.md (the theses section and the whole file), docs/PLAN.md (the
   checklist as a table and as PlanTimeline), docs/Decisions.md, README.md (credits)
   PipelineDiagram (inline SVG, across or down by width) · AiUsageTable ← GET /api/telemetry?scope=global
+```
+
+## 18. The AI chain — BUILT (T11, D-079)
+
+```
+loadConfig (§1): provider "chain" → config.ai.chain = links in order, e.g. the default
+  groq qwen/qwen3.8-27b → groq openai/gpt-oss-20b → gemini gemini-3.5-flash-lite → groq openai/gpt-oss-120b
+  → gemini gemini-3.5-flash @20 a day → openai (OPENAI_API_KEY + SIDELINE_MODEL_FAST/SMART), each without
+  its key left out
+createProvider (runtime.ts) → createChainLinks: one adapter per link                        runtime.ts
+  groq, gemini → createChatProvider (Chat Completions, bearer key, fixed base URLs)    ai/providers/chat.ts
+  openai       → createOpenAiProvider (Responses API, OPENAI_BASE_URL)               ai/providers/openai.ts
+  → createChainProvider({links, ledger: createLinkLedger(db) (ai_link_requests)})   ai/providers/chain.ts
+
+gateway (§8) → chain.complete(req)                    one call per gateway run, under the skill's timeout
+  for each round (at most 5):
+    for each link in order, not done for this request:
+      ├─ cooling down (in memory, per provider:model) → reason "cooling down", next
+      ├─ its daily cap used today (ledger, Pacific-time day) → reason "<cap> a day used", done, next
+      ├─ share = half the time left if a later link could still answer, else all of it
+      ├─ capped link → ledger.add before sending (every request sent counts)
+      └─ link.provider.complete({...req, model: link.models[tier], signal: gateway's or share's end})
+           answer → return {…, provider: link's, model: as reported, route: "passed over <earlier links (why)>"}
+           ProviderRefusalError | ProviderOutputError → rethrown with served {provider, model}: the request ends
+           the gateway's own abort → rethrown (the gateway records the timeout)
+           other → reason = "<status>, <code>" | class | "no answer within <share> ms"; cooldown:
+             429 → retry-after (else 30 s, ≤ 1 h) │ 401, 403, 404 → 10 min │ 5xx, network, share → 15 s
+             (a share under 2 s → none) │ 400, 413, 422 → none, but done for this request
+    nothing answered → wait for the soonest cooldown if it leaves 2 s of the time, else stop
+  → ChainExhaustedError("<link> (<reason>); …")  → gateway: "provider error: no link answered: …" (mode, D-071)
+chat.ts, per model family: Groq qwen/* reasoning_effort one step below the skill's ("none" at low) with
+  reasoning_format "hidden"; Groq openai/gpt-oss-* the skill's effort, include_reasoning false; Gemini the
+  skill's effort; usage = prompt_tokens, completion_tokens + whatever total_tokens holds beyond the two
 ```

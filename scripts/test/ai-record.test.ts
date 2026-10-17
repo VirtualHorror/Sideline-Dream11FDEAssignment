@@ -10,6 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createCache } from "../../apps/server/src/ai/cache.ts";
 import { loadReplayRows } from "../../apps/server/src/ai/providers/replay.ts";
 import { createScriptedProvider } from "../../apps/server/src/ai/providers/scripted.ts";
+import type { LlmProvider } from "../../apps/server/src/ai/providers/types.ts";
 import { loadConfig } from "../../apps/server/src/config.ts";
 import { loadMatchBundles } from "../../apps/server/src/data/bundle.ts";
 import { openDatabase } from "../../apps/server/src/db/database.ts";
@@ -156,6 +157,22 @@ describe("pnpm ai:record (PLAN 7.2)", () => {
     }
     expect(run.missing).toEqual([]);
   });
+
+  // D-079: a chain answers with whichever link served; the recording says which model wrote each row.
+  it("records the model that answered each moment, not the configured one", async () => {
+    const scripted = createScriptedProvider(scriptedAnswer);
+    const servedByALink: LlmProvider = {
+      name: "scripted",
+      complete: async (req) => ({ ...(await scripted.complete(req)), model: "served-by-a-link" }),
+    };
+    const other = await recordMoments(config, {
+      provider: servedByALink,
+      models: SCRIPTED_MODELS,
+      replayDir: null,
+    });
+    expect(other.rows).toHaveLength(lines.length);
+    expect(new Set(other.rows.map((row) => row.model))).toEqual(new Set(["served-by-a-link"]));
+  }, 120_000);
 
   it("calls the provider once per key, and not at all when every key is already recorded", async () => {
     expect(run.counters.aiCallsLive).toBe(lines.length);

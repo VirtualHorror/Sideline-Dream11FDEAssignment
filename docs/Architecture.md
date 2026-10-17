@@ -50,15 +50,15 @@ T20 World Cup game, with the 2024 final as a second match that proves nothing is
  │  ├ TV pane   │◄───────│                           ├─ SSE: per-session stream (events, moments, chat, clock)    │
  │  ├ companion │        │                           ├─ Session manager + one tick loop for all sessions          │
  │  └ control   │        │                           ├─ @sideline/engine (pure): timeline, reducer, detectors     │
- │    plane     │        │                           ├─ AI gateway ──────────────────────────────────────────────┼──► Anthropic or an OpenAI-compatible
- └──────────────┘        │                           │   (cache → provider → validate → fallback)                 │    API (today: a proxy); optional,
-                         │                           └─ node:sqlite: ai cache, AI traces, analytics tables        │    replay mode works without a key
+ │    plane     │        │                           ├─ AI gateway ──────────────────────────────────────────────┼──► the AI chain (D-079): Groq, Gemini,
+ └──────────────┘        │                           │   (cache → provider → validate → fallback)                 │    then the proxy's key; or Anthropic;
+                         │                           └─ node:sqlite: ai cache, AI traces, analytics tables        │    optional: replay mode needs no key
                          │  data/ (raw Cricsheet, fixtures, rules, models, crowd corpus, AI replay cache)          │
                          └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 No managed cloud services. Everything (TLS, app, database, model artefacts) runs on one machine;
-the only outbound dependency is the optional LLM API.
+the only outbound dependency is the optional LLM API (since T11 the AI chain's providers, in order).
 
 **As deployed (T7, D-066, D-068, D-070):** `https://sideline.nabhanyubm.tech/` (the owner's domain; its DNS
 points here) and `https://3-108-67-100.sslip.io/` (the Elastic IP, always), both served by Caddy. Caddy proxies to the server on
@@ -74,7 +74,7 @@ clone whose history is scrubbed of the proxy's name (D-072, D-078).
 | Path | What | Status |
 | --- | --- | --- |
 | `packages/engine` | Pure, isomorphic TypeScript domain core. Contracts (zod), cricket timeline + reducer, fantasy, models, detectors, gate, delay buffer, crowd. **No I/O, no clocks, no unseeded randomness.** Runs identically on server and client. | contracts, squad validator (T1), timeline, reducer, fantasy scoring (T2), models: logistic, win probability, leverage, priors (T3), clocks, delay buffer, commentary lines, join points, the four phase detectors, catch-up facts, entropy gate, quest resolver, seeded synthetic crowd (T4) **built** |
-| `apps/server` | Node 24 + Hono. Runs `.ts` directly (native type stripping, no build). Config, HTTP, sessions, SSE, AI gateway, SQLite. | config, health, static + SPA, security headers **built** (T1); match bundles, SQLite (AI cache, traces, analytics), per-browser sessions on one ticker, SSE, the AI gateway (Anthropic and OpenAI-compatible providers, cache, budget, traces, replay rows, labelled fallbacks), orchestrator, teaser / catch-up / explainer skills and their guards, telemetry with the scale projection, the session API **built** (T5); lineup-patch, bailout, room-read and stat-back skills, the read-only SQL sandbox and the NL inspector, the lineup-intent, chat and inspector routes, the AI mode that follows the provider **built** (T8); the sandbox's query in a child process killed at 2 s **built** (T10, D-078) |
+| `apps/server` | Node 24 + Hono. Runs `.ts` directly (native type stripping, no build). Config, HTTP, sessions, SSE, AI gateway, SQLite. | config, health, static + SPA, security headers **built** (T1); match bundles, SQLite (AI cache, traces, analytics), per-browser sessions on one ticker, SSE, the AI gateway (Anthropic and OpenAI-compatible providers, cache, budget, traces, replay rows, labelled fallbacks), orchestrator, teaser / catch-up / explainer skills and their guards, telemetry with the scale projection, the session API **built** (T5); lineup-patch, bailout, room-read and stat-back skills, the read-only SQL sandbox and the NL inspector, the lineup-intent, chat and inspector routes, the AI mode that follows the provider **built** (T8); the sandbox's query in a child process killed at 2 s **built** (T10, D-078); the AI chain (Groq and Gemini through Chat Completions, then the proxy's key; cooldowns, daily caps, served models in the cache) **built** (T11, D-079) |
 | `apps/web` | React 19 + Vite 8 + Tailwind 4 SPA. Theme system, effects, TV pane, companion, control plane. | shell, tokens, theme control, attribution **built** (T1); landing page, match room (the stream store and TV clock, TV pane, companion with held spoilers, catch-up reels, the explainer and the simulated chat, the control plane drawer), the four effects with their fallbacks, `/architecture` **built** (T6); the lineup ledger, the comeback quest with its shareable banter card, room-read pods, the stat-back take card, the fan's chat line, the inspector, story mode, the `/architecture` polish (theses, pipeline diagram, live AI-usage table, plan timeline, credits) **built** (T9) |
 | `data/` | Real Cricsheet files + manifest/checksums; authored fixtures (squads, credits, notes, personas); rules; trained models; crowd corpus; AI replay cache. | raw, fixtures, rules **built** (T1); models **built** (T3, generated by `scripts/build-models.ts`); crowd corpus **built** (T4, authored, synthetic); glossary **built** (T5, authored, 46 terms); runtime SQLite at `data/runtime/` (T5, git-ignored); replay rows: the recorder is built (T7), no rows yet (the key has no credit, D-067) |
 | `scripts/` | `fetch-cricsheet`, `verify-data`, `check-no-hardcode` (built, T1); `engine-report` (built, T2); `oracle/` audit reference (built, T1) and `oracle/audit/` auditor's toolkit: archive sweep, comparator, spec re-derivation, mutants (built, T2 audit); `build-models` + `lib/archive.ts` (built, T3); `ai-smoke` (built, T5: one real teaser through the gateway); `ai-record` (the replay recorder) and `deploy-env` (the production environment file) (built, T7). | |
@@ -179,7 +179,7 @@ the gateway. Flow: `docs/Flow.md` §1, §2, §7, §8, §13.
 | Piece | Rule | Checked on |
 | --- | --- | --- |
 | Sessions | start at the persona's join point; seek and jump refold from the timeline; skipping 12+ unseen legal balls earns a catch-up; produced moments stay hidden while in the future; the clock stops once the fan's delayed TV has shown the end (D-063) | late-from-work starts at 90/4; a jump back and forward equals a fresh fold; a 30 s feed sees the result |
-| Gateway | dedupe → cache → budget → provider (timeout, raced) → zod → guard → cache; every failure a labelled fallback with a reason; one trace per run | two sessions at 18.6 of the 2022 chase: one call, then a cache hit |
+| Gateway | dedupe → cache → budget → provider (timeout, raced) → zod → guard → cache; every failure a labelled fallback with a reason; one trace per run (with the AI chain, the link that answered and the ones passed over, T11) | two sessions at 18.6 of the 2022 chase: one call, then a cache hit |
 | Teaser | the model sees only the pre-ball facts and writes the teaser; the reveal is the scorecard; ready late for a fan → no teaser for that fan (D-055) | 23 teasers on a full 2022 replay; a 3 s call at 32x: `nudgeAt` null, `usedMs` 3000 > `budgetMs` |
 | Catch-up | shared per missed window and lens; the fan's squad impact stays out of the prompt; slides cite only the window | late-from-work: `catchup:1298150:2:0-14:casual`, prompt with 90/4, 70 and 36 |
 | Explainer | glossary first (no model); else the fan's TV-time facts with their question as data (D-057) | "what is a free hit?" with zero model calls |
@@ -225,16 +225,26 @@ until a later call gets an answer, and a restart starts from the last answer on 
 | Chat velocity spike / death-over window | detector → **Room Read** (window key) | yes, once per window |
 | Contextual question, "stat-back my take", telemetry question | **Explainer / Stat-back / Inspector** | yes, rate-limited per IP |
 
-Providers (D-033): both Anthropic and any OpenAI-compatible endpoint, chosen by `.env`
-(Anthropic if `ANTHROPIC_API_KEY` is set, else OpenAI-compatible if `OPENAI_API_KEY` is set,
-`SIDELINE_AI_PROVIDER` overrides). Anthropic default: `claude-opus-5-5` with per-skill `effort`
-(low for teasers and classification, medium for synthesis; `claude-haiku-5-5` for a cheaper fast
-lane). **Currently configured:** an OpenAI-compatible proxy endpoint
-(base URL in `.env`, `gpt-6.1-sol`, Responses API), verified to return strict
-JSON-schema output in 4-8.5 s, with ~4.4k hidden input tokens per call. On 2026-10-17 the account was out
-of credit (the Task 5 smoke call got a 403, F05): until it is topped up, every AI card is a
-labelled fallback and the trace says why. Structured outputs
-everywhere; no free-form text reaches the UI without schema validation.
+Providers (D-033, D-079), chosen by `.env`: the **AI chain** if a Groq or Gemini key is set, else Anthropic if
+`ANTHROPIC_API_KEY` is set, else an OpenAI-compatible endpoint if `OPENAI_API_KEY` is set (`SIDELINE_AI_PROVIDER`
+overrides). Anthropic default: `claude-opus-5-5` with per-skill `effort` (low for teasers and classification,
+medium for synthesis; `claude-haiku-5-5` for a cheaper fast lane).
+
+**The AI chain (T11, D-079)** asks its links in order and the first answer serves the moment; a link that is rate
+limited, over its daily cap, failing or slow is passed over, and when none answers the card is the labelled fallback:
+
+| # | Link | Endpoint | Limit it lives with | Measured 2026-10-17 (`pnpm ai:smoke --each-link`) |
+| --- | --- | --- | --- | --- |
+| 1 | `qwen/qwen3.8-27b` | Groq, Chat Completions | free tier: 1,000 requests a day, 8,000 tokens a minute (Groq's headers) | answered in 193 ms, schema-valid |
+| 2 | `openai/gpt-oss-20b` | Groq | the same, per model | 464 ms, schema-valid |
+| 3 | `gemini-3.5-flash-lite` | Gemini, OpenAI-compatible | free tier | 401: Google rejected the first `AQ.` key (D-079); the rotated key authenticates, not yet asked for a teaser (D-081) |
+| 4 | `openai/gpt-oss-120b` | Groq | the same, per model | 398 ms, schema-valid |
+| 5 | `gemini-3.5-flash` (served as `gemini-3.6-flash`) | Gemini | 20 requests a day: capped at 20 | 401, as link 3 |
+| 6 | `gpt-6.1-sol` | the proxy (Responses API, base URL in `.env`) | paid; no credit since 2026-10-17 | 403 `key_expired` |
+
+The proxy alone (before T11) returned strict JSON-schema output in 4-8.5 s with ~4.4k hidden input tokens per call;
+its account has had no credit since 2026-10-17 (F05), so before the chain every AI card was a labelled fallback.
+Structured outputs everywhere; no free-form text reaches the UI without schema validation.
 
 ## 6. Scale story ("% compute saved at 10M DAU")
 
@@ -259,7 +269,9 @@ viewer, saved about 99.6%; with no personal moments the saving shows as 99.99999
 - Secrets only in the server process (env or `/etc/sideline/sideline.env`, root-owned 0600, written only by
   `deploy/install.sh`, which prints variable names, never values). Never in logs, health output, SSE or the web
   bundle (`publicConfigSummary` is the only config view that leaves, and it reports the kind of AI endpoint,
-  never its host: D-068).
+  never its host: D-068; the AI chain's links by kind, model and cap: D-079). Never in a tracked file:
+  `pnpm check:hardcode` fails on anything shaped like a Groq, Google, OpenAI or Anthropic key (D-079), and on the
+  start of any of this project's own keys, revoked or live (D-081).
 - Production (T7, D-066): the server listens on loopback only, behind Caddy (automatic TLS, HTTP → HTTPS); the
   systemd unit runs it as the developer with a read-only system and home, write access to `data/runtime` only and
   no capabilities; the one sudo rule allows `systemctl restart sideline` and nothing else. Caddy replaces a
@@ -341,7 +353,7 @@ questions, or runs an operator's own SQL, over the same tables through the sandb
 | Moments | clocks and delay buffer at their edges; commentary lines and tags hand-derived from the raw file; every detector replayed per persona from its join point, with PLAN literals and expectations re-derived independently in Python (catch-up swings, quest outcomes); injected wickets pin the quest window, powerplay and cheap-score edges; the gate's share, counters, key dedupe and injected clock; crowd seeds, prefix stability and the burst after wickets; a hand-mutant pass over the new code | `packages/engine/test/{clock,delay,describe,detectors,gate,quests,crowd}.test.ts` (T4 built) |
 | Generality | every engine test runs on **both** matches; the auditor sweeps a whole Cricsheet archive the implementer did not tune on (engine vs oracle, plus an independent re-derivation of the rules), and from T4 runs the detectors on holdout matches, from T8 whole sessions (the final audit, T10: the 2026 semi-final, 1512772, and the archive's 199 identical of 230) | `scripts/oracle/audit/` (from the T2 audit) |
 | Anti-hardcoding | deny-list scan built from data | `scripts/check-no-hardcode.ts` |
-| AI | scripted provider (no key, no network): prompts carry state-derived facts and nothing per-session or post-ball; every gateway path (cache, dedupe, timeout, refusal, invalid, guard, repair, no provider, budget, replay, the mode after a provider error); skills' guards and fallbacks on every teaser of both matches; every Task 8 guard rejection with real facts (quest outcomes counted from the raw files); the SQL sandbox's refusals, authorizer, 200-row cap and 2 s kill, after which nothing computes (T10); providers through the real SDKs with a fake fetch | `apps/server/test` (T5, T8 built) |
+| AI | scripted provider (no key, no network): prompts carry state-derived facts and nothing per-session or post-ball; every gateway path (cache, dedupe, timeout, refusal, invalid, guard, repair, no provider, budget, replay, the mode after a provider error); skills' guards and fallbacks on every teaser of both matches; every Task 8 guard rejection with real facts (quest outcomes counted from the raw files); the SQL sandbox's refusals, authorizer, 200-row cap and 2 s kill, after which nothing computes (T10); providers through the real SDKs with a fake fetch; the AI chain's order, cooldowns, daily caps, waits and shares of the time over the real adapters with a scripted network (T11) | `apps/server/test` (T5, T8 built) |
 | HTTP | Hono `app.request()` with a fake socket peer: routes, validation, limits, SSE framing; sessions with an injected clock (seek and jump refolds, late AI results, eviction) | `apps/server/test` (T1, T5 built) |
 | UI | Vitest + Testing Library on real match events (store and TV clock refolds, held/teaser/revealed cards with no outcome in the DOM, effect fallbacks, dot matrix and scorebug literals from the raw file, control-plane holds, outbursts only on TV reveals, the docs page reading the real docs; T9: every new card held then shown, quest calls settled on the TV's events with outcomes from the raw file, the canvas card, the inspector's every result, the story director's stop sequence from the real plan and leaving the tour); Playwright on desktop + 390 px with system Chrome: every route, a fan jumping to the climax at 16x with a 25 s delay whose teaser is held, then revealed, and the whole story mode with its seven stops and `/architecture`'s live table after it | `apps/web/test`, `e2e/` (T1, T6, T9 built) |
 

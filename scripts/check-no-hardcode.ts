@@ -14,7 +14,10 @@
  * Every marker is reviewed in the audit (docs/TEST_CHECKLIST.md, section A).
  *
  * A second pass covers every tracked file, docs and handoffs included: no file may contain a
- * FORBIDDEN_WORDS entry, in any case, and there is no opt-out (D-068).
+ * FORBIDDEN_WORDS entry, in any case, and there is no opt-out (D-068). A third fails on anything
+ * shaped like an AI provider's key (SECRET_PATTERNS, D-079) and on the first characters of this
+ * project's own keys (KEY_PREFIXES, D-081), so a key or a fragment of one pasted into a tracked file
+ * is caught by `pnpm verify` before it can be committed; it prints where, never the key.
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from "node:fs";
@@ -213,6 +216,48 @@ export function findForbiddenWords(files: SourceFile[], words: readonly string[]
   return findings;
 }
 
+/**
+ * Key shapes no tracked file may hold (D-079), each a prefix and a long tail: the docs may name a
+ * prefix (`gsk_`) and the tests use short placeholders (sk-test), neither of which matches. The
+ * lookbehind keeps words like "task-" or "disk-" out of the OpenAI pattern.
+ */
+export const SECRET_PATTERNS: readonly { kind: string; re: RegExp }[] = [
+  { kind: "Groq API key", re: /(?<![A-Za-z0-9_])gsk_[A-Za-z0-9]{40,}/ },
+  { kind: "Google API key", re: /(?<![A-Za-z0-9_])AIza[0-9A-Za-z_-]{35}/ },
+  { kind: "Google API key", re: /(?<![A-Za-z0-9_.])AQ\.[0-9A-Za-z_-]{40,}/ },
+  { kind: "OpenAI or Anthropic API key", re: /(?<![A-Za-z0-9_-])sk-[A-Za-z0-9_-]{30,}/ },
+];
+
+/**
+ * The first characters of this project's own keys, the revoked pair and the live one (D-081): no
+ * tracked file may hold them, even in a fragment too short for SECRET_PATTERNS (a note quoting `gsk_`
+ * and four more characters). Matched case-sensitively, as keys are. Kept reversed, so this file does
+ * not contain them either.
+ */
+export const KEY_PREFIXES: readonly { kind: string; prefix: string }[] = [
+  { kind: "this project's Groq key", reversed: "xEGz_ksg" },
+  { kind: "this project's Groq key", reversed: "rWx4_ksg" },
+  { kind: "this project's Google key", reversed: "LK6NR8bA" },
+  { kind: "this project's Google key", reversed: "yJ6NR8bA" },
+].map(({ kind, reversed }) => ({ kind, prefix: [...reversed].reverse().join("") }));
+
+/**
+ * Every line of every file that holds something key-shaped or the start of one of this project's
+ * keys, with the kind of key (never the key).
+ */
+export function findSecrets(files: SourceFile[]): Finding[] {
+  const findings: Finding[] = [];
+  for (const file of files) {
+    file.content.split("\n").forEach((line, index) => {
+      const hit =
+        SECRET_PATTERNS.find(({ re }) => re.test(line)) ??
+        KEY_PREFIXES.find(({ prefix }) => line.includes(prefix));
+      if (hit) findings.push({ path: file.path, line: index + 1, term: hit.kind, kind: "secret" });
+    });
+  }
+  return findings;
+}
+
 function walkAll(dir: string, root: string, out: string[]): void {
   for (const name of readdirSync(dir)) {
     if (name === "node_modules" || name === ".git") continue;
@@ -269,8 +314,16 @@ function main(): void {
     process.exitCode = 1;
     return;
   }
+  const secrets = findSecrets(tracked);
+  if (secrets.length > 0) {
+    console.error(`check-no-hardcode: ${secrets.length} key-shaped string(s) in tracked files:`);
+    for (const f of secrets) console.error(`  ${f.path}:${f.line}  (${f.kind}: ${f.term})`);
+    console.error("Keys live in .env only (git-ignored); remove the key and rotate it (D-079).");
+    process.exitCode = 1;
+    return;
+  }
   console.log(
-    `check-no-hardcode: OK (${files.length} source files, ${terms.length} terms; ${tracked.length} tracked files, no forbidden words)`,
+    `check-no-hardcode: OK (${files.length} source files, ${terms.length} terms; ${tracked.length} tracked files, no forbidden words, no keys)`,
   );
 }
 

@@ -1,6 +1,6 @@
 # Handoff: Task 10 Final audit and submission (holdout, history scrub, submission zip, GitHub push)
 
-**Generated**: 2026-10-18 01:00 IST (by Claude Code, which implemented and self-audited Tasks 8 and 9 in one session, D-069)
+**Generated**: 2026-10-17 01:00 IST (by Claude Code, which implemented and self-audited Tasks 8 and 9 in one session, D-069)
 **Branch**: `main` = `t09-verified` (merge `6cdcb06`) + one docs commit (records, the holdout tooling, this file). Task 10
 works on `main`; only the history scrub happens first in a separate mirror clone (D-072).
 **Status**: Ready for Task 10. Not blocked. Three things come from Nabhanyu: the GitHub remote (and its auth), a key

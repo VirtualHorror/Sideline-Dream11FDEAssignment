@@ -20,7 +20,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { createScriptedProvider } from "../apps/server/src/ai/providers/scripted.ts";
-import { loadConfig, publicConfigSummary } from "../apps/server/src/config.ts";
+import { describeAiChain, loadConfig, publicConfigSummary } from "../apps/server/src/config.ts";
 import { createProvider } from "../apps/server/src/runtime.ts";
 import {
   type RecordRun,
@@ -92,6 +92,8 @@ const summary = publicConfigSummary(config);
 log(
   `provider ${summary.aiProvider}, endpoint ${summary.aiEndpoint}, models ${summary.aiModelFast} / ${summary.aiModelSmart}`,
 );
+// The chain answers with whichever link is up (D-079); each row records the model that wrote it.
+if (summary.aiChain) log(`AI chain ${describeAiChain(summary.aiChain)}`);
 log(
   `daily budget $${config.ai.dailyBudgetUsd} (SIDELINE_AI_DAILY_BUDGET_USD): calls stop when this run has spent it`,
 );

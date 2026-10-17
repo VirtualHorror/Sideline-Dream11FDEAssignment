@@ -254,11 +254,15 @@ async function jump(
   }
 }
 
-/** The cache's replayable rows for the recorded skills: one per key, a live answer first. */
+/**
+ * The cache's replayable rows for the recorded skills: one per key, a live answer first, named after
+ * the model that wrote it (an AI chain's link, D-079, rather than the configured first link).
+ */
 function replayable(db: DatabaseSync): { rows: ReplayRow[]; dropped: number } {
   const found = db
     .prepare(
-      `SELECT key, prompt_version, model, payload_json, source FROM ai_cache
+      `SELECT key, prompt_version, COALESCE(served_model, model) AS model, payload_json, source
+       FROM ai_cache
        ORDER BY key, prompt_version, CASE source WHEN 'live' THEN 0 ELSE 1 END, created_at DESC`,
     )
     .all() as { key: string; prompt_version: string; model: string; payload_json: string }[];

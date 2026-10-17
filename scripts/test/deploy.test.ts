@@ -26,7 +26,8 @@ const install = join(repo, "deploy", "install.sh");
 const update = join(repo, "deploy", "update.sh");
 const SITE = "203-0-113-10.sslip.io"; // a documentation address (RFC 5737), never a real host
 const DOMAIN = "sideline.nabhanyubm.tech"; // install.sh's default, the owner's domain (D-068, D-070)
-const FAKE_KEY = "sk-fake-value-that-must-never-be-printed";
+// Assembled at run time: a key-shaped literal in a tracked file fails check-no-hardcode (D-079).
+const FAKE_KEY = ["sk", "fake-value-that-must-never-be-printed"].join("-");
 
 const SHIMMED = [
   "apt-get",

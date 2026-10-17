@@ -15,6 +15,11 @@
  * provider error (a bad key, an account out of credit, an outage) turns it to "replay" until the next
  * call gets any answer at all; a timeout says nothing either way. Calls are still made in "replay"
  * mode while a provider is configured, so live AI comes back by itself (D-067).
+ *
+ * With the AI chain as the provider (D-079), one run is still one provider call and one trace: the
+ * trace names the link that answered (provider and model), its detail the links passed over before
+ * it, and the cost is the answering model's; a run no link answered is a provider error that names
+ * every link's reason.
  */
 import { randomUUID } from "node:crypto";
 import type { AICallTrace, AiProviderName, Provenance } from "@sideline/engine";
@@ -24,10 +29,12 @@ import type { Budget } from "./budget.ts";
 import type { AiCache } from "./cache.ts";
 import { costOf } from "./pricing.ts";
 import {
+  describeProviderError,
   type LlmProvider,
   PROVIDER_ERROR_DETAIL,
   ProviderOutputError,
   ProviderRefusalError,
+  type Served,
   type Usage,
 } from "./providers/types.ts";
 import type { Skill } from "./skills/types.ts";
@@ -153,30 +160,6 @@ function describeIssues(error: ZodError): string {
     .slice(0, 3)
     .map((issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`)
     .join("; ");
-}
-
-/** A provider's machine-readable error code ("service_unavailable"), never free text. */
-const ERROR_CODE = /^[A-Za-z0-9_.-]{1,48}$/;
-
-/**
- * Error class, HTTP status and the body's error code (the SDKs expose `code` and `type`): enough to
- * tell an outage or an exhausted account from a bad key in the trace alone. Provider messages are
- * not echoed into traces.
- */
-function errorLabel(error: unknown): string {
-  const name = error instanceof Error ? error.constructor.name : typeof error;
-  const { status, code, type } = (error ?? {}) as {
-    status?: unknown;
-    code?: unknown;
-    type?: unknown;
-  };
-  const errorCode = [code, type].find(
-    (v): v is string => typeof v === "string" && ERROR_CODE.test(v),
-  );
-  const parts = [typeof status === "number" ? String(status) : null, errorCode ?? null].filter(
-    (part): part is string => part !== null,
-  );
-  return parts.length > 0 ? `${name} (${parts.join(", ")})` : name;
 }
 
 /** Rejects as soon as `signal` aborts, so a provider that ignores its signal cannot hang a run. */
@@ -313,6 +296,13 @@ export function createGateway(deps: GatewayDeps): Gateway {
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     let usage: Usage | undefined;
     let served = model;
+    // A chain's link answers as itself (D-079); a single provider is the one that answered.
+    let servedBy = providerName;
+    const adopt = (link: Served | null | undefined) => {
+      if (!link) return;
+      served = link.model;
+      servedBy = link.provider;
+    };
     const called = (outcome: AICallTrace["outcome"], detail: string | null): Outcome => {
       // Costs come from reported usage only; a call cut off by the timeout has none to report.
       const cost = usage
@@ -324,7 +314,7 @@ export function createGateway(deps: GatewayDeps): Gateway {
         provenance: "fallback",
         called: true,
         trace: trace({
-          provider: providerName,
+          provider: servedBy,
           model: served,
           cache: "miss",
           outcome,
@@ -341,8 +331,10 @@ export function createGateway(deps: GatewayDeps): Gateway {
           user,
           jsonSchema: providerJsonSchema(skill.outputSchema),
           model,
+          tier: skill.tier,
           effort: skill.effort,
           maxTokens: skill.maxTokens,
+          timeoutMs,
           signal: controller.signal,
           meta: { skill: skill.name, key },
         }),
@@ -351,6 +343,7 @@ export function createGateway(deps: GatewayDeps): Gateway {
       answering = true;
       usage = { tokensIn: result.tokensIn, tokensOut: result.tokensOut };
       served = result.model;
+      servedBy = result.provider ?? providerName;
       // 5. Validation, the skill's repair and 6. the guard: the model proposes, rules dispose.
       const parsed = skill.outputSchema.safeParse(result.output);
       if (!parsed.success)
@@ -358,27 +351,29 @@ export function createGateway(deps: GatewayDeps): Gateway {
       const repaired = skill.repair?.(parsed.data, facts) ?? { output: parsed.data, dropped: [] };
       const verdict = skill.guard(repaired.output, facts);
       if (!verdict.ok) return called("fallback", `guard: ${verdict.reason}`);
-      // 7. Only a validated, guarded answer is cached for the next fan.
-      deps.cache.putLive(key, skill.promptVersion, model, repaired.output);
+      // 7. Only a validated, guarded answer is cached for the next fan, with the model that wrote it.
+      deps.cache.putLive(key, skill.promptVersion, model, repaired.output, served);
       const live =
         repaired.dropped.length > 0
           ? called("repaired", repaired.dropped.map((item) => `dropped ${item}`).join("; "))
-          : called("ok", null);
+          : called("ok", result.route ?? null);
       return { ...live, output: repaired.output, provenance: "live" };
     } catch (error) {
       if (controller.signal.aborted) return called("timeout", `no answer within ${timeoutMs} ms`);
       if (error instanceof ProviderRefusalError) {
         answering = true;
         usage = error.usage;
+        adopt(error.served);
         return called("refused", error.message);
       }
       if (error instanceof ProviderOutputError) {
         answering = true;
         usage = error.usage;
+        adopt(error.served);
         return called("error", `invalid output: ${error.message}`);
       }
       answering = false;
-      return called("error", `${PROVIDER_ERROR_DETAIL} ${errorLabel(error)}`);
+      return called("error", `${PROVIDER_ERROR_DETAIL} ${describeProviderError(error)}`);
     } finally {
       clearTimeout(timer);
     }

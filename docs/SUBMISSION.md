@@ -34,10 +34,13 @@ Code: https://github.com/VirtualHorror/Sideline-Dream11FDEAssignment
 
 ## What a reviewer sees today
 
-- **The AI cards are labelled fallbacks for now.** The model provider's account behind the configured key has no
-  credit (D-067), so the TV's chip reads "No live AI: recorded answers or labelled fallbacks" and every AI card says
-  "Fallback: AI unavailable": a template filled from the same facts the model would get, never text dressed up as
-  model output (Constraint 2). Live AI returns by itself once the account has credit, with no redeploy (D-071).
+- **The AI cards (updated 2026-10-17, Task 11).** The guided story and both replays show recorded real answers ("Replayed
+  AI"): 87 of the 91 shared moments, recorded through the AI chain (Groq's free tier; D-079), each row naming the model
+  that wrote it. Everything else (a fan's question, lineup request, take, an inspector question, and the 4 moments whose
+  answers the guards rejected) is answered live by the chain once production's env file has the Groq key (`sudo
+  deploy/install.sh`, F11); until then, and whenever every link is down, those cards say "Fallback: AI unavailable": a
+  template filled from the same facts the model would get, never text dressed up as model output (Constraint 2). The
+  proxy's key behind the first submission still has no credit (D-067); it is now the chain's last link.
 - **Everything else is live:** the real 2022 and 2024 matches, the fan's delayed TV clock, held and revealed spoilers,
   the comeback quests settled from real deliveries, the inspector's read-only SQL, the control plane's numbers.
 

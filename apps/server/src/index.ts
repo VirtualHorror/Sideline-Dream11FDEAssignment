@@ -10,7 +10,7 @@
 import { readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { serve } from "@hono/node-server";
-import { loadConfig, publicConfigSummary } from "./config.ts";
+import { describeAiChain, loadConfig, publicConfigSummary } from "./config.ts";
 import { createApp } from "./http/app.ts";
 import { buildRuntime } from "./runtime.ts";
 import { startTicker } from "./sessions/ticker.ts";
@@ -46,6 +46,8 @@ const server = serve({ fetch: app.fetch, port: config.port, hostname: config.hos
       aiMode: runtime.gateway.mode(),
     },
   );
+  const { aiChain } = publicConfigSummary(config);
+  if (aiChain) console.log(`[sideline] AI chain ${describeAiChain(aiChain)}`);
 });
 
 function shutdown(signal: string): void {

@@ -13,7 +13,7 @@ Everything Sideline knows about cricket comes from here, never from code.
 | `models/` (Task 3) | Trained win-probability model, leverage threshold, player priors, and a generated README with every count and exclusion | Cricsheet men's T20I archive (`t20s_male_json.zip`, sha256 in the files) | `scripts/build-models.ts` only (byte-reproducible; Biome-excluded) |
 | `crowd/corpus.json` (Task 4) | Synthetic watch-along chat: 303 lines over 16 triggers, made-up handles, reaction rates; placeholders only, no real names (rules in `crowd/README.md`) | authored, labelled synthetic | hand; `CrowdCorpusSchema` and `crowd.test.ts` check it |
 | `glossary.json` (Task 5) | 46 cricket and fantasy terms in plain English, optional analogies per lens; a question that just names a term is answered from here with no model call | authored from `docs/DOMAIN.md` | hand; `GlossaryFileSchema` (apps/server/src/data/glossary.ts) checks it at boot and in tests |
-| `ai-replay/` (Task 7) | Recorded real model outputs for keyless demos | `pnpm ai:record` | script only |
+| `ai-replay/` (Task 7; first recorded in Task 11 through the AI chain) | Recorded real model outputs for keyless demos; each row names the model that wrote it | `pnpm ai:record` | script only |
 | `runtime/` | SQLite at run time (git-ignored): the AI cache, one row per AI attempt, and the analytics tables (deliveries, players) rebuilt from the bundles at every boot | server (Task 5) | server |
 
 Matches shipped:

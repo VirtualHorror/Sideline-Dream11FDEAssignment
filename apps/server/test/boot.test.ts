@@ -1,4 +1,4 @@
-import { mkdtempSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -10,12 +10,31 @@ import { DATA_DIR } from "./helpers.ts";
 
 const env = { SIDELINE_DATA_DIR: DATA_DIR };
 
+/**
+ * The rows recorded in data/ai-replay, counted from the files themselves (one JSON line each), not by the
+ * loader under test: 0 before any recording, 87 after Task 11's (F11), whatever a later recording holds.
+ */
+function recordedRows(): number {
+  const dir = join(DATA_DIR, "ai-replay");
+  if (!existsSync(dir)) return 0;
+  return readdirSync(dir)
+    .filter((name) => name.endsWith(".jsonl"))
+    .reduce(
+      (sum, name) =>
+        sum +
+        readFileSync(join(dir, name), "utf8")
+          .split("\n")
+          .filter((line) => line.trim() !== "").length,
+      0,
+    );
+}
+
 describe("buildRuntime: what src/index.ts boots", () => {
   it("loads data/, rebuilds the analytics tables and runs in replay mode without a key", () => {
     const runtime = buildRuntime(loadConfig(env, "/srv/sideline"), { dbPath: ":memory:" });
     expect([...runtime.bundles.keys()]).toEqual(["1298150", "1415755"]);
     expect(runtime.analytics).toEqual({ deliveries: 251 + 251, players: 60 });
-    expect(runtime.replayRows).toBe(0);
+    expect(runtime.replayRows).toBe(recordedRows());
     expect(runtime.gateway.mode()).toBe("replay");
     const session = runtime.manager.create({ matchId: "1415755", personaId: "football-fan" });
     expect(runtime.manager.get(session.id)).toBe(session);
@@ -73,6 +92,7 @@ describe("buildRuntime: what src/index.ts boots", () => {
       },
       "openai",
     ],
+    [{ GROQ_API_KEY: "gsk_test", GEMINI_API_KEY: "gemini-test" }, "chain"],
     [{}, null],
   ])("picks the provider the config names (%j)", (vars, name) => {
     expect(createProvider(loadConfig(vars, "/srv/sideline"))?.name ?? null).toBe(name);

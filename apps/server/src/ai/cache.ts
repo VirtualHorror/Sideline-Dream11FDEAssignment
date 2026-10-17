@@ -6,26 +6,36 @@
  * `pnpm ai:record`, Task 7). Rows hold the model's validated *output*, not the payload: the skill
  * rebuilds the payload from the output and the caller's facts, which a shared key makes identical.
  * A look-up prefers a live row for the requested model, then a replay row for any model; with no
- * provider (model null) only replay rows can answer.
+ * provider (model null) only replay rows can answer. A live row is keyed by the configured model and
+ * remembers the model that wrote it (`served_model`, D-079: a chain's link, an Anthropic fallback),
+ * which a hit reports and the recorder writes into replay rows.
  */
 import type { DatabaseSync } from "node:sqlite";
 
 export interface CacheRow {
   output: unknown;
   source: "live" | "replay";
+  /** The model that wrote the answer. */
   model: string;
 }
 
 export interface AiCache {
   get(key: string, promptVersion: string, model: string | null): CacheRow | null;
-  putLive(key: string, promptVersion: string, model: string, output: unknown): void;
+  /** `model` is the configured model the row answers for; `servedModel` the one that wrote it. */
+  putLive(
+    key: string,
+    promptVersion: string,
+    model: string,
+    output: unknown,
+    servedModel?: string,
+  ): void;
   /** Loads a recorded row; never overwrites a live row for the same model. */
   putReplay(key: string, promptVersion: string, model: string, output: unknown): void;
 }
 
 export function createCache(db: DatabaseSync, now: () => number): AiCache {
   const select = db.prepare(
-    `SELECT payload_json, source, model FROM ai_cache
+    `SELECT payload_json, source, model, served_model FROM ai_cache
      WHERE key = ? AND prompt_version = ? AND ((source = 'live' AND model = ?) OR source = 'replay')
      ORDER BY CASE source WHEN 'live' THEN 0 ELSE 1 END, created_at DESC
      LIMIT 1`,
@@ -34,10 +44,11 @@ export function createCache(db: DatabaseSync, now: () => number): AiCache {
     "UPDATE ai_cache SET hits = hits + 1 WHERE key = ? AND prompt_version = ? AND model = ?",
   );
   const upsertLive = db.prepare(
-    `INSERT INTO ai_cache (key, prompt_version, model, payload_json, source, created_at, hits)
-     VALUES (?, ?, ?, ?, 'live', ?, 0)
+    `INSERT INTO ai_cache (key, prompt_version, model, payload_json, source, created_at, hits, served_model)
+     VALUES (?, ?, ?, ?, 'live', ?, 0, ?)
      ON CONFLICT (key, prompt_version, model)
-     DO UPDATE SET payload_json = excluded.payload_json, source = 'live', created_at = excluded.created_at`,
+     DO UPDATE SET payload_json = excluded.payload_json, source = 'live', created_at = excluded.created_at,
+       served_model = excluded.served_model`,
   );
   const upsertReplay = db.prepare(
     `INSERT INTO ai_cache (key, prompt_version, model, payload_json, source, created_at, hits)
@@ -51,14 +62,24 @@ export function createCache(db: DatabaseSync, now: () => number): AiCache {
   return {
     get(key, promptVersion, model) {
       const row = select.get(key, promptVersion, model) as
-        | { payload_json: string; source: "live" | "replay"; model: string }
+        | {
+            payload_json: string;
+            source: "live" | "replay";
+            model: string;
+            served_model: string | null;
+          }
         | undefined;
       if (!row) return null;
       touch.run(key, promptVersion, row.model);
-      return { output: JSON.parse(row.payload_json), source: row.source, model: row.model };
+      return {
+        output: JSON.parse(row.payload_json),
+        source: row.source,
+        model: row.served_model ?? row.model,
+      };
     },
-    putLive(key, promptVersion, model, output) {
-      upsertLive.run(key, promptVersion, model, JSON.stringify(output), stamp());
+    putLive(key, promptVersion, model, output, servedModel) {
+      const served = servedModel === undefined || servedModel === model ? null : servedModel;
+      upsertLive.run(key, promptVersion, model, JSON.stringify(output), stamp(), served);
     },
     putReplay(key, promptVersion, model, output) {
       upsertReplay.run(key, promptVersion, model, JSON.stringify(output), stamp());

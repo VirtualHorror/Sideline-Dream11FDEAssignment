@@ -96,7 +96,7 @@ desktop: performance 90, accessibility 100, best practices 96 (FCP 0.4 s, LCP 0.
 3. Fan picks in quests and polls live in the card's state for the session; a reload forgets them.
 
 ## Audit notes (filled by the auditor)
-Self-audit (Claude implemented Task 9; Codex unavailable), 2026-10-18, CLAUDE.md protocol and TEST_CHECKLIST §2:
+Self-audit (Claude implemented Task 9; Codex unavailable), 2026-10-17, CLAUDE.md protocol and TEST_CHECKLIST §2:
 - **A. Anti-hardcoding:** `check:hardcode` caught one real finding during the audit: the chat composer's placeholder
   named a player ("Kohli"); now neutral. No `hardcode-ok`; the diff since `t08-verified` has no golden numbers and no
   comparison with a label, seq, over or id; story beats come from `buildStoryPlan` (personas and triggers).
