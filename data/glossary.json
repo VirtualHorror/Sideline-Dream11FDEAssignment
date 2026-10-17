@@ -1,0 +1,508 @@
+{
+  "version": 1,
+  "note": "Authored plain-English cricket and fantasy terms for the explainer (Task 5). A question that names one of these terms is answered from here with no model call. Definitions follow docs/DOMAIN.md; analogies are optional, one per lens. No player, team or match is named.",
+  "terms": [
+    {
+      "id": "wicket",
+      "term": "wicket",
+      "aliases": ["wickets", "dismissal"],
+      "definition": "A dismissal: the batter is out and leaves the field. Losing ten wickets ends an innings early (all out). The word also names the three stumps with two bails on top that the bowler aims at.",
+      "analogies": {
+        "f1": "Like a car retiring from the race: that driver is done, and a team that loses ten is out of the race.",
+        "football": "Like a red card that removes one attacker: the side keeps playing, but it can only lose ten before the innings is over.",
+        "engineer": "A node failure: the cluster keeps serving with a replacement, until ten failures take the whole service down."
+      },
+      "related": ["bowled", "caught", "lbw", "run-out", "all-out"]
+    },
+    {
+      "id": "all-out",
+      "term": "all out",
+      "aliases": [],
+      "definition": "An innings ends when ten of the eleven batters are out, because a batter cannot bat alone. The total at that point is final.",
+      "analogies": {
+        "football": "Like running out of substitutes and players: the team cannot continue."
+      },
+      "related": ["wicket", "innings"]
+    },
+    {
+      "id": "over",
+      "term": "over",
+      "aliases": ["overs"],
+      "definition": "Six legal deliveries in a row from one bowler, then a different bowler takes over from the other end. A T20 innings lasts at most 20 overs, and a bowler may bowl at most 4 of them.",
+      "analogies": {
+        "f1": "Like a lap: the fixed unit an innings is counted in, 20 of them at most.",
+        "football": "Like a fixed passage of play: one bowler gets six attempts, then the next bowler starts.",
+        "engineer": "A batch of six requests from one producer; producers take turns, each capped at four batches."
+      },
+      "related": ["maiden", "run-rate", "wide"]
+    },
+    {
+      "id": "innings",
+      "term": "innings",
+      "aliases": [],
+      "definition": "One team's turn to bat. In a T20 each side bats once, for at most 20 overs or until ten wickets fall.",
+      "analogies": {
+        "f1": "Like one stint on track: the team that bats second knows exactly what it has to beat.",
+        "football": "Like one half where only one side may attack."
+      },
+      "related": ["over", "target", "chase"]
+    },
+    {
+      "id": "run",
+      "term": "run",
+      "aliases": ["runs"],
+      "definition": "The basic unit of score: both batters cross to the other end once. Boundaries score four or six without running, and extras such as wides add runs too.",
+      "analogies": {
+        "f1": "Like a point on the board: every run counts toward the total.",
+        "football": "Like a goal, except a team scores well over a hundred of them."
+      },
+      "related": ["boundary", "extras", "run-rate"]
+    },
+    {
+      "id": "boundary",
+      "term": "boundary",
+      "aliases": ["boundaries"],
+      "definition": "The rope around the edge of the field. A ball that reaches it after bouncing scores four; one that clears it on the full scores six, both without running.",
+      "analogies": {
+        "f1": "Like a pass on the straight that gains several places in one move.",
+        "football": "Like a goal from open play: the big, instant reward.",
+        "engineer": "A burst: several units of work completed in one request."
+      },
+      "related": ["four", "six"]
+    },
+    {
+      "id": "four",
+      "term": "four",
+      "aliases": ["fours"],
+      "definition": "The ball reached the boundary rope after bouncing: four runs, no running needed.",
+      "analogies": {
+        "football": "Like a well-worked goal: valuable, and it happens a few times an innings."
+      },
+      "related": ["boundary", "six"]
+    },
+    {
+      "id": "six",
+      "term": "six",
+      "aliases": ["sixes", "maximum"],
+      "definition": "The ball cleared the boundary rope without bouncing: six runs, the most a batter can score from one legal hit.",
+      "analogies": {
+        "f1": "Like a pass for the lead on one straight: the biggest gain from a single move.",
+        "football": "Like a screamer from distance: the most you can get from one strike.",
+        "engineer": "The largest batch one request can complete."
+      },
+      "related": ["boundary", "four"]
+    },
+    {
+      "id": "extras",
+      "term": "extras",
+      "aliases": ["sundries"],
+      "definition": "Runs not scored off the bat: wides, no-balls, byes, leg byes and penalty runs. They count for the batting team but for no individual batter.",
+      "analogies": {
+        "football": "Like own goals: they count on the scoreboard, but no attacker gets the credit.",
+        "engineer": "Throughput the other side's errors handed you."
+      },
+      "related": ["wide", "no-ball", "bye", "leg-bye"]
+    },
+    {
+      "id": "wide",
+      "term": "wide",
+      "aliases": ["wides", "wide ball"],
+      "definition": "A delivery too far from the batter to hit. It gives the batting side one extra run (plus any runs they take) and does not count as one of the over's six balls, so it is bowled again.",
+      "analogies": {
+        "f1": "Like a lap time deleted for track limits: it does not count and has to be done again.",
+        "football": "Like a foul that hands the other side a free kick.",
+        "engineer": "A malformed request: rejected, charged a penalty, and retried."
+      },
+      "related": ["no-ball", "extras", "over"]
+    },
+    {
+      "id": "no-ball",
+      "term": "no-ball",
+      "aliases": ["no ball", "noball", "no-balls"],
+      "definition": "An illegal delivery, most often because the bowler's front foot landed beyond the crease or a full toss arrived above waist height. It costs one extra run, is bowled again, and the next delivery is a free hit.",
+      "analogies": {
+        "f1": "Like a jump start: a penalty, a restart, and an advantage handed to the rival.",
+        "football": "Like a foul in the box: a penalty against the bowling side, and the next ball is a free hit.",
+        "engineer": "A protocol violation: a penalty, a retry, and the next request runs with relaxed failure rules."
+      },
+      "related": ["free-hit", "wide", "extras"]
+    },
+    {
+      "id": "free-hit",
+      "term": "free hit",
+      "aliases": ["freehit", "free-hit"],
+      "definition": "The delivery after a no-ball. The batter cannot be out bowled or caught on it (only a run out and a few rare dismissals still count), so they can swing hard. If the free hit is itself a wide or a no-ball, the free hit carries over to the next ball.",
+      "analogies": {
+        "f1": "Like an overtake attempt where a mistake cannot cost you the race.",
+        "football": "Like a penalty kick: a big chance where the defence can do very little.",
+        "engineer": "A request that can only fail one rare way (a run out), so you send the biggest payload you can."
+      },
+      "related": ["no-ball", "bowled", "caught"]
+    },
+    {
+      "id": "bye",
+      "term": "bye",
+      "aliases": ["byes"],
+      "definition": "Runs the batters take when the ball misses both bat and body, usually past the wicket-keeper. They count as extras, not to the batter.",
+      "analogies": {
+        "football": "Like a goalkeeper's fumble that gifts the other side a goal."
+      },
+      "related": ["leg-bye", "extras"]
+    },
+    {
+      "id": "leg-bye",
+      "term": "leg bye",
+      "aliases": ["leg byes", "leg-bye", "leg-byes", "legbye"],
+      "definition": "Runs the batters take after the ball hits the batter's body rather than the bat. They count as extras, not to the batter.",
+      "analogies": {},
+      "related": ["bye", "extras"]
+    },
+    {
+      "id": "dot-ball",
+      "term": "dot ball",
+      "aliases": ["dot", "dots", "dot balls"],
+      "definition": "A legal delivery with no run scored off the bat (byes and leg byes do not spoil it for the bowler). Strings of dot balls build pressure on the batting side.",
+      "analogies": {
+        "f1": "A lap with no gain while the rival pulls away.",
+        "football": "A spell of possession that goes nowhere while the clock runs.",
+        "engineer": "A request that returns nothing: the backlog stays put and the pressure builds."
+      },
+      "related": ["maiden", "required-run-rate"]
+    },
+    {
+      "id": "maiden",
+      "term": "maiden",
+      "aliases": ["maiden over", "maidens"],
+      "definition": "A complete over in which the bowler concedes no runs. Rare and valuable in T20.",
+      "analogies": {
+        "football": "Like a clean sheet for a whole spell of the game.",
+        "engineer": "A full batch with zero throughput for the other side."
+      },
+      "related": ["over", "dot-ball", "economy-rate"]
+    },
+    {
+      "id": "lbw",
+      "term": "LBW",
+      "aliases": ["leg before wicket", "leg before", "l.b.w."],
+      "definition": "Leg before wicket: the batter is out because the ball hit their leg or body when it would otherwise have gone on to hit the stumps. The umpire judges where the ball pitched, where it hit and where it was heading.",
+      "analogies": {
+        "football": "Like a handball on the line: the body stopped a ball that was going in, and that is not allowed."
+      },
+      "related": ["wicket", "drs", "bowled"]
+    },
+    {
+      "id": "bowled",
+      "term": "bowled",
+      "aliases": ["clean bowled"],
+      "definition": "The bowler hits the stumps and a bail falls: the batter is out, whatever else happened.",
+      "analogies": {
+        "football": "Like a shot that beats the keeper completely: no doubt, no review."
+      },
+      "related": ["wicket", "lbw", "free-hit"]
+    },
+    {
+      "id": "caught",
+      "term": "caught",
+      "aliases": ["catch", "catches", "caught out"],
+      "definition": "A fielder, the wicket-keeper or the bowler catches the ball off the bat before it touches the ground: the batter is out.",
+      "analogies": {
+        "football": "Like a keeper claiming a cross cleanly: the attack is over."
+      },
+      "related": ["wicket", "free-hit"]
+    },
+    {
+      "id": "stumped",
+      "term": "stumped",
+      "aliases": ["stumping", "stumpings"],
+      "definition": "The wicket-keeper takes the ball and breaks the stumps while the batter has stepped out of the crease without trying for a run: the batter is out.",
+      "analogies": {
+        "football": "Like being caught offside: one step too far and the move is over."
+      },
+      "related": ["wicket-keeper", "wicket"]
+    },
+    {
+      "id": "run-out",
+      "term": "run out",
+      "aliases": ["runout", "run-out", "run outs"],
+      "definition": "A fielder breaks the stumps with the ball while a batter is still short of the crease, running between the ends: that batter is out. The bowler gets no credit for a run out.",
+      "analogies": {
+        "f1": "Like a pit-lane mistake: an unforced error, not the rival's skill, costs you.",
+        "football": "Like losing the ball while dribbling out of your own box."
+      },
+      "related": ["wicket", "free-hit"]
+    },
+    {
+      "id": "duck",
+      "term": "duck",
+      "aliases": ["ducks", "out for a duck"],
+      "definition": "A batter out for zero. In fantasy cricket a duck costs a batter, wicket-keeper or all-rounder points.",
+      "analogies": {
+        "f1": "Like retiring on the first lap: no points at all.",
+        "football": "Like a striker taken off without a single shot."
+      },
+      "related": ["golden-duck", "wicket"]
+    },
+    {
+      "id": "golden-duck",
+      "term": "golden duck",
+      "aliases": ["golden ducks"],
+      "definition": "Out for zero on the first ball the batter faces.",
+      "analogies": {
+        "f1": "Like crashing out at the first corner."
+      },
+      "related": ["duck"]
+    },
+    {
+      "id": "strike-rate",
+      "term": "strike rate",
+      "aliases": ["sr", "batting strike rate"],
+      "definition": "A batter's runs per 100 balls faced. 150 means one and a half runs a ball. In T20 a higher strike rate matters as much as the runs themselves.",
+      "analogies": {
+        "f1": "Like one driver's pace: how fast they turn laps into progress.",
+        "football": "Like a striker's goals per shot: output for the chances used.",
+        "engineer": "Throughput per hundred requests served."
+      },
+      "related": ["run-rate", "economy-rate"]
+    },
+    {
+      "id": "economy-rate",
+      "term": "economy rate",
+      "aliases": ["economy", "econ"],
+      "definition": "The runs a bowler concedes per over. Lower is better: under 7 is good in T20, above 10 is expensive.",
+      "analogies": {
+        "football": "Like goals conceded per game for a defence.",
+        "engineer": "The error budget a component burns per unit of work."
+      },
+      "related": ["strike-rate", "maiden"]
+    },
+    {
+      "id": "run-rate",
+      "term": "run rate",
+      "aliases": ["current run rate", "crr", "scoring rate"],
+      "definition": "Runs per over so far in the innings (the current run rate, CRR): the batting side's pace.",
+      "analogies": {
+        "f1": "Your current race pace.",
+        "football": "Goals per minute so far.",
+        "engineer": "Current throughput."
+      },
+      "related": ["required-run-rate", "over"]
+    },
+    {
+      "id": "required-run-rate",
+      "term": "required run rate",
+      "aliases": ["rrr", "required rate", "asking rate"],
+      "definition": "The runs per over the chasing side needs from here to reach the target (RRR). The higher it climbs above the current run rate, the harder the chase.",
+      "analogies": {
+        "f1": "The lap time you must hold to catch the leader before the chequered flag.",
+        "football": "The goals per remaining minute you need to turn the game round.",
+        "engineer": "The throughput needed to clear the backlog before the deadline."
+      },
+      "related": ["run-rate", "target", "chase"]
+    },
+    {
+      "id": "target",
+      "term": "target",
+      "aliases": ["targets"],
+      "definition": "The score the side batting second must reach to win: the first innings total plus one.",
+      "analogies": {
+        "f1": "The gap to the leader you have to close.",
+        "football": "The scoreline you have to beat.",
+        "engineer": "The SLA you must hit before time runs out."
+      },
+      "related": ["chase", "required-run-rate"]
+    },
+    {
+      "id": "chase",
+      "term": "chase",
+      "aliases": ["run chase", "chasing"],
+      "definition": "The second innings: the team batting second tries to reach the target before its 20 overs or ten wickets run out. It wins the moment it gets there.",
+      "analogies": {
+        "f1": "Hunting down the leader with a known gap and a known number of laps.",
+        "football": "Chasing the game from behind with the clock running.",
+        "engineer": "Working through a known backlog against a hard deadline with limited retries (wickets)."
+      },
+      "related": ["target", "required-run-rate", "innings"]
+    },
+    {
+      "id": "partnership",
+      "term": "partnership",
+      "aliases": ["stand", "partnerships"],
+      "definition": "The runs two batters add together while both are in. A long partnership steadies an innings; a wicket ends it.",
+      "analogies": {
+        "f1": "Like teammates running together and sharing the tow.",
+        "football": "Like a strike partnership that keeps combining.",
+        "engineer": "Uptime between incidents."
+      },
+      "related": ["wicket"]
+    },
+    {
+      "id": "powerplay",
+      "term": "powerplay",
+      "aliases": ["power play", "powerplay overs"],
+      "definition": "The first six overs of an innings, when only two fielders may stand outside the inner circle, so hitting over the field is easier and early wickets are common.",
+      "analogies": {
+        "f1": "Like the opening laps on fresh tyres: the best chance to make up ground.",
+        "football": "Like attacking a team that has pushed a high line: space to exploit.",
+        "engineer": "A burst window with relaxed limits."
+      },
+      "related": ["death-overs", "over"]
+    },
+    {
+      "id": "death-overs",
+      "term": "death overs",
+      "aliases": ["death", "death bowling", "the death"],
+      "definition": "The last overs of an innings, the 16th to the 20th, when batters attack almost every ball and bowlers rely on yorkers and slower balls.",
+      "analogies": {
+        "f1": "The final laps: tyres gone, everyone pushing.",
+        "football": "Stoppage time with everyone forward.",
+        "engineer": "The last minutes before a deadline, at peak load."
+      },
+      "related": ["yorker", "slower-ball", "powerplay"]
+    },
+    {
+      "id": "yorker",
+      "term": "yorker",
+      "aliases": ["yorkers"],
+      "definition": "A full delivery aimed at the batter's toes, landing right under the bat: very hard to hit for runs, which is why it is a death-overs favourite.",
+      "analogies": {
+        "football": "Like a low cross driven at boot height: hard to do anything clean with."
+      },
+      "related": ["death-overs", "bouncer"]
+    },
+    {
+      "id": "bouncer",
+      "term": "bouncer",
+      "aliases": ["bouncers", "short ball"],
+      "definition": "A short delivery that rears up toward the batter's chest or head. Used to push a batter back or invite a mistimed hook.",
+      "analogies": {},
+      "related": ["yorker", "slower-ball"]
+    },
+    {
+      "id": "slower-ball",
+      "term": "slower ball",
+      "aliases": ["slower balls", "change of pace", "slower one"],
+      "definition": "A delivery bowled with the usual action but much less pace, so the batter swings too early.",
+      "analogies": {
+        "football": "Like a stuttered penalty run-up that sends the keeper the wrong way."
+      },
+      "related": ["yorker", "death-overs"]
+    },
+    {
+      "id": "strike",
+      "term": "on strike",
+      "aliases": ["strike", "striker", "non-striker", "non striker", "strike rotation"],
+      "definition": "The batter facing the bowler is on strike; the other waits at the bowler's end. They swap ends when they run an odd number of runs, and again at the end of each over.",
+      "analogies": {
+        "football": "Like which striker is on the ball: the side wants its best hitter facing at the key moment."
+      },
+      "related": ["run", "over"]
+    },
+    {
+      "id": "all-rounder",
+      "term": "all-rounder",
+      "aliases": ["all rounder", "all-rounders", "allrounder"],
+      "definition": "A player picked to both bat and bowl. In fantasy cricket all-rounders can score points both ways.",
+      "analogies": {
+        "football": "Like a box-to-box midfielder who defends and scores."
+      },
+      "related": ["wicket-keeper", "credits"]
+    },
+    {
+      "id": "wicket-keeper",
+      "term": "wicket-keeper",
+      "aliases": ["wicketkeeper", "keeper", "wk", "wicket keeper"],
+      "definition": "The gloved fielder who stands behind the stumps, takes most catches off edges and makes stumpings.",
+      "analogies": {
+        "football": "The goalkeeper's cousin: gloves on, behind the target, catching what the batter misses."
+      },
+      "related": ["stumped", "caught"]
+    },
+    {
+      "id": "captain",
+      "term": "captain",
+      "aliases": ["fantasy captain", "captaincy"],
+      "definition": "In fantasy cricket, the captain's points count double. Choosing the captain is the biggest decision in a team.",
+      "analogies": {
+        "f1": "Like a double-points race, for one driver.",
+        "football": "Like a captain chip in fantasy football: one player's points count twice.",
+        "engineer": "A 2x weight on one input."
+      },
+      "related": ["vice-captain", "credits", "playing-xi"]
+    },
+    {
+      "id": "vice-captain",
+      "term": "vice-captain",
+      "aliases": ["vice captain", "vc"],
+      "definition": "In fantasy cricket, the vice-captain's points count one and a half times.",
+      "analogies": {
+        "engineer": "A 1.5x weight on a second input."
+      },
+      "related": ["captain", "credits"]
+    },
+    {
+      "id": "credits",
+      "term": "credits",
+      "aliases": ["credit", "fantasy credits", "budget"],
+      "definition": "Every fantasy player has a credit price, and a team of 11 must fit in 100 credits, with at most 7 players from one side.",
+      "analogies": {
+        "f1": "Like a budget cap: the best drivers cost the most, so you balance the grid.",
+        "football": "Like a fantasy football budget: stars cost more, so you need bargains too.",
+        "engineer": "A resource quota: fit the best set of components under a fixed budget."
+      },
+      "related": ["captain", "playing-xi"]
+    },
+    {
+      "id": "playing-xi",
+      "term": "playing XI",
+      "aliases": ["playing eleven", "xi", "starting eleven", "line-up", "lineup"],
+      "definition": "The eleven players each team announces at the toss. In fantasy cricket a player outside the playing XI scores nothing, so a surprise omission can hurt a team picked earlier.",
+      "analogies": {
+        "f1": "Like the starting grid: a driver who does not start scores no points.",
+        "football": "The starting eleven announced before kick-off."
+      },
+      "related": ["toss", "credits"]
+    },
+    {
+      "id": "toss",
+      "term": "toss",
+      "aliases": ["coin toss"],
+      "definition": "A coin toss before the match: the captain who wins it chooses whether to bat or field first.",
+      "analogies": {
+        "football": "Like the coin toss for ends and kick-off, but the choice can shape the whole match."
+      },
+      "related": ["playing-xi", "innings"]
+    },
+    {
+      "id": "super-over",
+      "term": "super over",
+      "aliases": ["super overs", "eliminator"],
+      "definition": "A tie-breaker when scores finish level: each side bats one over, and the higher score wins.",
+      "analogies": {
+        "f1": "Like a one-lap shoot-out.",
+        "football": "Like a penalty shoot-out."
+      },
+      "related": ["over"]
+    },
+    {
+      "id": "drs",
+      "term": "DRS",
+      "aliases": ["decision review system", "review", "reviews"],
+      "definition": "The Decision Review System: a team may challenge an umpire's decision, and the TV umpire checks replays, sound and ball tracking before confirming or overturning it.",
+      "analogies": {
+        "f1": "Like the stewards reviewing an incident with every camera angle.",
+        "football": "Like VAR."
+      },
+      "related": ["lbw"]
+    },
+    {
+      "id": "dls",
+      "term": "DLS method",
+      "aliases": ["dls", "duckworth-lewis", "duckworth lewis", "duckworth-lewis-stern"],
+      "definition": "Duckworth-Lewis-Stern: the method that resets a target when rain shortens a match, based on the overs and wickets each side has left.",
+      "analogies": {
+        "engineer": "A formula that rescales a target when the available capacity changes mid-job."
+      },
+      "related": ["target"]
+    }
+  ]
+}
