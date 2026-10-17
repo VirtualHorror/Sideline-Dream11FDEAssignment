@@ -12,6 +12,7 @@ audit updates this page.
 | F02 | Cricket core: Cricsheet timeline, reducer, fantasy scoring, engine report CLI | audited and merged, `t02-verified` | [F02](features/F02-cricket-core.md) |
 | F03 | Models: T20I archive pipeline, win probability, leverage threshold, player priors | audited and merged, `t03-verified` | [F03](features/F03-models.md) |
 | F04 | Moments engine: clocks, delay buffer, commentary lines, phase detectors (lineup, collapse, nudge with the match-deciding ball, room), catch-up facts, entropy gate, quest resolver, synthetic crowd; Task 3 carry-overs (step 4.0) | audited and merged, `t04-verified` | [F04](features/F04-moments-engine.md) |
+| F05 | Server runtime and AI layer: match bundles, SQLite, per-browser sessions on one ticker, SSE, the AI gateway (Anthropic and OpenAI-compatible providers, cache, budget, traces, replay rows, labelled fallbacks), orchestrator, spoiler teaser / catch-up / explainer skills with their guards, telemetry and the scale projection, `pnpm ai:smoke`; the `t04-verified` spot-check and its two pinned test gaps | audited and merged, `t05-verified` | [F05](features/F05-server-ai.md) |
 
 ## Bugs
 
@@ -34,3 +35,15 @@ Fixed in Task 4 step 4.0 (logged in F04, no bug file):
   with a TypeError instead of "no priors for player" (test first).
 - Two Task 3 behaviours were untested (a diagonal-only Hessian and leverage counting retired hurt as a
   wicket would both have passed); tests now pin them.
+
+Fixed while Task 5 was being implemented (logged in F05, no bug file):
+- The scale projection printed `100.0000%` for a saving of 99.9999991%; it now shows as many decimals
+  as it takes not to round up to 100 (test first).
+- A browser reconnecting to a session that had already stopped was not told; the stream now repeats the
+  `session_failed` error after the snapshot (test first).
+- A replay file line that was not JSON failed with a bare `SyntaxError`; it now names the file and line.
+
+Closed by tests in Task 5 (the `t04-verified` spot-check, D-051, no bug file):
+- Nothing pinned the room detector's ten-minute history minimum or an at-most dots quest settling on the
+  ball that makes it certain; the merged code was right, and both edges now have tests.
+

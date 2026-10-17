@@ -17,12 +17,15 @@ cached by moment so the cost scales with the match, not with the number of fans.
 The demo replays **real ball-by-ball data** (Cricsheet) of India vs Pakistan at the 2022 T20 World
 Cup, with the 2024 final as a second match to prove nothing is hardcoded.
 
-> Status: Tasks 1-4 complete and audited: foundation; cricket core (Cricsheet timeline, match
+> Status: Tasks 1-5 complete and audited: foundation; cricket core (Cricsheet timeline, match
 > reducer, fantasy scoring, engine report); models (win probability, leverage and player priors
 > trained on 3,093 real men's T20Is, rebuilt byte for byte by one script); the moments engine (TV
 > clock and delay buffer, the four phase detectors, the entropy gate that keeps 233 of 266 events
-> of the 2022 replay away from any model, quest resolution and a seeded synthetic crowd). See
-> `docs/PLAN.md` for the build sequence and status.
+> of the 2022 replay away from any model, quest resolution and a seeded synthetic crowd); the server
+> runtime (a session per browser streamed over SSE, the AI gateway with moment-keyed caching, budgets
+> and labelled fallbacks, spoiler teasers that never see the outcome, catch-up reels, a
+> glossary-first explainer, telemetry with the scale projection). See `docs/PLAN.md` for the build
+> sequence and status.
 
 ## Quick start
 
@@ -41,12 +44,20 @@ node scripts/engine-report.ts data/raw/cricsheet/1298150.json \
 
 # rebuild data/models (win probability, leverage threshold, priors) from Cricsheet's T20I archive
 node scripts/build-models.ts            # or --zip <saved t20s_male_json.zip> for an exact rebuild
+
+# one real teaser call through the AI gateway with the provider in .env (spends a few thousand tokens)
+pnpm ai:smoke
 ```
+
+The API (Task 5): `GET /api/matches`, `POST /api/sessions`, `GET /api/sessions/:id/stream` (SSE),
+`POST /api/sessions/:id/control`, `POST /api/sessions/:id/ask`, `GET /api/telemetry`; the flows are in
+`docs/Flow.md` §7, §8 and §13.
 
 Optional AI configuration: copy `.env.example` to `.env` and add an Anthropic key or an
 OpenAI-compatible key (+ `OPENAI_BASE_URL` and model names for non-OpenAI endpoints). The provider
-defaults to whichever key is present. Without a key Sideline runs on deterministic logic plus
-recorded AI output (from Task 7).
+defaults to whichever key is present. Without a key Sideline runs on deterministic logic, and every
+AI card falls back to a labelled template built from the same facts (recorded AI output joins in
+Task 7).
 
 For the demo round, `/architecture` (from Task 6) presents this architecture and the live build
 plan inside the app, rendered from the same docs in this repository.
@@ -66,7 +77,7 @@ plan inside the app, rendered from the same docs in this repository.
 ## How this was built
 
 Claude Code (architect and auditor) designed the system, wrote the plan and Task 1, and audits each
-task; OpenAI Codex implements tasks on branches (Claude implemented Tasks 3 and 4 while Codex was
+task; OpenAI Codex implements tasks on branches (Claude implemented Tasks 3, 4 and 5 while Codex was
 unavailable). The process is documented as it happens:
 `docs/Decisions.md` (why), `docs/Flow.md` (how execution travels), `docs/features/` (per-task
 traces), `docs/TEST_CHECKLIST.md` (what proves it works), `docs/ROLLBACK.md` (how to undo it).
