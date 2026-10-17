@@ -1,5 +1,5 @@
 import { foldEvents, type MatchState } from "@sideline/engine";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Commentary } from "../src/broadcast/Commentary.tsx";
@@ -180,6 +180,24 @@ describe("PlaybackControls and DelayControl", () => {
       action: "jump",
       target: { kind: "over", innings: 2, afterOvers: 18 },
     });
+  });
+
+  it("shows the chosen speed at once, and goes back when the session refuses it", async () => {
+    const user = userEvent.setup();
+    let refuse: (ok: boolean) => void = () => {};
+    const onControl = vi.fn(
+      () =>
+        new Promise<boolean>((resolve) => {
+          refuse = resolve;
+        }),
+    );
+    render(<PlaybackControls playing speed={1} onControl={onControl} />);
+    await user.click(screen.getByRole("radio", { name: "16x" }));
+    expect((screen.getByRole("radio", { name: "16x" }) as HTMLInputElement).checked).toBe(true);
+    refuse(false);
+    await waitFor(() =>
+      expect((screen.getByRole("radio", { name: "1x" }) as HTMLInputElement).checked).toBe(true),
+    );
   });
 
   it("sets the TV delay from a preset", async () => {

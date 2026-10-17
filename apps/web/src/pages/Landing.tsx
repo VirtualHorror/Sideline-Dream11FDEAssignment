@@ -1,6 +1,7 @@
 /**
- * The landing page (`/`): the floodlit hero with the ghost-text wordmark, the persona picker, and the
- * three ways Sideline does or does not use AI (DESIGN_SYSTEM §5). The matches and personas come from
+ * The landing page (`/`): the floodlit hero with the ghost-text wordmark (the light rises from the
+ * hero's bottom edge, as in the reference recording), the persona picker under it, and the three ways
+ * Sideline does or does not use AI (DESIGN_SYSTEM §5). The matches and personas come from
  * GET /api/matches; "Start watching" opens `/match/<id>?persona=<id>`.
  * Caller: App.tsx.
  */
@@ -45,21 +46,24 @@ export function Landing() {
             A second screen for live cricket that holds every spoiler until your stream shows it,
             catches you up when you arrive late, and tells you when it is using AI.
           </p>
-          {matches ? (
-            <PersonaPicker
-              matches={matches}
-              onStart={(matchId, personaId) =>
-                navigate(`/match/${matchId}?persona=${encodeURIComponent(personaId)}`)
-              }
-            />
-          ) : problem ? (
-            <p className="notice" role="alert">
-              {problem}
-            </p>
-          ) : (
-            <p className="hero__loading">Loading the matches…</p>
-          )}
         </div>
+      </section>
+
+      <section className="start" aria-label="Start watching">
+        {matches ? (
+          <PersonaPicker
+            matches={matches}
+            onStart={(matchId, personaId) =>
+              navigate(`/match/${matchId}?persona=${encodeURIComponent(personaId)}`)
+            }
+          />
+        ) : problem ? (
+          <p className="notice" role="alert">
+            {problem}
+          </p>
+        ) : (
+          <p className="start__loading">Loading the matches…</p>
+        )}
       </section>
 
       <section className="ai-use" aria-labelledby="ai-use-title">

@@ -45,7 +45,9 @@ export type StreamAction =
   | { type: "message"; message: StreamMessage }
   | { type: "connection"; connection: Connection }
   /** A moment from a REST answer (POST /ask) rather than the stream. */
-  | { type: "moment"; moment: Moment };
+  | { type: "moment"; moment: Moment }
+  /** The clock a control request answered with; the stream's own `clock` message follows. */
+  | { type: "clock"; clock: ClockState };
 
 export function initialStreamState(): StreamState {
   return {
@@ -114,6 +116,8 @@ export function reduceStream(state: StreamState, action: StreamAction): StreamSt
         : { ...state, connection: action.connection };
     case "moment":
       return { ...state, moments: upsertMoment(state.moments, action.moment) };
+    case "clock":
+      return { ...state, clock: action.clock };
   }
 }
 

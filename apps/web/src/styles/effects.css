@@ -38,14 +38,21 @@
   position: absolute;
   inset: 0;
   transform-origin: 50% 100%;
-  mask-image: radial-gradient(120% 100% at 50% 100%, #000 0%, #000 30%, transparent 70%);
+  mask-image: radial-gradient(
+    var(--fl-cone, 120% 100%) at 50% 100%,
+    #000 0%,
+    #000 30%,
+    transparent 70%
+  );
 }
 
+/* Sized from the container's height as well as its width, so the cone shows on a wide TV screen,
+   a tall phone hero and everything between. */
 .floodlight__blob {
   position: absolute;
-  bottom: -30%;
-  width: 58%;
-  aspect-ratio: 1.5;
+  bottom: -34%;
+  width: 46%;
+  height: 92%;
   border-radius: 50%;
   filter: blur(48px);
   background: radial-gradient(
@@ -63,30 +70,30 @@
 .floodlight__blob--1 {
   --fl-c: #5171e8;
   --fl-drift: 13s;
-  left: -8%;
+  left: 10%;
   animation-delay: -4.8s, -2s;
 }
 
 .floodlight__blob--2 {
   --fl-c: #69b9ec;
   --fl-drift: 17s;
-  left: 14%;
-  bottom: -36%;
+  left: 22%;
+  bottom: -38%;
   animation-delay: -3.2s, -6s;
 }
 
 .floodlight__blob--3 {
   --fl-c: #7771bc;
   --fl-drift: 11s;
-  left: 32%;
+  left: 33%;
   animation-delay: -1.6s, -1s;
 }
 
 .floodlight__blob--4 {
   --fl-c: #d165aa;
   --fl-drift: 15s;
-  left: 50%;
-  bottom: -34%;
+  left: 44%;
+  bottom: -36%;
   animation-delay: 0s, -8s;
 }
 
@@ -168,16 +175,25 @@
   opacity: 0;
 }
 
-.ghost[data-render="css"] .ghost__text {
-  text-shadow:
-    -1px 0 color-mix(in oklab, #ff3b5c 85%, transparent),
-    1px 0 color-mix(in oklab, #3fe0d0 85%, transparent);
+/* Additive fringes on a dark surface, the subtractive pair on a light one. A surface that stays
+   dark in both themes (the TV screen) sets the dark values again. */
+:root {
+  --ghost-mode: light;
+  --ghost-fringe-a: color-mix(in oklab, #d7263d 60%, transparent);
+  --ghost-fringe-b: color-mix(in oklab, #1d7fb8 60%, transparent);
 }
 
-:root[data-theme="light"] .ghost[data-render="css"] .ghost__text {
+:root[data-theme="dark"],
+.surface-night {
+  --ghost-mode: dark;
+  --ghost-fringe-a: color-mix(in oklab, #ff3b5c 85%, transparent);
+  --ghost-fringe-b: color-mix(in oklab, #3fe0d0 85%, transparent);
+}
+
+.ghost[data-render="css"] .ghost__text {
   text-shadow:
-    -1px 0 color-mix(in oklab, #d7263d 60%, transparent),
-    1px 0 color-mix(in oklab, #1d7fb8 60%, transparent);
+    -1px 0 var(--ghost-fringe-a),
+    1px 0 var(--ghost-fringe-b);
 }
 
 /* ---------------------------------------------------------------- Effect C: DitherVeil */

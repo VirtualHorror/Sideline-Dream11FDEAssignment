@@ -1,10 +1,12 @@
 /**
  * Play, pause, speed (1x-32x) and "jump to after N overs of an innings": the demo's remote control.
  * Caller: broadcast/TvPane.tsx; every action is a `ControlRequest` the match room POSTs to the session.
- * The server owns the clock: the UI changes when the answer (and, for a jump, the snapshot) arrives.
+ * The server owns the clock. The buttons show the fan's choice at once and drop that guess when the
+ * session's clock changes (the answer) or the request fails, so a slow network never makes a click look
+ * ignored.
  */
 import type { ControlRequest, InningsNumber, Speed } from "@sideline/engine";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 const SPEEDS: readonly Speed[] = [1, 2, 4, 8, 16, 32];
 const OVERS = Array.from({ length: 20 }, (_, i) => i);
@@ -17,12 +19,24 @@ export function PlaybackControls({
 }: {
   playing: boolean;
   speed: Speed;
-  onControl(request: ControlRequest): void;
+  /** Resolves false when the session refused the request. */
+  onControl(request: ControlRequest): Promise<boolean> | undefined;
   disabled?: boolean;
 }) {
   const speedName = useId();
   const [innings, setInnings] = useState<InningsNumber>(2);
   const [afterOvers, setAfterOvers] = useState(18);
+  const [guess, setGuess] = useState<{ speed?: Speed; playing?: boolean }>({});
+  // biome-ignore lint/correctness/useExhaustiveDependencies: the session's clock answered: drop the guess
+  useEffect(() => setGuess({}), [speed, playing]);
+  const shownSpeed = guess.speed ?? speed;
+  const shownPlaying = guess.playing ?? playing;
+  const send = (request: ControlRequest, next: { speed?: Speed; playing?: boolean }) => {
+    setGuess((current) => ({ ...current, ...next }));
+    void onControl(request)?.then((ok) => {
+      if (!ok) setGuess({});
+    });
+  };
 
   return (
     <div className="playback">
@@ -30,9 +44,11 @@ export function PlaybackControls({
         type="button"
         className="button button--primary playback__toggle"
         disabled={disabled}
-        onClick={() => onControl({ action: playing ? "pause" : "play" })}
+        onClick={() =>
+          send({ action: shownPlaying ? "pause" : "play" }, { playing: !shownPlaying })
+        }
       >
-        {playing ? "Pause" : "Play"}
+        {shownPlaying ? "Pause" : "Play"}
       </button>
       <fieldset className="segmented" disabled={disabled}>
         <legend className="sr-only">Speed</legend>
@@ -42,8 +58,8 @@ export function PlaybackControls({
               type="radio"
               name={speedName}
               value={value}
-              checked={speed === value}
-              onChange={() => onControl({ action: "speed", value })}
+              checked={shownSpeed === value}
+              onChange={() => send({ action: "speed", value }, { speed: value })}
             />
             <span>{value}x</span>
           </label>

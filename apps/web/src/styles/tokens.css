@@ -36,6 +36,11 @@
   --four: #1d7fb8;
   --wicket: #d7263d;
   --dot: #8a93ad;
+  /* Text on a filled six / four / wicket cell, chosen for WCAG AA in each theme. */
+  --on-six: #0b1222;
+  --on-four: #ffffff;
+  --on-wicket: #ffffff;
+  --four-fill: #17699a;
 
   --r-panel: 20px;
   --r-card: 14px;
@@ -45,6 +50,7 @@
 
   --font-ui: "Anek Latin Variable", "Anek Latin", ui-sans-serif, system-ui, sans-serif;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --gutter: clamp(16px, 4vw, 40px);
 }
 
 :root[data-theme="dark"] {
@@ -68,4 +74,30 @@
   --four: #69b9ec;
   --wicket: #ff5468;
   --dot: #4c5571;
+  --on-six: #080b14;
+  --on-four: #080b14;
+  --on-wicket: #080b14;
+  --four-fill: #69b9ec;
+}
+
+/*
+ * The TV screen is a night-match picture in both themes, the way a video player stays dark on a
+ * light page. It re-declares the dark values for everything drawn on it (DESIGN_SYSTEM §2).
+ */
+.surface-night {
+  color-scheme: dark;
+  --bg: #080b14;
+  --surface-1: #0e1424;
+  --surface-2: #141c30;
+  --surface-3: #1b2540;
+  --ink: #f4f2fc;
+  --ink-muted: #a2abc6;
+  --ink-faint: #737d9b;
+  --line: rgb(162 171 198 / 0.14);
+  --line-strong: rgb(162 171 198 / 0.26);
+  --glow-strength: 1;
+  --six: #ffc94a;
+  --four: #69b9ec;
+  --wicket: #ff5468;
+  color: var(--ink);
 }

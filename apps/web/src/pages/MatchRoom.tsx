@@ -166,15 +166,21 @@ function Room({
   const persona = state.session?.persona ?? null;
   const stopped = state.failure !== null || state.connection === "closed";
 
-  const control = (request: ControlRequest) => {
+  const control = (request: ControlRequest): Promise<boolean> =>
     api
       .control(sessionId, request)
-      .then(() => setControlError(null))
-      .catch((error: unknown) => setControlError(messageOf(error)));
-  };
+      .then((clock) => {
+        store.dispatch({ type: "clock", clock });
+        setControlError(null);
+        return true;
+      })
+      .catch((error: unknown) => {
+        setControlError(messageOf(error));
+        return false;
+      });
   const chooseLens = (next: Lens) => {
     setLens(next);
-    control({ action: "lens", lens: next });
+    void control({ action: "lens", lens: next });
   };
   const ask = (text: string) => {
     setPending(text);
@@ -294,7 +300,7 @@ function Room({
   const rail = (
     <PhaseRail
       state={view.state}
-      onJump={(target) => control({ action: "jump", target })}
+      onJump={(target) => void control({ action: "jump", target })}
       disabled={stopped || !state.clock}
     />
   );
@@ -304,25 +310,27 @@ function Room({
       <div className="room" data-layout={phone ? "phone" : "desktop"} style={teamStyle}>
         {phone ? (
           <>
-            <div className="room__pinned">
-              <Scorebug state={view.state} teams={teams} players={players} compact />
-              <span className="room__delay">TV {Math.round(delayMs / 1000)} s behind</span>
-            </div>
-            <div className="room__tabs" role="tablist" aria-label="Match room">
-              {TABS.map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  role="tab"
-                  id={`tab-${id}`}
-                  aria-selected={tab === id}
-                  aria-controls={`panel-${id}`}
-                  className="room__tab"
-                  onClick={() => setTab(id)}
-                >
-                  {label}
-                </button>
-              ))}
+            <div className="room__sticky">
+              <div className="room__pinned">
+                <Scorebug state={view.state} teams={teams} players={players} compact />
+                <span className="room__delay">TV {Math.round(delayMs / 1000)} s behind</span>
+              </div>
+              <div className="room__tabs" role="tablist" aria-label="Match room">
+                {TABS.map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    id={`tab-${id}`}
+                    aria-selected={tab === id}
+                    aria-controls={`panel-${id}`}
+                    className="room__tab"
+                    onClick={() => setTab(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
             {banner}
             {controlError ? (

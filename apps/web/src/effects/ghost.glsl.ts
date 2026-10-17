@@ -25,9 +25,9 @@ vec4 encode(vec3 v) { return uEncoded ? vec4(clamp(v * 0.5 + 0.5, 0.0, 1.0), 1.0
 void main() {
   vec3 v = decode(texture(uPrev, vUv)) * uDecay;
   vec2 d = (vUv - uPointer) * vec2(1.0, uAspect);
-  float g = exp(-dot(d, d) / (2.0 * uRadius * uRadius)) * uEnergy;
+  float g = exp(-dot(d, d) / (2.0 * uRadius * uRadius));
   v.rg += uVelocity * g;
-  v.b += g;
+  v.b += uEnergy * g;
   outColor = encode(v);
 }`;
 

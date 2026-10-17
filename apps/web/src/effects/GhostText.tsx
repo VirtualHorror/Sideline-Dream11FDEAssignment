@@ -10,7 +10,8 @@
  * canvas has drawn its first frame. The canvas copy is drawn with the element's computed font into
  * a texture; the shaders are in ghost.glsl.ts. The frame loop runs only while the trail has energy,
  * and the context is released on unmount. Fallback (no WebGL2, reduced motion, or no context): the
- * plain text with a static one-pixel red/cyan fringe in CSS.
+ * plain text with a static one-pixel red/cyan fringe in CSS. Light or dark rendering follows the
+ * `--ghost-mode` custom property of the surface the text sits on (styles/effects.css).
  */
 import { createElement, useEffect, useRef, useState } from "react";
 import { GHOST_FRAGMENT, TRAIL_FRAGMENT } from "./ghost.glsl.ts";
@@ -30,12 +31,16 @@ import {
 const DECAY = 0.92;
 const TRAIL_WIDTH = 64;
 const SPLAT_RADIUS = 0.08;
+/** A programmatic sweep crosses a short headline once, so it paints wider and harder than a pointer. */
+const SWEEP_RADIUS = 0.16;
+const SWEEP_INPUT = 0.24;
 /** Velocity is pointer travel per frame as a share of the text's width, times this gain. */
 const VELOCITY_GAIN = 24;
-const VELOCITY_LIMIT = 1.5;
+const VELOCITY_LIMIT = 1;
 const VELOCITY_INPUT = 0.12;
-const STRENGTH = 0.5;
-const SWEEP_MS = 900;
+/** With the velocity input, caps the channel offset near 5% of the text's width. */
+const STRENGTH = 0.8;
+const SWEEP_MS = 700;
 /** The canvas extends past the glyphs so fringes are not clipped. */
 const PAD_X = 0.06;
 const PAD_Y = 0.3;
@@ -194,8 +199,10 @@ export function GhostText({
     };
 
     const composite = () => {
-      const light = document.documentElement.dataset.theme === "light";
-      const ink = cssColorToRgb(getComputedStyle(textEl).color);
+      // The surface decides, not the page theme: the TV screen stays a night picture in daylight.
+      const style = getComputedStyle(textEl);
+      const light = style.getPropertyValue("--ghost-mode").trim() === "light";
+      const ink = cssColorToRgb(style.color);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clearColor(0, 0, 0, 0);
@@ -253,14 +260,11 @@ export function GhostText({
       gl.bindTexture(gl.TEXTURE_2D, from.texture);
       gl.uniform1i(trailU("uPrev"), 0);
       gl.uniform2f(trailU("uPointer"), pointer.u, pointer.v);
-      gl.uniform2f(
-        trailU("uVelocity"),
-        (velocity[0] ?? 0) * VELOCITY_INPUT,
-        (velocity[1] ?? 0) * VELOCITY_INPUT,
-      );
+      const gain = mode === "sweep" ? SWEEP_INPUT : VELOCITY_INPUT;
+      gl.uniform2f(trailU("uVelocity"), (velocity[0] ?? 0) * gain, (velocity[1] ?? 0) * gain);
       gl.uniform1f(trailU("uEnergy"), input);
       gl.uniform1f(trailU("uAspect"), cssH / cssW);
-      gl.uniform1f(trailU("uRadius"), SPLAT_RADIUS);
+      gl.uniform1f(trailU("uRadius"), mode === "sweep" ? SWEEP_RADIUS : SPLAT_RADIUS);
       gl.uniform1f(trailU("uDecay"), DECAY);
       gl.uniform1i(trailU("uEncoded"), half ? 0 : 1);
       gl.bindVertexArray(vao);

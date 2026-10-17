@@ -20,7 +20,7 @@ export function DelayControl({
   disabled = false,
 }: {
   delayMs: number;
-  onControl(request: ControlRequest): void;
+  onControl(request: ControlRequest): Promise<boolean> | undefined;
   disabled?: boolean;
 }) {
   const id = useId();

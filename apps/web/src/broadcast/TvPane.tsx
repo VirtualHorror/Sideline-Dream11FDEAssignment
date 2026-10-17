@@ -76,7 +76,7 @@ export function TvPane({
   winprob: WinProbModel;
   aiMode: AiMode | null;
   disabled: boolean;
-  onControl(request: ControlRequest): void;
+  onControl(request: ControlRequest): Promise<boolean> | undefined;
 }) {
   const burstRef = useRef<FloodlightHandle>(null);
   const [headline, setHeadline] = useState<Outburst | null>(null);
@@ -118,7 +118,7 @@ export function TvPane({
           </span>
         ) : null}
       </header>
-      <div className="tv__screen" data-headline={headline?.kind}>
+      <div className="tv__screen surface-night" data-headline={headline?.kind}>
         <Ground />
         <FloodlightGlow intensity={0.55} burstRef={burstRef} />
         {headline ? (
