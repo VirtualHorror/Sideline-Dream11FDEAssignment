@@ -1,4 +1,4 @@
-import { foldEvents, type MatchState } from "@sideline/engine";
+import { foldEvents, type InningsState, type MatchState, winProbability } from "@sideline/engine";
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -72,6 +72,25 @@ describe("InningsDotMatrix (PLAN 6.4)", () => {
       { kind: "wicket", marks: [] },
       { kind: "runs", marks: ["wd"] },
     ]);
+  });
+
+  it("writes W for a wicket even when the ball also went for a boundary", () => {
+    const mark = {
+      eventId: "x:0001",
+      label: "0.1",
+      runs: 6,
+      isLegal: true,
+      isWicket: true,
+      boundary: 6 as const,
+      isFreeHit: false,
+      extraKind: null,
+    };
+    const innings = {
+      ...chase(fullMatch),
+      overs: [{ ...chase(fullMatch).overs[0], balls: [mark] }],
+    } as InningsState;
+    const { container } = render(<InningsDotMatrix innings={innings} />);
+    expect(row(container, 2, 0)[0]?.kind).toBe("wicket");
   });
 
   it("leaves balls not yet bowled empty", () => {
@@ -159,6 +178,27 @@ describe("WinProbLine", () => {
   });
 });
 
+describe("WinProbLine in the first innings", () => {
+  it("shows the chasing side's chance while the other side bats", () => {
+    const ten = delivery(1, "9.6");
+    const wp = winProbability(foldEvents(MATCH_ID, events, ten.seq), winprob);
+    if (!wp) throw new Error("no win probability after 10 overs");
+    expect(wp.battingTeam).toBe("PAK");
+    render(
+      <WinProbLine
+        events={events}
+        released={ten.seq + 1}
+        matchId={MATCH_ID}
+        model={winprob}
+        teams={summary.teams}
+      />,
+    );
+    expect(screen.getByRole("img").getAttribute("aria-label")).toBe(
+      `India's chance to win: ${Math.round((1 - wp.pBattingTeamWins) * 100)}%`,
+    );
+  });
+});
+
 describe("PhaseRail", () => {
   it("marks where the TV is and jumps to a phase's start", async () => {
     const onJump = vi.fn();
@@ -169,6 +209,17 @@ describe("PhaseRail", () => {
     expect(onJump).toHaveBeenCalledWith({ kind: "over", innings: 1, afterOvers: 0 });
     await userEvent.click(screen.getByRole("button", { name: /toss/i }));
     expect(onJump).toHaveBeenLastCalledWith({ kind: "toss" });
+  });
+
+  it("starts the death overs after 15 completed overs", () => {
+    const { rerender } = render(<PhaseRail state={through(2, "14.5")} onJump={() => {}} />);
+    expect(screen.getByRole("button", { current: "step" }).getAttribute("data-phase")).toBe(
+      "2:middle",
+    );
+    rerender(<PhaseRail state={through(2, "14.6")} onJump={() => {}} />);
+    expect(screen.getByRole("button", { current: "step" }).getAttribute("data-phase")).toBe(
+      "2:death",
+    );
   });
 });
 

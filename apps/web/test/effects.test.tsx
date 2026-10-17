@@ -144,6 +144,24 @@ describe("GlowInput (PLAN 6.3)", () => {
     expect((input as HTMLInputElement).value).toBe("");
   });
 
+  it("leaves typed text alone on Tab and lets focus move on", async () => {
+    const user = userEvent.setup();
+    render(
+      <GlowInput
+        state="idle"
+        label="Ask Sideline"
+        suggestion="What is a free hit?"
+        onSubmit={() => {}}
+      />,
+    );
+    const input = screen.getByRole("textbox", { name: "Ask Sideline" }) as HTMLInputElement;
+    await user.click(input);
+    await user.type(input, "why");
+    await user.keyboard("{Tab}");
+    expect(input.value).toBe("why");
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: "Send" }));
+  });
+
   it("does not submit blank text or questions over 280 characters", () => {
     const onSubmit = vi.fn();
     render(<GlowInput state="idle" label="Ask Sideline" onSubmit={onSubmit} />);
