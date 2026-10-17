@@ -1,43 +1,57 @@
 /**
  * The companion's feed: every moment this session has, newest first, each kind with its own card
  * (DESIGN_SYSTEM §7) and each card deciding for itself what the fan's TV time allows it to show.
- * A question in flight sits on top as a thinking card. Lineup patches, bailouts, room reads and takes
- * get their cards in Task 9; until then such a moment is listed by name only, never dropped silently.
+ * A question or a take in flight sits on top as a thinking card.
  *
- * Caller: pages/MatchRoom.tsx. New cards are announced politely to screen readers.
+ * Caller: pages/MatchRoom.tsx, with what the fan's TV has shown (events, chat) for the cards that
+ * settle calls or quote the chat. New cards are announced politely to screen readers.
  */
-import type { MatchEvent, Moment } from "@sideline/engine";
+import type { ChatMessage, MatchEvent, Moment, Player } from "@sideline/engine";
 import { DitherVeil } from "../effects/DitherVeil.tsx";
+import { BailoutQuestCard } from "./cards/BailoutQuestCard.tsx";
 import { CatchUpReel, type SquadImpact } from "./cards/CatchUpReel.tsx";
 import { ExplainerCard } from "./cards/ExplainerCard.tsx";
+import { RoomReadPods } from "./cards/RoomReadPods.tsx";
 import { SpoilerCard } from "./cards/SpoilerCard.tsx";
-import { ProvenanceChip } from "./ProvenanceChip.tsx";
+import { SquadDiffLedger } from "./cards/SquadDiffLedger.tsx";
+import { TakeCard } from "./cards/TakeCard.tsx";
 
-const LATER_KINDS: Partial<Record<Moment["kind"], string>> = {
-  lineup_patch: "Lineup patch",
-  bailout: "Comeback quest",
-  room_read: "Room read",
-  take_card: "Stat check",
-};
+/** The fan's lineup request (phase 1), threaded from the match room to every lineup card. */
+export interface LineupRequest {
+  locked: boolean;
+  pending: boolean;
+  error: string | null;
+  send(text: string): void;
+}
 
 export function MomentFeed({
   moments,
   events,
+  tvEvents = events,
+  chat = [],
+  players = new Map(),
   tvT,
   delayMs,
   speed,
   impact,
   pendingQuestion,
   onAsk,
+  lineup,
 }: {
   moments: readonly Moment[];
   events: readonly MatchEvent[];
+  /** The events the fan's TV has shown: quests and polls settle on these. */
+  tvEvents?: readonly MatchEvent[];
+  /** The chat lines the fan's TV has shown: room reads quote these. */
+  chat?: readonly ChatMessage[];
+  players?: ReadonlyMap<string, Player>;
   tvT: number;
   delayMs: number;
   speed: number;
   impact: SquadImpact | null;
   pendingQuestion: string | null;
   onAsk(text: string): void;
+  lineup?: LineupRequest;
 }) {
   const labels = new Map(
     events.flatMap((e) => (e.kind === "delivery" ? [[e.id, e.label] as const] : [])),
@@ -82,15 +96,44 @@ export function MomentFeed({
               );
             case "explainer":
               return <ExplainerCard key={moment.id} moment={moment} onAsk={onAsk} />;
-            default:
+            case "lineup_patch":
               return (
-                <article key={moment.id} className="card" data-kind={moment.kind}>
-                  <header className="card__head">
-                    <h3 className="card__title">{LATER_KINDS[moment.kind] ?? moment.kind}</h3>
-                    <ProvenanceChip provenance={moment.provenance} />
-                  </header>
-                </article>
+                <SquadDiffLedger
+                  key={moment.id}
+                  moment={moment}
+                  tvT={tvT}
+                  players={players}
+                  locked={lineup?.locked ?? true}
+                  pending={lineup?.pending ?? false}
+                  error={lineup?.error ?? null}
+                  onIntent={(text) => lineup?.send(text)}
+                />
               );
+            case "bailout":
+              return (
+                <BailoutQuestCard
+                  key={moment.id}
+                  moment={moment}
+                  tvT={tvT}
+                  players={players}
+                  events={tvEvents}
+                />
+              );
+            case "room_read":
+              return (
+                <RoomReadPods
+                  key={moment.id}
+                  moment={moment}
+                  tvT={tvT}
+                  chat={chat}
+                  events={tvEvents}
+                />
+              );
+            case "take_card":
+              return <TakeCard key={moment.id} moment={moment} />;
+            default:
+              // Every kind has a card; a kind added to the contract without one shows nothing.
+              return null;
           }
         })}
         {ordered.length === 0 && !pendingQuestion ? (

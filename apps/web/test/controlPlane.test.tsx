@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 import { ControlPlaneDrawer } from "../src/controlplane/ControlPlaneDrawer.tsx";
+import { traceVisible } from "../src/controlplane/spoilerSafe.ts";
 import { delivery, events, MATCH_ID } from "./helpers/match.ts";
 
 afterEach(cleanup);
@@ -196,5 +197,23 @@ describe("control plane (PLAN 6.5)", () => {
     await user.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
     expect(screen.getByRole("table", { name: "Gate decisions" })).toBeTruthy();
+  });
+});
+
+describe("trace holds for the Task 8 moments (Task 9)", () => {
+  const trace = (momentKey: string) => ({ id: `t-${momentKey}`, momentKey });
+  const wicket = delivery(1, "1.1");
+  const overEnd = delivery(2, "16.6");
+
+  it("holds a bailout trace with no card yet until the fan's TV shows its wicket", () => {
+    const bailout = trace(`bailout:${MATCH_ID}:${wicket.id}:C`);
+    expect(traceVisible(bailout, wicket.t - 1, [], events)).toBe(false);
+    expect(traceVisible(bailout, wicket.t, [], events)).toBe(true);
+  });
+
+  it("holds a room read's trace with no card yet until the TV shows the over's last ball", () => {
+    const room = trace(`room:${MATCH_ID}:2:16`);
+    expect(traceVisible(room, overEnd.t - 1, [], events)).toBe(false);
+    expect(traceVisible(room, overEnd.t, [], events)).toBe(true);
   });
 });

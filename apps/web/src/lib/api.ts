@@ -7,11 +7,18 @@
  * The SSE stream itself is opened by stream/useSessionStream.ts.
  */
 import {
+  type ChatMessage,
+  ChatMessageSchema,
   type ClockState,
   ClockStateSchema,
   type ControlRequest,
   type FantasyRules,
   FantasyRulesSchema,
+  type InspectorRequest,
+  type InspectorResult,
+  InspectorResultSchema,
+  type InspectorView,
+  InspectorViewSchema,
   type Lens,
   type MatchSummary,
   MatchSummarySchema,
@@ -24,6 +31,10 @@ import {
   type SessionCreateRequest,
   type SessionCreateResponse,
   SessionCreateResponseSchema,
+  type StoryPlan,
+  StoryPlanSchema,
+  type TelemetrySnapshot,
+  TelemetrySnapshotSchema,
   type WinProbModel,
   WinProbModelSchema,
 } from "@sideline/engine";
@@ -138,5 +149,56 @@ export const api = {
       moment?: unknown;
     };
     return parse(MomentSchema, body?.moment);
+  },
+
+  /** A different lineup patch for the fan's request (Task 8): 409 when the session cannot patch now. */
+  async lineupIntent(sessionId: string, text: string): Promise<Moment> {
+    const body = (await call(`${sessionPath(sessionId)}/lineup-intent`, post({ text }))) as {
+      moment?: unknown;
+    };
+    return parse(MomentSchema, body?.moment);
+  },
+
+  /** The fan's own chat line; with `statBack`, also a take card checking it. */
+  async chat(
+    sessionId: string,
+    text: string,
+    statBack: boolean,
+  ): Promise<{ message: ChatMessage; moment: Moment | null }> {
+    const body = (await call(`${sessionPath(sessionId)}/chat`, post({ text, statBack }))) as {
+      message?: unknown;
+      moment?: unknown;
+    };
+    return {
+      message: parse(ChatMessageSchema, body?.message),
+      moment: body?.moment === null ? null : parse(MomentSchema, body?.moment),
+    };
+  },
+
+  /** The control plane's inspector: a question, or the fan's own SQL, through the sandbox. */
+  async inspect(sessionId: string, request: InspectorRequest): Promise<InspectorResult> {
+    const body = (await call(`${sessionPath(sessionId)}/inspector`, post(request))) as {
+      result?: unknown;
+    };
+    return parse(InspectorResultSchema, body?.result);
+  },
+
+  /** The tables the inspector may read, as the server documents them. */
+  async inspectorViews(): Promise<InspectorView[]> {
+    const body = (await call("/api/inspector/views")) as { views?: unknown };
+    return parse(InspectorViewSchema.array(), body?.views);
+  },
+
+  /** The guided story's beats for a match (Task 9), or null when it has no story persona. */
+  async story(matchId: string): Promise<StoryPlan | null> {
+    const body = (await call(`/api/matches/${encodeURIComponent(matchId)}/story`)) as {
+      story?: unknown;
+    };
+    return body?.story === null ? null : parse(StoryPlanSchema, body?.story);
+  },
+
+  /** Every session's counters together: the /architecture page's live AI-usage table. */
+  async globalTelemetry(): Promise<TelemetrySnapshot> {
+    return parse(TelemetrySnapshotSchema, await call("/api/telemetry?scope=global"));
   },
 };

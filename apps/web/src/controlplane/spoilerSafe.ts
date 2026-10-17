@@ -12,9 +12,30 @@ import { type MatchEvent, type Moment, momentVisibility } from "@sideline/engine
 export const decisionVisible = (decision: { t: number }, tvT: number) => decision.t <= tvT;
 
 /**
- * When a trace may be shown: when its moment is revealed (a card the fan has); otherwise, for a
- * teaser key (`nudge:<match>:<eventId>`), when the TV reaches that ball. Traces without either
- * (a fan's own question) are shown at once.
+ * The ball a moment key waits for, when the key names one: a teaser's (`nudge:<match>:<eventId>`) or
+ * a bailout's (`bailout:<match>:<eventId>:<C|VC>`) delivery, or a room read's over
+ * (`room:<match>:<innings>:<over>`), whose last delivery so far closed it. Undefined otherwise.
+ */
+function awaitedEvent(key: string, events: readonly MatchEvent[]): MatchEvent | null | undefined {
+  const named =
+    key.match(/^nudge:[^:]+:(.+)$/)?.[1] ?? key.match(/^bailout:[^:]+:(.+):(?:C|VC)$/)?.[1];
+  if (named) return events.find((e) => e.id === named) ?? null;
+  const room = key.match(/^room:[^:]+:(\d+):(\d+)$/);
+  if (room) {
+    const [innings, over] = [Number(room[1]), Number(room[2])];
+    return (
+      events
+        .filter((e) => e.kind === "delivery" && e.innings === innings && e.over === over)
+        .at(-1) ?? null
+    );
+  }
+  return undefined;
+}
+
+/**
+ * When a trace may be shown: when its moment is revealed (a card the fan has); otherwise, for a key
+ * that names a ball (a teaser, a bailout, a room read), when the TV reaches that ball. Traces without
+ * either (a fan's own question, take or lineup request) are shown at once.
  */
 export function traceVisible(
   trace: { id: string; momentKey: string },
@@ -24,10 +45,7 @@ export function traceVisible(
 ): boolean {
   const moment = moments.find((m) => m.traceId === trace.id || m.key === trace.momentKey);
   if (moment) return momentVisibility(moment, tvT) === "revealed";
-  const eventId = trace.momentKey.match(/^nudge:[^:]+:(.+)$/)?.[1];
-  if (eventId) {
-    const event = events.find((e) => e.id === eventId);
-    return event ? event.t <= tvT : false;
-  }
-  return true;
+  const event = awaitedEvent(trace.momentKey, events);
+  if (event === undefined) return true;
+  return event !== null && event.t <= tvT;
 }

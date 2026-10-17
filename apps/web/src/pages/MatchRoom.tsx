@@ -23,11 +23,12 @@ import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { PhaseRail } from "../broadcast/PhaseRail.tsx";
 import { Scorebug } from "../broadcast/Scorebug.tsx";
 import { TvPane } from "../broadcast/TvPane.tsx";
+import { ChatComposer } from "../companion/ChatComposer.tsx";
 import { ChatFeed } from "../companion/ChatFeed.tsx";
 import { Composer } from "../companion/Composer.tsx";
 import type { SquadImpact } from "../companion/cards/CatchUpReel.tsx";
 import { LensSwitch } from "../companion/LensSwitch.tsx";
-import { MomentFeed } from "../companion/MomentFeed.tsx";
+import { type LineupRequest, MomentFeed } from "../companion/MomentFeed.tsx";
 import { suggestQuestion } from "../companion/suggest.ts";
 import { PersonaPicker } from "../components/PersonaPicker.tsx";
 import { ControlPlaneDrawer } from "../controlplane/ControlPlaneDrawer.tsx";
@@ -47,6 +48,8 @@ function messageOf(error: unknown): string {
   }
   if (error.code === "session_failed") return "This session was paused. Start a new one to go on.";
   if (error.code === "invalid_control") return `That jump isn't possible: ${error.message}.`;
+  if (error.code === "locked") return "Teams locked at the first ball on your TV.";
+  if (error.code === "not_yet") return "The playing XIs are not out yet.";
   return error.message;
 }
 
@@ -161,6 +164,10 @@ function Room({
   const [askError, setAskError] = useState<string | null>(null);
   const [controlError, setControlError] = useState<string | null>(null);
   const [lens, setLens] = useState<Lens | null>(null);
+  const [lineupPending, setLineupPending] = useState(false);
+  const [lineupError, setLineupError] = useState<string | null>(null);
+  const [chatPending, setChatPending] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
   const players = useMemo(() => new Map(detail.players.map((p) => [p.id, p])), [detail.players]);
   const teams = detail.match.teams;
   const persona = state.session?.persona ?? null;
@@ -193,6 +200,46 @@ function Room({
   };
 
   const chat = state.chat.slice(0, releasedCount(state.chat, view.tvT));
+  const tvEvents = useMemo(
+    () => state.events.slice(0, view.released),
+    [state.events, view.released],
+  );
+  // Fantasy teams lock at the first ball (DOMAIN §3), on the fan's own picture.
+  const firstBallShown = tvEvents.some((event) => event.kind === "delivery");
+  const lineup: LineupRequest = {
+    locked: firstBallShown,
+    pending: lineupPending,
+    error: lineupError,
+    send(text) {
+      setLineupPending(true);
+      setLineupError(null);
+      api
+        .lineupIntent(sessionId, text)
+        .then((moment) => store.dispatch({ type: "moment", moment }))
+        .catch((error: unknown) => setLineupError(messageOf(error)))
+        .finally(() => setLineupPending(false));
+    },
+  };
+  const post = (text: string, statBack: boolean) => {
+    setChatError(null);
+    if (statBack) {
+      setChatPending(true);
+      setPending(text);
+    }
+    api
+      .chat(sessionId, text, statBack)
+      .then(({ message, moment }) => {
+        store.dispatch({ type: "chat", messages: [message] });
+        if (moment) store.dispatch({ type: "moment", moment });
+      })
+      .catch((error: unknown) => setChatError(messageOf(error)))
+      .finally(() => {
+        if (statBack) {
+          setChatPending(false);
+          setPending(null);
+        }
+      });
+  };
   const lastDelivery = useMemo(() => {
     for (let i = view.released - 1; i >= 0; i -= 1) {
       const event = state.events[i];
@@ -271,14 +318,19 @@ function Room({
       <MomentFeed
         moments={state.moments}
         events={state.events}
+        tvEvents={tvEvents}
+        chat={chat}
+        players={players}
         tvT={view.tvT}
         delayMs={delayMs}
         speed={state.clock?.speed ?? 1}
         impact={impact}
         pendingQuestion={pending}
         onAsk={ask}
+        lineup={lineup}
       />
       <ChatFeed messages={chat} teams={teams} />
+      <ChatComposer disabled={stopped} pending={chatPending} error={chatError} onPost={post} />
       <Composer
         suggestion={suggestQuestion(view.state, lastDelivery)}
         thinking={pending !== null}
@@ -295,6 +347,7 @@ function Room({
       events={state.events}
       moments={state.moments}
       variant={phone ? "panel" : "drawer"}
+      sessionId={sessionId}
     />
   );
   const rail = (
