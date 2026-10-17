@@ -99,3 +99,29 @@ ai-record: plan: 91 moments need a provider call (48 teasers, 19 catch-up reels,
    view would need the session id, which is a capability and stays out (D-073).
 
 ## Audit notes (filled by the auditor)
+Self-audit (Claude implemented Task 8; Codex unavailable), 2026-10-17, CLAUDE.md protocol and TEST_CHECKLIST §2:
+- **A. Anti-hardcoding:** `pnpm check:hardcode` OK (145 source files; 320 tracked files, no forbidden word); no
+  `hardcode-ok`; the diff since `1481f54` has no golden numbers and no comparison with a label, seq, over or id.
+  Prompts and templates interpolate facts only.
+- **B. Engine vs oracle:** IDENTICAL on 1298150, 1415755 and the holdout 1512773 (the 2026 final, India v New
+  Zealand, from the World Cup archive, sha256 `df5e2fa7…a742`, the Task 2 baseline's).
+- **C. Holdout sessions:** a scratch data directory with 1512773 (`gen_fixtures.py` fixtures, audit-only priors, one
+  invented bench pick, a pre-match persona with the first strikers as captain and vice-captain, a late joiner),
+  whole sessions through the real modules, checked by rules written in the audit script: scripted, a lineup patch
+  whose swaps take a benched pick out for a new XI player with a valid squad and two different XI armbands, 12 room
+  reads citing only real crowd lines with shares of 95-105%, teasers and the reel; keyless, every moment a labelled
+  fallback that validates. No bailout fired, and none should: Samson made 89 and Seifert 52 (the raw file). The
+  inspector's count over the holdout equals the raw file's 249 deliveries and 414 runs.
+- **D. Test quality:** literals from the raw files in Python (quest outcomes, Kohli's 61 off 47 and 82 off 53, the
+  20th over's 16, 251 deliveries), FNV hash computed independently. Hand mutants (the long loop skipped at the
+  owner's request): 8 of 8 killed (benched captain allowed, shares down to 90%, any number in a verdict, no TV cut,
+  every SQL function, bailout window start, a provider error keeping "live", the lineup lock off). The sandbox's
+  `query_only` layer is unreachable through the wrapper (only a SELECT can sit inside `SELECT * FROM (...)`), so no
+  test can kill its removal: defence in depth, noted.
+- **E. Docs:** F08, Decisions D-070 to D-075, Flow §7, §8, §16, Architecture (status, the skills table, security,
+  observability, testing), Constraint 12, TEST_CHECKLIST baselines, ROLLBACK, the register, README, PLAN.
+- **F. Security:** no key-shaped string in the bundle, `.env` untracked and 600, no `.skip`/`.only`; SQL injection
+  through the inspector leaves the real tables untouched; prompt injection in a take or request stays escaped data.
+- **G. UI:** `pnpm test:e2e` 22 passed (the chip's mode is read from the stream; the climax test now reads the key's
+  presence from `/api/health`). The cards are Task 9's.
+Accepted: `t08-verified`.

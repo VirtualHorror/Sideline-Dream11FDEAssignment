@@ -80,7 +80,7 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Claude (Codex unavailable) | `task/05-server-ai` | ✅ done, tagged `t05-verified` |
 | 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Claude (Codex unavailable) | `task/06-frontend-core` | ✅ done, tagged `t06-verified` |
 | 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Claude (Codex unavailable) + Nabhanyu | `task/07-deploy` | ✅ done, tagged `t07-verified` (recording waits for a key with credit) |
-| 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | next session, with Task 9 (D-069) | `task/08-09-skills-frontend` | ⬜ |
+| 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | Claude (Codex unavailable), with Task 9 (D-069) | `task/08-09-skills-frontend` | ✅ done, tagged `t08-verified` |
 | 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | next session, with Task 8 (D-069) | `task/08-09-skills-frontend` | ⬜ |
 | 10 | Final audit, holdout match, security review, submission note, demo script, GitHub push (D-069) | Claude | `main` | ⬜ |
 
@@ -653,12 +653,21 @@ model's proposals safe to show.
   numbers that appear in the returned rows (guard).
 
 **Steps** (failing test → implement → pass; scripted provider)
-- [ ] **8.1** Lineup: `babar-believer` with a scripted output proposing an illegal swap → the illegal swap is dropped and provenance `fallback` only if nothing legal remains; a legal output is accepted and `squadValid` is true.
-- [ ] **8.2** Bailout: a scripted rule whose window starts before the trigger is rejected; predictions in an accepted quest later resolve through `resolveQuestRule` on real events.
-- [ ] **8.3** Room read: invented message ids are rejected; shares outside 95-105 are rejected.
-- [ ] **8.4** SQL sandbox: `DELETE`, `ATTACH`, `PRAGMA`, a recursive CTE, two statements and an infinite cross join (timeout) are all refused or killed; a valid query returns ≤ 200 rows; stat-back cannot see deliveries beyond the fan's TV time (Review focus 5).
-- [ ] **8.5** Routes: lineup intent, chat (stat-back on request), inspector; limits and 429s.
-- [ ] **8.6** `pnpm verify` green; docs (F08, Flow, Architecture, Decisions, TEST_CHECKLIST, ROLLBACK).
+- [x] **8.1** Lineup: `babar-believer` with a scripted output proposing an illegal swap → the illegal swap is dropped and provenance `fallback` only if nothing legal remains; a legal output is accepted and `squadValid` is true.
+- [x] **8.2** Bailout: a scripted rule whose window starts before the trigger is rejected; predictions in an accepted quest later resolve through `resolveQuestRule` on real events.
+- [x] **8.3** Room read: invented message ids are rejected; shares outside 95-105 are rejected.
+- [x] **8.4** SQL sandbox: `DELETE`, `ATTACH`, `PRAGMA`, a recursive CTE, two statements and an infinite cross join (timeout) are all refused or killed; a valid query returns ≤ 200 rows; stat-back cannot see deliveries beyond the fan's TV time (Review focus 5).
+- [x] **8.5** Routes: lineup intent, chat (stat-back on request), inspector; limits and 429s.
+- [x] **8.6** `pnpm verify` green; docs (F08, Flow, Architecture, Decisions, TEST_CHECKLIST, ROLLBACK).
+
+**Audit result (2026-10-17, Claude): accepted, `t08-verified`.** Implemented by Claude (Codex unavailable), so a
+self-audit, in one session with Task 9 (D-069) and merged before it at Nabhanyu's request (D-075). 705 tests; 8 of 8
+hand mutants killed (the long loop skipped at the owner's request); engine vs oracle identical on both matches and a
+holdout (1512773, the 2026 final); whole holdout sessions through every new skill, scripted and keyless, checked by
+independent rules. Beyond the PLAN's files: `skill.repair` in the gateway (D-075), `ai/skills/questRules.ts`,
+`sql/views.ts`, the inspector contract and the operator's own SQL (D-073), SQLite's authorizer in the sandbox (D-074),
+the AI mode that follows the provider (D-071), the domain (D-070), Task 10's history scrub recorded (D-072).
+Follow-ups: F08.
 
 ---
 

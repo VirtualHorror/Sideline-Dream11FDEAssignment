@@ -157,3 +157,4 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 | T5 Server runtime + AI | 2026-10-17 | pass | pass (165 files) | 37 files / 492 tests | OK (86 files, 209 terms) | OK (2 matches) | 292 ms | 8 passed |
 | T6 Frontend I | 2026-10-17 | pass | pass (222 files) | 47 files / 569 tests | OK (131 files, 209 terms) | OK (2 matches) | 805 ms | 22 passed |
 | T7 Deploy | 2026-10-17 | pass | pass (229 files) | 50 files / 599 tests | OK (131 files, 209 terms; 299 tracked files, no forbidden words) | OK (2 matches) | 1.02 s | 22 passed locally; 22 passed against https://3-108-67-100.sslip.io |
+| T8 AI skills II | 2026-10-17 | pass | pass (248 files) | 55 files / 705 tests | OK (145 files, 209 terms; 320 tracked files, no forbidden words) | OK (2 matches) | 1.03 s | 22 passed locally (deployed with Task 9) |
