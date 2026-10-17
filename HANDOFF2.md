@@ -53,7 +53,7 @@ audits afterwards; you do not merge.
   suppression; catch-up z-scores use the *population* standard deviation (3.04, not sample 2.92).
 - **Naive spoiler lint** on the word "six" rejects a real spoiler-free model output ("Six balls, 16
   to find…"); Task 5 lints outcome statements, not words.
-- **proxy model tiers**: `gpt-6.1-sol` and `gpt-6-luna` returned identical answers; don't rely on
+- **Proxy model tiers**: `gpt-6.1-sol` and `gpt-6-luna` returned identical answers; don't rely on
   fast/smart tiers on that endpoint (Task 5, not relevant to Task 2).
 
 ## Key Decisions

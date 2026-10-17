@@ -37,6 +37,9 @@ for (const route of ROUTES) {
 }
 
 test("theme choice applies immediately and survives a reload", async ({ page }, testInfo) => {
+  // Two full-page screenshots: at 3x on the phone, Chrome renders the landing page's WebGL in software
+  // at 1170 x 7410 px, 10-15 s each on this host (F07). A time budget, not an assertion.
+  test.setTimeout(60_000);
   await page.goto("/");
   await page.getByRole("radio", { name: "Dark" }).check({ force: true });
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");

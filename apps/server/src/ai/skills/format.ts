@@ -24,6 +24,10 @@ export function clip(text: string, max: number): string {
 
 export const percent = (p: number): number => Math.round(p * 100);
 
+/** "1 ball", "4 balls": a count with its noun, for the labelled fallback templates. */
+export const plural = (count: number, word: string): string =>
+  `${count} ${word}${count === 1 ? "" : "s"}`;
+
 /**
  * Where an innings stands in one line: "<team> 90/4, need 70 off 36" in a live chase, the score
  * after N overs in a first innings, and how a finished chase ended.

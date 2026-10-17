@@ -79,10 +79,10 @@ React 19.3, Vite 8, Tailwind 4.3, Vitest 5, fast-check 4, Playwright 1.63 (syste
 | 4 | Moments engine: clock, delay buffer, detectors, gate, quests, crowd, commentary | Claude (Codex unavailable) | `task/04-moments-engine` | ✅ done, tagged `t04-verified` |
 | 5 | Server runtime + AI gateway + first skills (teaser, catch-up, explainer) | Claude (Codex unavailable) | `task/05-server-ai` | ✅ done, tagged `t05-verified` |
 | 6 | Frontend I: effects, landing, match room, phases 3-4 UI, control plane, `/architecture` page | Claude (Codex unavailable) | `task/06-frontend-core` | ✅ done, tagged `t06-verified` |
-| 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Codex + Nabhanyu | `task/07-deploy` | ⬜ |
-| 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | Codex | `task/08-ai-skills-2` | ⬜ |
-| 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | Codex | `task/09-frontend-complete` | ⬜ |
-| 10 | Final audit, holdout match, security review, submission note, demo script | Claude | `main` | ⬜ |
+| 7 | Deploy (Milestone A): Caddy + systemd, replay recording, public E2E | Claude (Codex unavailable) + Nabhanyu | `task/07-deploy` | ✅ done, tagged `t07-verified` (recording waits for a key with credit) |
+| 8 | AI skills II: lineup patch, bailout, room read, stat-back, inspector | next session, with Task 9 (D-069) | `task/08-09-skills-frontend` | ⬜ |
+| 9 | Frontend II: phases 1-2 UI, room read, inspector, personas, story mode, `/architecture` polish | next session, with Task 8 (D-069) | `task/08-09-skills-frontend` | ⬜ |
+| 10 | Final audit, holdout match, security review, submission note, demo script, GitHub push (D-069) | Claude | `main` | ⬜ |
 
 ---
 
@@ -398,7 +398,8 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
   `openai`, since OpenAI-compatible endpoints name models differently), `SIDELINE_PRICE_IN_PER_MTOK` /
   `SIDELINE_PRICE_OUT_PER_MTOK`, `SIDELINE_AI_DAILY_BUDGET_USD`, `SIDELINE_ASK_PER_MINUTE`,
   `SIDELINE_SESSION_AI_CAP`; keep the existing provider detection (D-033). `publicConfigSummary`
-  gains `aiModelFast`, `aiModelSmart` and `aiEndpointHost` (host name only, never keys or paths).
+  gains `aiModelFast`, `aiModelSmart` and `aiEndpointHost` (host name only, never keys or paths; Task 7 replaced it
+  with `aiEndpoint`, the kind of endpoint without its host, D-068).
 - Modify `src/http/app.ts`, `src/index.ts`, `apps/server/package.json` (add `@anthropic-ai/sdk`, `openai`; Decisions entry with versions ≥ 14 days old)
 - Test `apps/server/test/{bundle,sessions,stream,gateway,skills,orchestrator,routes,telemetry}.test.ts`
 
@@ -438,7 +439,7 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
   content: user }], text: { format: { type: "json_schema", name: <skill name>, schema, strict: true } },
   max_output_tokens })`; read `output_text`; usage from `usage.input_tokens` / `usage.output_tokens`;
   same zod validation. Do not send `reasoning` options by default. **Verified on 2026-10-16 against
-  the configured endpoint** (proxy, `https://api.proxy.pro/v1`, `gpt-6.1-sol`): strict
+  the configured endpoint** (an OpenAI-compatible proxy, base URL in `.env`, `gpt-6.1-sol`): strict
   `json_schema` works; tiny calls take 4-8.5 s; each call reports ~4,440 input tokens because of a
   hidden upstream prompt (D-033). The local `.env` already holds this configuration.
 - Replay provider: serves only cache rows loaded from `data/ai-replay/*.jsonl` (none exist until
@@ -480,7 +481,7 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
   rebuilt at boot from the bundles.
 
 **Steps** (failing test → implement → pass for each; use the scripted provider and an injected clock)
-- [x] **5.0** `config.test.ts` (extend): `OPENAI_API_KEY` + `OPENAI_BASE_URL` + both model vars → provider `openai` with that base URL; provider `openai` without `SIDELINE_MODEL_FAST/SMART` → throws naming the variable; both keys present → `anthropic` unless `SIDELINE_AI_PROVIDER=openai`; `publicConfigSummary` exposes `aiEndpointHost` (e.g. `api.proxy.pro`) and never a key.
+- [x] **5.0** `config.test.ts` (extend): `OPENAI_API_KEY` + `OPENAI_BASE_URL` + both model vars → provider `openai` with that base URL; provider `openai` without `SIDELINE_MODEL_FAST/SMART` → throws naming the variable; both keys present → `anthropic` unless `SIDELINE_AI_PROVIDER=openai`; `publicConfigSummary` exposes the kind of endpoint (`aiEndpoint`, D-068) and never a key or host.
 - [x] **5.1** `bundle.test.ts`: both bundles load and validate; events equal `buildTimeline` output.
 - [x] **5.2** `sessions.test.ts`: create a session for `late-from-work` → initial stadium time is the join point (after 14 overs of the chase) and the snapshot has every event ≤ it; advancing the fake clock at 8x releases the next events in order; `jump` backwards then forwards gives a snapshot equal to a fresh fold (Review focus 1); idle sessions are evicted after TTL.
 - [x] **5.3** `stream.test.ts`: SSE output parses as `StreamMessage`s in order (`hello`, `snapshot`, …), with `id:` = seq; no API key or secret appears anywhere in the stream.
@@ -489,7 +490,7 @@ skills (spoiler teaser, catch-up, explainer), all testable without a key.
 - [x] **5.6** `orchestrator.test.ts`: two sessions on 1298150 reach innings-2 `18.6` (amended by D-043: `18.5` is below the nudge threshold): the first triggers a live call, the second gets provenance `cache` and the scripted provider call count stays 1 (thesis 1); a slow scripted call at 32x speed results in `nudgeAt: null` and `usedMs > budgetMs` in the trace (Review focus 3).
 - [x] **5.7** `routes.test.ts`: `/api/matches`; session create/control validation (bad speed → 400); `/ask` with 281 characters → 400; 13 asks in a minute from one IP → 429; unknown session → 404 JSON (Review focus 5).
 - [x] **5.8** `telemetry.test.ts`: after a full scripted replay, counters equal the gate's counters plus the gateway's; `projection.formula` contains the substituted numbers; `savedPct > 99` at 10 000 000 viewers.
-- [x] **5.9** `scripts/ai-smoke.ts` (`pnpm ai:smoke`, loads `.env`): when a key is configured, one real teaser call through the gateway returns a schema-valid output that passes `spoilerLint`, and prints provider, endpoint host, model, latency, tokens and estimated cost; without a key it prints "skipped". Not part of `pnpm test`. With today's `.env` this exercises the proxy endpoint (costs a few thousand tokens).
+- [x] **5.9** `scripts/ai-smoke.ts` (`pnpm ai:smoke`, loads `.env`): when a key is configured, one real teaser call through the gateway returns a schema-valid output that passes `spoilerLint`, and prints provider, endpoint kind, model, latency, tokens and estimated cost; without a key it prints "skipped". Not part of `pnpm test`. With today's `.env` this exercises the proxy endpoint (costs a few thousand tokens).
 - [x] **5.10** `pnpm verify` green; docs (F05, Flow §7-8 → BUILT, Architecture, Decisions incl. SDK versions, `.env.example`, TEST_CHECKLIST, ROLLBACK).
 
 **Audit hooks:** run the server and watch a full session with `curl -N`; run `pnpm ai:smoke` with a key
@@ -597,15 +598,32 @@ as built: D-064. Lighthouse was not run (Task 9.5). Follow-ups: F06.
   updating `~/.bashrc` (Codex), `.env` and re-running `install.sh`.
 
 **Steps**
-- [ ] **7.1** Shellcheck-clean scripts (`bash -n`; `shellcheck` if available); `install.sh --dry-run` prints the plan without changes.
-- [ ] **7.2** `ai-record` dry run on a scripted provider (`--provider scripted`) writes well-formed JSONL that the replay provider loads (unit test).
-- [ ] **7.3** With Nabhanyu: run `install.sh`, open the ports, record the replay cache, `update.sh`.
-- [ ] **7.4** `PLAYWRIGHT_BASE_URL=https://<host> pnpm test:e2e` green; replay mode check: unset the key, restart, the climax shows `Replayed AI` chips (Review focus 2).
-- [ ] **7.5** Docs (F07, deploy README, ROLLBACK deploy rows, TEST_CHECKLIST §F, Architecture deployment status).
+- [x] **7.0** Independent spot-check of `t06-verified` (added at Nabhanyu's request, as D-051 and D-059 did; D-065).
+- [x] **7.1** Shellcheck-clean scripts (`bash -n`; `shellcheck` if available); `install.sh --dry-run` prints the plan without changes.
+- [x] **7.2** `ai-record` dry run on a scripted provider (`--provider scripted`) writes well-formed JSONL that the replay provider loads (unit test).
+- [ ] **7.3** With Nabhanyu: run `install.sh`, open the ports, record the replay cache, `update.sh`. *(Done except the recording, which waits for a key with credit: D-067, F07 follow-up 1.)*
+- [x] **7.4** `PLAYWRIGHT_BASE_URL=https://<host> pnpm test:e2e` green; replay mode check: unset the key, restart, the climax shows `Replayed AI` chips (Review focus 2). *(The replay check ran on scripted rows in a scratch data directory through the real UI; the real one follows the recording.)*
+- [x] **7.5** Docs (F07, deploy README, ROLLBACK deploy rows, TEST_CHECKLIST §F, Architecture deployment status).
+
+**Audit result (2026-10-17, Claude): accepted, `t07-verified`.** Implemented by Claude because Codex was
+unavailable (a self-audit), after an independent spot-check of `t06-verified` in the same session (three Task 6
+test gaps pinned, D-065). Live on this host: `https://3-108-67-100.sslip.io/` (Caddy 2.11.7, Let's Encrypt) and
+`https://sideline.nabhanyubm.xyz/` once its DNS resolves (D-068); the public E2E passes against production.
+Deviations, each with a Decisions entry: production runs from a deploy checkout at `/srv/sideline` on loopback
+port 8780 (the working copy and 8787 belong to development on this same host), one sudo rule lets `update.sh`
+restart the service (D-066); the recorder runs at 1x on a hand-moved clock and covers the room's one-click jumps
+(D-067); the AI proxy's name left the repository and `/api/health` reports the endpoint's kind (D-068). The key's
+account has no credit (the proxy now answers 403 `key_expired`), so every production AI card is a labelled
+fallback until it is renewed and `pnpm ai:record --yes` runs. Follow-ups: F07.
 
 ---
 
 ## Task 8: AI skills II (lineup patch, bailout, room read, stat-back, inspector)
+
+> **Tasks 8 and 9 run in one session (D-069)** on `task/08-09-skills-frontend`: Task 8's steps first (each
+> skill with its guard and fallback, test first), then Task 9's, then one audit, `t08-verified` and
+> `t09-verified` on the merge, a redeploy (`deploy/update.sh`) and HANDOFF10 for Task 10. Production
+> (Constraints §F) and the forbidden word (Constraint 27) bind every step.
 
 **Goal:** Phases 1-2 and the remaining phase 4 intelligence, each with guardrails that make the
 model's proposals safe to show.
@@ -685,6 +703,8 @@ explains the engineering.
 - [ ] Redeploy, public E2E, live AI smoke.
 - [ ] `docs/SUBMISSION.md`: the ≤ 200-word note (fan problem, how Sideline helps, AI tools used) in Nabhanyu's voice, plus the link.
 - [ ] `docs/DEMO_SCRIPT.md`: a 5-minute walkthrough and likely questions with answers (when not to call AI, scale, cost, failure modes, what's next).
+- [ ] Push to GitHub (D-069): Nabhanyu provides the remote; first decide on the history that still holds the AI
+  proxy's name (D-068: push as is, or a fresh history), then push `main` and the tags.
 - [ ] README final pass; tag `t10-verified`.
 
 ## Stretch (only after Milestone B)

@@ -1,10 +1,11 @@
 /**
  * The scripted provider: a stand-in model for tests, so no test needs a key or the network.
  *
- * Callers: apps/server/test only (config never selects it). Each request is recorded; the script
- * decides the answer from the skill, moment key and prompts: return an output, return a promise
- * (resolve late, or never), or throw (a ProviderRefusalError, any Error). Usage is fixed per
- * provider so costs in tests are exact.
+ * Callers: apps/server/test, and scripts/lib/record.ts for `pnpm ai:record --provider scripted`,
+ * whose rows never go to data/ai-replay (config never selects it). Each request is recorded; the
+ * script decides the answer from the skill, moment key and prompts: return an output, return a
+ * promise (resolve late, or never), or throw (a ProviderRefusalError, any Error). Usage is fixed
+ * per provider so costs in tests are exact.
  */
 import type { Effort, LlmProvider, ProviderRequest } from "./types.ts";
 

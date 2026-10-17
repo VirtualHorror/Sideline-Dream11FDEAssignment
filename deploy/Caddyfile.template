@@ -1,0 +1,17 @@
+# Sideline's public site (PLAN Task 7, D-025, D-066, D-068). Written by deploy/install.sh to
+# /etc/caddy/Caddyfile with the site names (<public-ip-with-dashes>.sslip.io, then the owner's
+# domain) and the server's loopback port filled in: edit this template and re-run install.sh,
+# not the installed copy.
+#
+# Caddy gets and renews a Let's Encrypt certificate for each name itself (ports 80 and 443 open;
+# a name whose DNS does not point here yet is retried until it does) and redirects HTTP to HTTPS. The Node server listens on loopback only. Caddy sets
+# X-Forwarded-For to the real client and ignores any X-Forwarded-* a client sends (no
+# trusted_proxies here), and the server trusts that header only from a loopback peer (D-058), so
+# the per-address limits see real visitors. Server-sent events are flushed as they are written.
+@SITES@ {
+	# Static files compressed; the API, and its event stream, passed through as the server wrote it.
+	@static not path /api/*
+	encode @static zstd gzip
+
+	reverse_proxy 127.0.0.1:@PORT@
+}

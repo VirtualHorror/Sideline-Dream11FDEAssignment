@@ -2,7 +2,7 @@
 
 **Generated**: 2026-10-17 17:09 IST (by Claude Code, which implemented Task 6 in Codex's place and then audited it)
 **Branch**: `main`, clean (this file is committed on top of `9d65a2f`). Task 6 is merged and tagged `t06-verified` (`9d65a2f`). Create `task/07-deploy` from `main`.
-**Status**: Ready for implementation. **One owner blocker for step 7.3**: the AI key in `.env` (proxy) is out of credit, and `pnpm ai:record` needs a working provider.
+**Status**: Ready for implementation. **One owner blocker for step 7.3**: the AI key in `.env` (an OpenAI-compatible proxy) is out of credit, and `pnpm ai:record` needs a working provider.
 
 ## Goal
 
@@ -74,7 +74,7 @@ the public E2E run. This is **Milestone A**, the submittable link. Claude audits
 | D-060 match detail route | the room needs `GET /api/matches/:matchId`; nothing to configure |
 | D-063 end of match | the clock stops at `end + delayMs`; nothing to configure, but a full-match recording runs that much longer |
 | D-064 match room | outbursts only for a ball with a teaser or the result; the control plane holds rows until the TV shows them |
-| proxy out of credit (memory, F05) | 403 on 2026-10-17; keep the key; ask Nabhanyu before any real call (smoke, record, diagnostics) |
+| The proxy account out of credit (memory, F05) | 403 on 2026-10-17; keep the key; ask Nabhanyu before any real call (smoke, record, diagnostics) |
 
 ## Current State
 
@@ -179,7 +179,7 @@ What the Task 7 audit will check; flag anything you are unsure about:
 4. 7.1 and 7.2 first (no sudo, no key): the scripts with `--dry-run`, `ai-record` against the scripted
    provider with a unit test that round-trips through `loadReplayRows`, `PLAYWRIGHT_BASE_URL` in
    `playwright.config.ts`, and the `e2e/match-room.spec.ts` provenance fix. Test first; commit small.
-5. Then ask Nabhanyu once (AskUserQuestion, with a recommendation and the estimated cost): top up proxy or
+5. Then ask Nabhanyu once (AskUserQuestion, with a recommendation and the estimated cost): top up the proxy account or
    add an Anthropic key so `pnpm ai:smoke` and then `pnpm ai:record --yes` can run; and run
    `sudo deploy/install.sh` (an agent has no sudo), open 80/443 in the security group, attach an Elastic IP.
    - Expected after his steps: `curl -fsS https://<ip-with-dashes>.sslip.io/api/health` → `{"ok":true,…}`
@@ -200,7 +200,7 @@ What the Task 7 audit will check; flag anything you are unsure about:
 - **A public server with a live key** answers `Live AI` or `Cached for everyone at this moment`; the public E2E
   must accept those too, and the climax at 16x with a real provider can be late: the card then goes straight
   from held to revealed (`nudgeAt: null`). Do not assert the teaser state against a live provider.
-- **Budget**: `SIDELINE_AI_DAILY_BUDGET_USD` (default 3) applies to the recorder's runtime too; proxy reports
+- **Budget**: `SIDELINE_AI_DAILY_BUDGET_USD` (default 3) applies to the recorder's runtime too; the proxy reports
   about 4,440 input tokens per call (hidden upstream prompt), about $0.023 each at the default prices, so
   roughly 60 calls cost about $1.40 (estimated).
 - **Recording at 32x**: teasers will mostly arrive with `nudgeAt: null` for the recording session; that does

@@ -181,8 +181,8 @@ describe("OpenAI-compatible provider (openai SDK, Responses API, D-033)", () => 
   it("calls the configured endpoint with a strict JSON-schema text format and no reasoning options", async () => {
     const net = fakeFetch({ body: openAiResponse({}) });
     const provider = createOpenAiProvider({
-      apiKey: "sk-kk-test",
-      baseURL: "https://api.proxy.pro/v1",
+      apiKey: "sk-proxy-test",
+      baseURL: "https://llm-proxy.example.test/v1",
       fetch: net.fetch,
     });
     const result = await provider.complete(request({ model: "gpt-6.1-sol" }));
@@ -193,8 +193,8 @@ describe("OpenAI-compatible provider (openai SDK, Responses API, D-033)", () => 
       model: "gpt-6.1-sol",
     });
     const call = net.calls[0];
-    expect(call?.url).toBe("https://api.proxy.pro/v1/responses");
-    expect(call?.headers.get("authorization")).toBe("Bearer sk-kk-test");
+    expect(call?.url).toBe("https://llm-proxy.example.test/v1/responses");
+    expect(call?.headers.get("authorization")).toBe("Bearer sk-proxy-test");
     expect(call?.body).toEqual({
       model: "gpt-6.1-sol",
       input: [

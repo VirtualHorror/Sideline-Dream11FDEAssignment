@@ -15,6 +15,7 @@ import {
   clip,
   LENS_INSTRUCTIONS,
   percent,
+  plural,
   situationLine,
   type TeamName,
   teamName,
@@ -168,7 +169,7 @@ function templateSlides(facts: CatchUpSkillFacts): Slide[] {
   if (anomaly) {
     slides.push({
       kind: "anomaly",
-      headline: clip(`Over ${anomaly.over + 1} cost ${anomaly.runs} runs`, 80),
+      headline: clip(`Over ${anomaly.over + 1} cost ${plural(anomaly.runs, "run")}`, 80),
       body: clip(
         `${anomaly.bowler.displayName} went for ${anomaly.runs} in over ${anomaly.over + 1}, ${anomaly.z} standard deviations above the average over in this stretch.`,
         280,
@@ -178,10 +179,13 @@ function templateSlides(facts: CatchUpSkillFacts): Slide[] {
   }
   const spell = c.longestRunless;
   if (spell) {
+    // A one-ball spell starts and ends on the same ball: "From 15.1 to 15.1" read as a typo.
+    const span =
+      spell.balls === 1 ? `At ${spell.fromLabel}` : `From ${spell.fromLabel} to ${spell.toLabel}`;
     slides.push({
       kind: "plot_twist",
-      headline: clip(`${spell.balls} balls without a run`, 80),
-      body: clip(`From ${spell.fromLabel} to ${spell.toLabel}, nothing was scored.`, 280),
+      headline: clip(`${plural(spell.balls, "ball")} without a run`, 80),
+      body: clip(`${span}, nothing was scored.`, 280),
       citedEventIds: [spell.fromEventId, spell.toEventId],
     });
   }
@@ -190,9 +194,9 @@ function templateSlides(facts: CatchUpSkillFacts): Slide[] {
     const wickets = c.overs.reduce((sum, o) => sum + o.wickets, 0);
     slides.push({
       kind: "plot_twist",
-      headline: clip(`${c.overs.length} overs in brief`, 80),
+      headline: clip(`${plural(c.overs.length, "over")} in brief`, 80),
       body: clip(
-        `${runs} runs and ${wickets} wickets from ${c.window.fromLabel} to ${c.window.toLabel}.`,
+        `${plural(runs, "run")} and ${plural(wickets, "wicket")} from ${c.window.fromLabel} to ${c.window.toLabel}.`,
         280,
       ),
       citedEventIds: [],

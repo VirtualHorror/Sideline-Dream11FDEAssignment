@@ -12,8 +12,12 @@
  * Tests, fixtures and docs are not scanned: golden tests are *supposed* to name real players.
  * A line can opt out with an explicit marker and reason:  // hardcode-ok: <why>
  * Every marker is reviewed in the audit (docs/TEST_CHECKLIST.md, section A).
+ *
+ * A second pass covers every tracked file, docs and handoffs included: no file may contain a
+ * FORBIDDEN_WORDS entry, in any case, and there is no opt-out (D-068).
  */
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { extname, join, relative } from "node:path";
 
 export interface Term {
@@ -184,6 +188,61 @@ export function listSourceFiles(root: string): SourceFile[] {
   return paths.map((path) => ({ path: relative(root, path), content: readFileSync(path, "utf8") }));
 }
 
+/**
+ * Words no tracked file may contain, in any case (D-068). Today one: the name of the proxy behind
+ * the AI key, which the owner keeps out of the repository (its address lives only in .env). Kept
+ * reversed, so this file does not contain them either.
+ */
+export const FORBIDDEN_WORDS: readonly string[] = ["traktik"].map((w) => [...w].reverse().join(""));
+
+/** Every line of every file that contains a forbidden word, case-insensitively. */
+export function findForbiddenWords(files: SourceFile[], words: readonly string[]): Finding[] {
+  const findings: Finding[] = [];
+  for (const file of files) {
+    file.content
+      .toLowerCase()
+      .split("\n")
+      .forEach((line, index) => {
+        for (const word of words) {
+          if (line.includes(word)) {
+            findings.push({ path: file.path, line: index + 1, term: word, kind: "forbidden word" });
+          }
+        }
+      });
+  }
+  return findings;
+}
+
+function walkAll(dir: string, root: string, out: string[]): void {
+  for (const name of readdirSync(dir)) {
+    if (name === "node_modules" || name === ".git") continue;
+    const path = join(dir, name);
+    if (lstatSync(path).isDirectory()) walkAll(path, root, out);
+    else out.push(relative(root, path));
+  }
+}
+
+/**
+ * The files git tracks under `root`, read byte for byte (latin1), so any file type is searched;
+ * every file but node_modules and .git when `root` is not a git work tree (the CLI test's copy).
+ */
+export function listTrackedFiles(root: string): SourceFile[] {
+  let paths: string[] = [];
+  try {
+    paths = execFileSync("git", ["-C", root, "ls-files", "-z"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .split("\0")
+      .filter((path) => path !== "");
+  } catch {
+    walkAll(root, root, paths);
+  }
+  return paths
+    .filter((path) => existsSync(join(root, path)) && lstatSync(join(root, path)).isFile())
+    .map((path) => ({ path, content: readFileSync(join(root, path), "latin1") }));
+}
+
 function main(): void {
   const rootFlag = process.argv.indexOf("--root");
   const root =
@@ -202,7 +261,17 @@ function main(): void {
     process.exitCode = 1;
     return;
   }
-  console.log(`check-no-hardcode: OK (${files.length} source files, ${terms.length} terms)`);
+  const tracked = listTrackedFiles(root);
+  const forbidden = findForbiddenWords(tracked, FORBIDDEN_WORDS);
+  if (forbidden.length > 0) {
+    console.error(`check-no-hardcode: ${forbidden.length} forbidden word(s) in tracked files:`);
+    for (const f of forbidden) console.error(`  ${f.path}:${f.line}  (${f.kind}, D-068)`);
+    process.exitCode = 1;
+    return;
+  }
+  console.log(
+    `check-no-hardcode: OK (${files.length} source files, ${terms.length} terms; ${tracked.length} tracked files, no forbidden words)`,
+  );
 }
 
 if (import.meta.main) main();

@@ -3,7 +3,12 @@ import { cpSync, mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { findHardcodedTerms, type Term } from "../check-no-hardcode.ts";
+import {
+  FORBIDDEN_WORDS,
+  findForbiddenWords,
+  findHardcodedTerms,
+  type Term,
+} from "../check-no-hardcode.ts";
 
 const REPO = join(import.meta.dirname, "..", "..");
 
@@ -70,5 +75,44 @@ describe("check-no-hardcode CLI", () => {
 
     writeFileSync(file, 'export const isStar = (name: string) => name === "Babar Azam";\n');
     expect(() => run()).toThrow(/Babar Azam/);
+  });
+});
+
+// D-068: the name of the proxy behind today's AI key must never be in a tracked file. Built from
+// parts here, so this file does not contain it either.
+const PROXY_NAME = ["kit", "kart"].join("");
+
+describe("forbidden words in tracked files (D-068)", () => {
+  it("lists the proxy's name", () => {
+    expect(FORBIDDEN_WORDS).toContain(PROXY_NAME);
+  });
+
+  it("flags the word in any case and any kind of file, with file and line", () => {
+    const files = [
+      { path: "docs/notes.md", content: `line one\nThe ${PROXY_NAME.toUpperCase()} proxy\n` },
+      { path: ".env.example", content: `OPENAI_BASE_URL=https://api.${PROXY_NAME}.example/v1` },
+      { path: "clean.ts", content: "export const proxy = true;\n" },
+    ];
+    expect(findForbiddenWords(files, FORBIDDEN_WORDS)).toEqual([
+      { path: "docs/notes.md", line: 2, term: PROXY_NAME, kind: "forbidden word" },
+      { path: ".env.example", line: 1, term: PROXY_NAME, kind: "forbidden word" },
+    ]);
+  });
+
+  it("fails the CLI on a tracked file that names it, wherever the file is", () => {
+    const root = mkdtempSync(join(tmpdir(), "sideline-forbidden-"));
+    cpSync(join(REPO, "data"), join(root, "data"), { recursive: true });
+    const git = (...args: string[]) =>
+      execFileSync("git", ["-C", root, ...args], { stdio: "pipe" });
+    git("init", "-q");
+    writeFileSync(join(root, "HANDOFF99.md"), `Keys come from the ${PROXY_NAME} account.\n`);
+    git("add", "-A");
+    const run = () =>
+      execFileSync("node", [join(REPO, "scripts", "check-no-hardcode.ts"), "--root", root], {
+        stdio: "pipe",
+      });
+    expect(() => run()).toThrow(/HANDOFF99\.md:1/);
+    writeFileSync(join(root, "HANDOFF99.md"), "Keys come from the proxy account.\n");
+    expect(() => run()).not.toThrow();
   });
 });

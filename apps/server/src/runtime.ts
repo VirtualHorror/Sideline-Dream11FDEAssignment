@@ -3,7 +3,8 @@
  * rebuilt, replay rows loaded), the provider the config names, the gateway, telemetry, the
  * orchestrator and the session manager.
  *
- * Callers: src/index.ts (boot) and scripts/ai-smoke.ts. Everything that touches data/ fails here,
+ * Callers: src/index.ts (boot), scripts/ai-smoke.ts and scripts/lib/record.ts (`pnpm ai:record`,
+ * with its own provider and replay directory). Everything that touches data/ fails here,
  * at boot, with the file named; nothing below this is started (the ticker and the HTTP server
  * belong to index.ts).
  */
@@ -37,7 +38,14 @@ export function createProvider(config: AppConfig): LlmProvider | null {
 
 export function buildRuntime(
   config: AppConfig,
-  opts: { now?: () => number; dbPath?: string } = {},
+  opts: {
+    now?: () => number;
+    dbPath?: string;
+    /** Overrides the provider the config names (scripts/lib/record.ts: none, or the scripted one). */
+    provider?: LlmProvider | null;
+    /** Where recorded rows are read from (default data/ai-replay); null reads none. */
+    replayDir?: string | null;
+  } = {},
 ) {
   const now = opts.now ?? Date.now;
   const bundles = loadMatchBundles(config.dataDir);
@@ -45,14 +53,16 @@ export function buildRuntime(
   const db = openDatabase(opts.dbPath ?? join(config.dataDir, "runtime", "sideline.db"));
   const analytics = rebuildAnalytics(db, bundles);
   const cache = createCache(db, now);
-  const replayRows = loadReplayRows(join(config.dataDir, "ai-replay"), cache);
+  const replayDir =
+    opts.replayDir === undefined ? join(config.dataDir, "ai-replay") : opts.replayDir;
+  const replayRows = replayDir === null ? 0 : loadReplayRows(replayDir, cache);
   const traces = createTraceSink(db);
   const telemetry = createTelemetry({
     traces,
     eventsPerMatch: new Map([...bundles].map(([id, bundle]) => [id, bundle.events.length])),
   });
   const gateway = createGateway({
-    provider: createProvider(config),
+    provider: opts.provider === undefined ? createProvider(config) : opts.provider,
     cache,
     budget: createBudget({
       db,

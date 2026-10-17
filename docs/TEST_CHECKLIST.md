@@ -14,23 +14,27 @@
 
 ## 1. Every change, every task (must all pass)
 
-| # | Command | Expected (baseline after Task 6) |
+| # | Command | Expected (baseline after Task 7) |
 | --- | --- | --- |
 | 1 | `pnpm typecheck` | `packages/engine typecheck: Done`, `apps/server typecheck: Done`, `apps/web typecheck: Done`, then no output from root `tsc`; exit 0 |
 | 2 | `pnpm lint` | `Checked N files in …ms. No fixes applied.` and no `×` or `!` diagnostics; exit 0 |
-| 3 | `pnpm test` | `Test Files  47 passed (47)` and `Tests  569 passed (569)`; no failed, no skipped |
-| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (131 source files, 209 terms)` (counts grow with code/data) |
+| 3 | `pnpm test` | `Test Files  50 passed (50)` and `Tests  599 passed (599)`; no failed, no skipped |
+| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (131 source files, 209 terms; 299 tracked files, no forbidden words)` (counts grow with code/data; the second pass fails on the AI proxy's name in any tracked file, D-068) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
-| 7 | `pnpm test:e2e` (any UI-visible change) | `22 passed` (desktop + mobile: every route, the climax flow with a held then revealed teaser, tabular numerals, reduced motion); about 1.5 min |
+| 7 | `pnpm test:e2e` (any UI-visible change) | `22 passed` (desktop + mobile: every route, the climax flow with a held then revealed teaser, tabular numerals, reduced motion); about 1.5 min. The local server is always keyless (`SIDELINE_AI_PROVIDER=none`) |
 | 8 | `grep -rnE "\.(skip\|only)\(" --include=*.ts --include=*.tsx packages apps scripts e2e` | no output |
 | 9 | `git status --short` | only files the task intended to change |
 | 10 | `node scripts/engine-report.ts <raw.json> --players <players.json> --rules <rules.json> --json` | JSON scorecard, fall-of-wicket ids and fantasy report; compare with the Python oracle on both fixtures |
 | 11 | `node scripts/build-models.ts --zip <saved t20s_male_json.zip>` (Task 3+, when `scripts/build-models.ts`, `scripts/lib/archive.ts`, the engine or `data/` change) | `build-models: … used (train …, test …)` and `wrote …`; then `git status --short data/models` prints nothing when the zip's sha256 equals the one in `data/models/README.md` (2026-10-16: `95305bc2…860a`, 3,093 used, threshold 0.18437). A new archive changes the files: review the diff |
-| 12 | `pnpm ai:smoke` (Task 5+, with a key in `.env`; spends a few thousand tokens and sends one ball's facts to the provider: ask Nabhanyu first) | `ai-smoke: provider …, endpoint <host>, model …`, `ai-smoke: outcome ok, provenance live, …, latency … ms, tokens … in / … out, cost $… (est.)`, `ai-smoke: spoilerLint ok`, `ai-smoke: OK`; with no provider (or `SIDELINE_AI_PROVIDER=none`): `ai-smoke: skipped (…)`. The key is never printed. 2026-10-17: `FAILED (error: provider error: PermissionDeniedError (403))`: the proxy account was out of credit (Nabhanyu); re-run when it is topped up |
+| 12 | `pnpm ai:smoke` (Task 5+, with a key in `.env`; spends a few thousand tokens and sends one ball's facts to the provider: ask Nabhanyu first) | `ai-smoke: provider …, endpoint <kind>, model …`, `ai-smoke: outcome ok, provenance live, …, latency … ms, tokens … in / … out, cost $… (est.)`, `ai-smoke: spoilerLint ok`, `ai-smoke: OK`; with no provider (or `SIDELINE_AI_PROVIDER=none`): `ai-smoke: skipped (…)`. The key is never printed. 2026-10-17: `FAILED (error: provider error: PermissionDeniedError (403))`: the proxy account was out of credit (Nabhanyu); re-run when it is topped up |
 | 13 | Server by hand (Task 5+): `PORT=8788 node apps/server/src/index.ts` (no `--env-file`: keyless, aiMode `replay`), then `curl -s -X POST -H 'content-type: application/json' -d '{"matchId":"1298150","personaId":"late-from-work"}' :8788/api/sessions` and `curl -N :8788/api/sessions/<id>/stream` | the boot line with `aiMode: 'replay'`, `analyticsRows: 502`; the stream starts `event: hello`, `event: snapshot` (249 events and 2 catch-up reels after a jump to 18 overs), then `events`, `chat`, `telemetry` frames with `id:` rising by one; SIGTERM prints `shutting down` and frees the port |
-
 | 14 | Dev server by hand (Task 6+): `SIDELINE_AI_PROVIDER=none pnpm dev`, open `http://127.0.0.1:5173` | the server logs `aiProvider: 'none'`, `aiMode: 'replay'`; the landing page lists both matches; "Late from work" opens at 90/4 with its catch-up reel revealed once the 15 s feed reaches the join point; at 16x with a 25 s delay, a jump to after 18 overs of the chase shows the 18.6 card held under the veil, then revealed with the floodlight outburst and the "Six" headline on the TV; the scorebug ends on the result |
+| 15 | Deploy dry runs (Task 7+): `deploy/install.sh --dry-run`, `deploy/update.sh --dry-run [ref]` | every step and file listed, the env report naming variables only (`deploy-env: copied OPENAI_API_KEY, …`), ending `dry run: nothing was changed`; `scripts/test/deploy.test.ts` proves no host-changing command runs |
+| 16 | `pnpm ai:record` (Task 7+; without `--yes` nothing is sent) | `ai-record: plan: 67 moments need a provider call (48 teasers, 19 catch-up reels); 0 already recorded in …/data/ai-replay`. With `--yes` it spends money: ask Nabhanyu first (Constraint 26) |
+| 17 | `deploy/update.sh <ref>` (the auditor, after a merge; as the developer, no password) | `update: health: http://127.0.0.1:8780/api/health` and each site's health body with `"aiEndpoint":"openai-compatible"`, then `update: deployed <sha> (<ref>) at https://3-108-67-100.sslip.io/` |
+| 18 | `PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e` (Task 7+) | `22 passed` against production (with a key that fails, the climax card shows `Fallback: AI unavailable`) |
+| 19 | Public origin (Task 7+): `curl -sI https://<host>/`; `curl -sI http://<host>/`; a session's `curl -sN https://<host>/api/sessions/<id>/stream` | `HTTP/2 200` with the CSP, `x-frame-options: DENY`, `nosniff`, `strict-transport-security`; `308` to https; the stream's first byte in well under a second with `event: hello` and `event: snapshot` |
 
 `pnpm verify` runs rows 1-6 in order and stops at the first failure.
 
@@ -119,6 +123,11 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 - Prompts: no teaser prompt carries a ball's outcome, no shared prompt a fan's squad, and fan text
   sits escaped inside `<fan_question>` (Task 5: `skills.test.ts`, and the holdout run above).
 - NL→SQL: write statements, `ATTACH`, `PRAGMA`, recursive CTEs and multi-statements are refused (Task 8).
+- Production (Task 7+): the public origin sends the same headers over HTTPS (row 19); `/api/health` shows
+  `aiEndpoint` (the kind) and never a host or key (D-068); `ls /etc/sideline` is denied to the developer
+  (root 700, the file 600); the service journal has no line with the key's first 8 characters; five asks
+  with five spoofed `X-Forwarded-For` values from one client: the fifth answers 429 (Caddy replaces the
+  header, D-066); the public bundle has no key-shaped string.
 
 ### G. UI review (UI tasks)
 - `pnpm test:e2e`, then look at `test-results/**/*.png` (desktop + 390 px, light + dark).
@@ -142,3 +151,4 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 | T4 Moments engine | 2026-10-16 | pass | pass (113 files) | 25 files / 337 tests | OK (51 files, 209 terms) | OK (2 matches) | 641 ms | 8 passed |
 | T5 Server runtime + AI | 2026-10-17 | pass | pass (165 files) | 37 files / 492 tests | OK (86 files, 209 terms) | OK (2 matches) | 292 ms | 8 passed |
 | T6 Frontend I | 2026-10-17 | pass | pass (222 files) | 47 files / 569 tests | OK (131 files, 209 terms) | OK (2 matches) | 805 ms | 22 passed |
+| T7 Deploy | 2026-10-17 | pass | pass (229 files) | 50 files / 599 tests | OK (131 files, 209 terms; 299 tracked files, no forbidden words) | OK (2 matches) | 1.02 s | 22 passed locally; 22 passed against https://3-108-67-100.sslip.io |
