@@ -149,6 +149,43 @@ describe("control plane (PLAN 6.5)", () => {
     expect(within(traces).queryByRole("button", { name: /show the json/i })).toBeNull();
   });
 
+  // Pinned by the t06-verified spot-check (D-065): a mutant showing the trace in the teaser window survived.
+  it("keeps a teaser's trace held while its card only teases, until the TV shows the ball", () => {
+    // Between nudgeAt and revealAt the card shows the spoiler-free teaser; the trace's detail quotes
+    // the score after the ball, so it waits for the reveal like the card's own reveal zone.
+    const { container } = render(drawer(big.t - 3_000));
+    const traces = screen.getByRole("list", { name: "AI calls" });
+    expect(within(traces).getByText("Held until your TV shows this moment")).toBeTruthy();
+    expect(container.innerHTML).not.toContain("144/4");
+  });
+
+  // Pinned by the t06-verified spot-check (D-065): a mutant that never showed such a trace survived.
+  it("shows a trace with no card and no ball to wait for (a fan's question) at once", () => {
+    const question: AICallTrace = {
+      ...trace,
+      id: "trace-question",
+      skill: "explainer",
+      momentKey: `explain:${MATCH_ID}:120:casual:5f3a9c1d`,
+      outcome: "ok",
+      cache: "miss",
+      budgetMs: null,
+      detail: null,
+    };
+    render(
+      <ControlPlaneDrawer
+        telemetry={{ ...telemetry, recentCalls: [question] }}
+        tvT={0}
+        events={events}
+        moments={[]}
+        defaultOpen
+      />,
+    );
+    const traces = screen.getByRole("list", { name: "AI calls" });
+    expect(within(traces).queryByText("Held until your TV shows this moment")).toBeNull();
+    expect(within(traces).getByText("Explainer")).toBeTruthy();
+    expect(within(traces).getByText("Live AI")).toBeTruthy();
+  });
+
   it("summarises itself in one line while collapsed", async () => {
     const user = userEvent.setup();
     render(<ControlPlaneDrawer telemetry={telemetry} tvT={big.t} events={events} moments={[]} />);

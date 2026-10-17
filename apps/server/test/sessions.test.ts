@@ -316,6 +316,23 @@ describe("sessions: behaviour the t05-verified spot-check found unpinned", () =>
   });
 });
 
+describe("sessions: behaviour the t06-verified spot-check found unpinned", () => {
+  // A mutant clamping seeks to the end plus the fan's delay survived (D-065).
+  it("clamps a seek past the end to the last thing at the ground, not to the fan's delayed TV (D-063)", () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const end = events.at(-1);
+    const lastChat = b.crowd.at(-1);
+    if (!end || !lastChat) throw new Error("no events or crowd");
+    expect(lastChat.t).toBeGreaterThan(end.t);
+    expect(session.clock().delayMs).toBe(15_000);
+    // Seeks and jumps stop at the crowd's last reaction; only play runs the clock on by the delay.
+    const clock = session.control({ action: "seek", t: lastChat.t + 3_600_000 });
+    expect(clock.stadiumT).toBe(lastChat.t);
+    expect(session.stadiumNow()).toBe(lastChat.t);
+  });
+});
+
 // BUG-004, found by the Task 6 UI: the clock stopped when the ground was done, so a fan whose TV runs
 // behind never saw the last balls or the result.
 describe("sessions: the end of the match reaches the fan's TV (BUG-004)", () => {
