@@ -1,18 +1,19 @@
 /**
- * The replay recorder behind `pnpm ai:record` (PLAN Task 7, D-054, D-066): it walks every persona of
- * every match through the moments a reviewer reaches in the room, on the server's own sessions, so
- * the gateway asks for exactly the keys a live server would; the validated answers become replay rows
- * (data/ai-replay/<matchId>.jsonl) that a server with no key serves to everyone (Constraint 2).
+ * The replay recorder behind `pnpm ai:record` (PLAN Task 7, D-054, D-066): it walks every persona
+ * of every match through the moments a reviewer reaches in the room, on the server's own sessions,
+ * so the gateway asks for exactly the keys a live server would; the validated answers become
+ * replay rows (data/ai-replay/<matchId>.jsonl) that a server with no key serves to everyone
+ * (Constraint 2).
  *
  * Callers: scripts/ai-record.ts (the CLI) and scripts/test/ai-record.test.ts (scripted provider).
  * Each persona plays from its join point to the end (its catch-up reel and every teaser after it),
- * then, from its join point again, makes each one-click jump the room offers (the phase rail and the
- * jump control's default), whose catch-ups are keyed by window and lens. Calls go one at a time on a
- * hand-moved clock, so the only wall time is the provider's, and the sessions run at 1x with the
- * longest stream delay so that every teaser gets the skill's full timeout (at 32x it would get the
- * 9 s minimum, and the endpoint of D-033 takes up to 8.5 s). Rows already recorded in the replay
- * directory answer before any call (D-054), so a second run only fills the gaps. Explainer answers
- * are personal (keyed by the fan's question) and are never recorded.
+ * then, from its join point again, makes each one-click jump the room offers (the phase rail and
+ * the jump control's default), whose catch-ups are keyed by window and lens. Calls go one at a
+ * time on a hand-moved clock, so the only wall time is the provider's, and the sessions run at 1x
+ * with the longest stream delay so that every teaser gets the skill's full timeout (at 32x it
+ * would get the 9 s minimum, and the endpoint of D-033 takes up to 8.5 s). Rows already recorded
+ * in the replay directory answer before any call (D-054), so a second run only fills the gaps.
+ * Explainer answers are personal (keyed by the fan's question) and are never recorded.
  */
 import { renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

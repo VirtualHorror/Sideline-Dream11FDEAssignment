@@ -2,19 +2,19 @@
  * `pnpm ai:record` (PLAN Task 7, D-066): records the AI answers a reviewer reaches into
  * data/ai-replay/<matchId>.jsonl, from real provider calls, for servers with no key (Constraint 2).
  *
- * Usage: pnpm ai:record                    the plan: which moments need a provider call (spends nothing)
- *        pnpm ai:record --yes              record them with the provider in .env (spends money)
- *        pnpm ai:record --yes --fresh      re-record everything, ignoring the rows already recorded
- *        pnpm ai:record --provider scripted --out <dir>   a dry run with the test provider, never
- *                                          into data/ai-replay
- *        --out <dir>                       where the rows go (default data/ai-replay)
+ * Usage: pnpm ai:record                  the plan: the moments that need a provider call (no spend)
+ *        pnpm ai:record --yes            record them with the provider in .env (spends money)
+ *        pnpm ai:record --yes --fresh    re-record everything, ignoring the rows already recorded
+ *        pnpm ai:record --provider scripted --out <dir>
+ *                                        a dry run with the test provider, never into data/ai-replay
+ *        --out <dir>                     where the rows go (default data/ai-replay)
  *
- * Without --yes nothing is sent anywhere: the plan walks the same sessions with no provider. With it,
- * every call goes through the real gateway (timeouts, schema, guards, the daily budget of
- * SIDELINE_AI_DAILY_BUDGET_USD, which stops the calls), one at a time, and only validated answers are
- * written. Rows already in the output directory are kept and answer first, so a second run only
- * fills the gaps. Prints the calls, outcomes, tokens and cost; the key is never printed. Exit 1 when
- * some moment could not be recorded (re-run to retry only those).
+ * Without --yes nothing is sent anywhere: the plan walks the same sessions with no provider. With
+ * it, every call goes through the real gateway (timeouts, schema, guards, and the daily budget of
+ * SIDELINE_AI_DAILY_BUDGET_USD, which stops the calls), one at a time, and only validated answers
+ * are written. Rows already in the output directory are kept and answer first, so a second run
+ * only fills the gaps. Prints the calls, outcomes, tokens and cost; the key is never printed.
+ * Exit 1 when some moment could not be recorded (run it again to retry only those).
  */
 import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";

@@ -3,13 +3,13 @@
  * stdout, a report of variable names (never values) on stderr.
  *
  * Usage: node scripts/deploy-env.ts [--env-file <path>] [--keyless]
- *   --env-file   the .env to read (default: this repository's .env; no file means a keyless install)
+ *   --env-file   the .env to read (default: this repository's .env; none means a keyless install)
  *   --keyless    leave the AI keys out and set SIDELINE_AI_PROVIDER=none: recorded AI and labelled
  *                fallbacks only, never a paid call
  *
- * The .env is parsed with Node's own parser, the one `--env-file` uses for `pnpm dev`, so production
- * reads what development reads. Exit 1 (naming the variable, never its value) when a setting cannot
- * be written or the server would refuse it at boot.
+ * The .env is parsed with Node's own parser, the one `--env-file` uses for `pnpm dev`, so
+ * production reads what development reads. Exit 1 (naming the variable, never its value) when a
+ * setting cannot be written or the server would refuse it at boot.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
