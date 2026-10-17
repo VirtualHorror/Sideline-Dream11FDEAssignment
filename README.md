@@ -17,12 +17,13 @@ cached by moment so the cost scales with the match, not with the number of fans.
 The demo replays **real ball-by-ball data** (Cricsheet) of India vs Pakistan at the 2022 T20 World
 Cup, with the 2024 final as a second match to prove nothing is hardcoded.
 
-**Live:** <https://sideline.nabhanyubm.tech/> (the owner's domain, D-070: its DNS points here; Caddy serves it
-once `sudo deploy/install.sh` has run with it) and
-<https://3-108-67-100.sslip.io/> (always): one EC2 host, Caddy with automatic HTTPS, the server under
-systemd (`deploy/README.md`).
+**Live:** <https://sideline.nabhanyubm.tech/> (the owner's domain, D-070) and <https://3-108-67-100.sslip.io/> (the
+same server): one EC2 host, Caddy with automatic HTTPS, the server under systemd (`deploy/README.md`). Start with
+"Watch the story" on the landing page: a guided tour of all four moments.
+**Code:** <https://github.com/VirtualHorror/Sideline-Dream11FDEAssignment>. **Submission note and links:**
+`docs/SUBMISSION.md`; **demo round:** `docs/DEMO_SCRIPT.md`.
 
-> Status: Tasks 1-9 complete and audited (Milestone A, the public link, at Task 7; Milestone B, the complete product, at Task 9): foundation; cricket core (Cricsheet timeline, match
+> Status: Tasks 1-10 complete and audited (Milestone A, the public link, at Task 7; Milestone B, the complete product, at Task 9; Milestone C, the submission, at Task 10): foundation; cricket core (Cricsheet timeline, match
 > reducer, fantasy scoring, engine report); models (win probability, leverage and player priors
 > trained on 3,093 real men's T20Is, rebuilt byte for byte by one script); the moments engine (TV
 > clock and delay buffer, the four phase detectors, the entropy gate that keeps 233 of 266 events
@@ -41,15 +42,31 @@ systemd (`deploy/README.md`).
 > sandbox; and the complete product (Task 9): a card for every moment, the fan's own chat line, the inspector
 > in the control plane, a guided story mode built from the match's own triggers ("Watch the story" on the
 > landing page), and `/architecture` with the pipeline, a live count of what ran without AI and the build
-> timeline. See `docs/PLAN.md` for the build sequence and status.
+> timeline; and the final audit (Task 10): the whole repository against the independent oracle, a holdout match no
+> code had seen and a whole Cricsheet archive, a security review whose one finding (a stopped SQL query kept
+> computing) is fixed, the submission note and the demo script. See `docs/PLAN.md` for the build sequence and status.
 
-## Quick start
+## Clone and run
 
-Requirements: Node 24.22 and pnpm 10.34 (`~/.local/bin` on this host), Google Chrome for E2E.
+Requirements: Node 24 (24.22 or a later 24.x; `.node-version` says which), pnpm 10.34 (`package.json` pins 10.34.7:
+`corepack enable` picks it up, or `npm install -g pnpm@10.34.7`) and, for the browser tests, Google Chrome. Built and
+tested on Ubuntu 24.04. No AI key is needed: without one, every AI card is a labelled fallback built from the same
+facts the model would get.
 
 ```bash
+git clone https://github.com/VirtualHorror/Sideline-Dream11FDEAssignment.git
+cd Sideline-Dream11FDEAssignment
 pnpm install --frozen-lockfile
-pnpm verify          # typecheck, lint, unit tests, anti-hardcoding scan, data gate, build
+pnpm verify                          # typecheck, lint, unit tests, anti-hardcoding scan, data gate, build
+SIDELINE_AI_PROVIDER=none pnpm dev   # open http://127.0.0.1:5173 ("Watch the story" for the tour)
+```
+
+## More commands
+
+On the host that serves the site, the working copy is `~/Downloads/SidelineProd-Dream11FDEAssignment` (it holds
+`.env`; Node and pnpm live in `~/.local/bin`).
+
+```bash
 pnpm test:e2e        # Playwright on system Chrome, desktop + 390 px mobile
 pnpm dev             # web on http://127.0.0.1:5173 (proxies /api to the server on :8787)
 SIDELINE_AI_PROVIDER=none pnpm dev   # the same without calling the AI provider in .env
@@ -72,12 +89,13 @@ pnpm ai:record --yes
 # deploy on this EC2 host (deploy/README.md): once with sudo, then redeploys and rollbacks without
 deploy/install.sh --dry-run && sudo deploy/install.sh
 deploy/update.sh                      # main; or a tag such as t07-verified to roll back
-PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e   # the browser tests, live
+PLAYWRIGHT_BASE_URL=https://sideline.nabhanyubm.tech pnpm test:e2e   # the browser tests, live
 ```
 
-The API (Task 5): `GET /api/matches`, `POST /api/sessions`, `GET /api/sessions/:id/stream` (SSE),
-`POST /api/sessions/:id/control`, `POST /api/sessions/:id/ask`, `GET /api/telemetry`; the flows are in
-`docs/Flow.md` §7, §8 and §13.
+The API: `GET /api/matches` (and `/:matchId`, `/:matchId/story`), `POST /api/sessions`,
+`GET /api/sessions/:id/stream` (SSE), and per session `POST …/control`, `…/ask`, `…/lineup-intent`, `…/chat` and
+`…/inspector`; `GET /api/inspector/views`, `GET /api/telemetry`, `GET /api/health`. The route map is at the top of
+`apps/server/src/http/app.ts`; the flows are in `docs/Flow.md` (§2, §7-8, §13, §16-17).
 
 Optional AI configuration: copy `.env.example` to `.env` and add an Anthropic key or an
 OpenAI-compatible key (+ `OPENAI_BASE_URL` and model names for non-OpenAI endpoints). The provider
@@ -103,9 +121,9 @@ decision inside the app, rendered at build time from the same docs in this repos
 
 ## How this was built
 
-Claude Code (architect and auditor) designed the system, wrote the plan and Task 1, and audits each
-task; OpenAI Codex implements tasks on branches (Claude implemented Tasks 3, 4, 5 and 6 while Codex
-was unavailable). The process is documented as it happens:
+Claude Code (architect and auditor) designed the system, wrote the plan and Task 1, and audited each
+task; OpenAI Codex implemented Task 2 on its branch, and Claude implemented Tasks 3 to 9 while Codex
+was unavailable, then ran the final audit (Task 10). The process is documented as it happened:
 `docs/Decisions.md` (why), `docs/Flow.md` (how execution travels), `docs/features/` (per-task
 traces), `docs/TEST_CHECKLIST.md` (what proves it works), `docs/ROLLBACK.md` (how to undo it).
 

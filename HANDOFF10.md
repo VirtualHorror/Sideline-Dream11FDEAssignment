@@ -65,7 +65,7 @@ Task 10, in this order (the scrub must come after `t10-verified` exists and befo
 **Owner (Nabhanyu), not blockers:**
 - [ ] **Domain:** DNS is done (`dig +short A sideline.nabhanyubm.tech @1.1.1.1` → `3.108.67.100`, Cloudflare, DNS only), but
   the installed Caddyfile lists only the sslip.io name, so `https://sideline.nabhanyubm.tech/` fails the TLS handshake. Run
-  once: `sudo /home/nabhanyu/Downloads/Dream11FDEAssignment/deploy/install.sh` (idempotent: rewrites the Caddyfile with
+  once: `sudo /home/nabhanyu/Downloads/SidelineProd-Dream11FDEAssignment/deploy/install.sh` (idempotent: rewrites the Caddyfile with
   both names, the env file and the unit, redeploys `main`); then `curl -fsS https://sideline.nabhanyubm.tech/api/health`.
 - [ ] **GitHub:** the remote URL and how to authenticate (`gh auth login` or an SSH key); repository visibility.
 
@@ -191,7 +191,7 @@ hand mutants: Task 8 8/8 killed; Task 9 10/10 killed (2 test gaps pinned first)
 
 ## Resume Instructions
 
-1. `cd ~/Downloads/Dream11FDEAssignment && export PATH="$HOME/.local/bin:$PATH" && node --version && pnpm --version`
+1. `cd ~/Downloads/SidelineProd-Dream11FDEAssignment && export PATH="$HOME/.local/bin:$PATH" && node --version && pnpm --version`
    - Expected: `v24.22.0`, `10.34.7`
 2. `git status --short` (empty) `&& git log --oneline -1` (this handoff's commit on `main`) `&& pnpm install --frozen-lockfile && pnpm verify`
    - Expected: the Verification Output above. If red, stop and report.
@@ -199,9 +199,9 @@ hand mutants: Task 8 8/8 killed; Task 9 10/10 killed (2 test gaps pinned first)
    → fails until Nabhanyu's install, then `"ok":true`.
 4. Audit: TEST_CHECKLIST §2 with a new holdout (README "Session-level holdout", another match id), then `/security-review`.
 5. Docs: `SUBMISSION.md`, `DEMO_SCRIPT.md`, README; commit; `git tag t10-verified`; the zip (Not Yet Done).
-6. **Back up before the scrub:** `git -C ~/Downloads/Dream11FDEAssignment bundle create ~/Downloads/sideline-before-scrub.bundle --all`
+6. **Back up before the scrub:** `git -C ~/Downloads/SidelineProd-Dream11FDEAssignment bundle create ~/Downloads/sideline-before-scrub.bundle --all`
    then `git bundle verify ~/Downloads/sideline-before-scrub.bundle` → "is okay". Keep it until the push is verified.
-7. **Scrub (D-072) in a mirror clone**, e.g. `git clone --mirror ~/Downloads/Dream11FDEAssignment ~/Downloads/sideline-scrub.git`:
+7. **Scrub (D-072) in a mirror clone**, e.g. `git clone --mirror ~/Downloads/SidelineProd-Dream11FDEAssignment ~/Downloads/sideline-scrub.git`:
    - Preferred: `git filter-repo` (not installed; no pip here). Fetch its single-file script from its official release into a
      scratch directory (published ≥ 14 days ago), run `python3 -I <script> --replace-text <file> --replace-message <file>`
      with one line `regex:(?i)<the word>==>proxy` in a file outside every repository; it rewrites contents and messages,

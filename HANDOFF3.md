@@ -122,7 +122,7 @@ Oracle comparisons
 ## Resume Instructions
 
 ```bash
-cd ~/Downloads/Dream11FDEAssignment
+cd ~/Downloads/SidelineProd-Dream11FDEAssignment
 export PATH="$HOME/.local/bin:$PATH"
 pnpm install --frozen-lockfile
 pnpm verify

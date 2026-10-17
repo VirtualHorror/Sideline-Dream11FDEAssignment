@@ -58,7 +58,7 @@ tag `t08-verified` and `t09-verified` on the merge commit, redeploy with `deploy
 **Owner (Nabhanyu), not blockers:**
 - [ ] **Domain:** `nabhanyubm.xyz` was NXDOMAIN at the `.xyz` registry during this session, 2026-10-17 evening (not published yet). Once
   `dig +short A sideline.nabhanyubm.xyz @1.1.1.1` prints `3.108.67.100`, he runs
-  `sudo /home/nabhanyu/Downloads/Dream11FDEAssignment/deploy/install.sh` once. The installed Caddyfile still lists only
+  `sudo /home/nabhanyu/Downloads/SidelineProd-Dream11FDEAssignment/deploy/install.sh` once. The installed Caddyfile still lists only
   the sslip.io name; the install adds the domain and Caddy gets its certificate. Check
   `curl -fsS https://sideline.nabhanyubm.xyz/api/health`.
 - [ ] **AI key:** production's calls now get **403 `key_expired`** (the account had no credit before). After he renews:
@@ -187,7 +187,7 @@ For the Task 8+9 audit (a self-audit in the same session, as Tasks 3-7 were), an
 
 ## Resume Instructions
 
-1. `cd ~/Downloads/Dream11FDEAssignment && export PATH="$HOME/.local/bin:$PATH" && node --version && pnpm --version`
+1. `cd ~/Downloads/SidelineProd-Dream11FDEAssignment && export PATH="$HOME/.local/bin:$PATH" && node --version && pnpm --version`
    - Expected: `v24.22.0`, `10.34.7`
 2. `pnpm install --frozen-lockfile && pnpm verify`
    - Expected: the Verification Output above (50 files / 599 tests). If red, stop and report.

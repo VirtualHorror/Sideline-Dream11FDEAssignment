@@ -19,6 +19,13 @@ may change what the public link serves. Only `deploy/update.sh` moves the deploy
 same reason production listens on port 8780, not 8787: `pnpm dev` and its Vite proxy use 8787 on
 this same host (the port is set once, in `install.sh`).
 
+On this host the working copy is `~/Downloads/SidelineProd-Dream11FDEAssignment` (D-078): it holds `.env`, and
+the deploy checkout's `origin` points at it. `update.sh` deploys only from the repository it lives in, so if the
+working copy ever moves, point the deploy checkout at the new place first:
+`git -C /srv/sideline remote set-url origin <new path>`, then `pnpm install --frozen-lockfile` in the moved copy
+and `deploy/update.sh`. The public repository on GitHub is a separate clone with a scrubbed history (D-072,
+D-078); production never deploys from it.
+
 ## Once, by hand (the parts a script cannot do)
 
 1. **AWS security group** of the instance: inbound TCP **80** and **443** from `0.0.0.0/0` (and
@@ -85,6 +92,7 @@ to everyone once it is committed and deployed, with or without a key.
 | blank page right after a build | the asset names in `index.html` | `sudo systemctl restart sideline` (`update.sh` does this) |
 | `update.sh: could not restart sideline without a password` | `sudo -l` | `sudo deploy/install.sh` (it adds the rule) |
 | `update.sh: … has local changes` | `git -C /srv/sideline status` | the deploy checkout is never edited: `git -C /srv/sideline checkout -- .` |
+| `update.sh: … is not a deploy checkout of …` | `git -C /srv/sideline remote get-url origin` | the working copy moved: `git -C /srv/sideline remote set-url origin <the working copy's path>` |
 
 ## Removing it
 

@@ -156,7 +156,7 @@ appear (ignore). `raw.innings[i] = { team, overs: [{ over, deliveries }], target
 
 ## Resume Instructions
 
-1. `cd ~/Downloads/Dream11FDEAssignment && export PATH="$HOME/.local/bin:$PATH" && node --version`
+1. `cd ~/Downloads/SidelineProd-Dream11FDEAssignment && export PATH="$HOME/.local/bin:$PATH" && node --version`
    - Expected: `v24.22.0` (and `pnpm --version` → `10.34.7`)
 2. `pnpm install --frozen-lockfile && pnpm verify`
    - Expected: the baseline in "Current State" (65 tests). If anything is red, stop and report; don't fix Task 1 silently.

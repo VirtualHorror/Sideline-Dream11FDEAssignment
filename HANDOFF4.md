@@ -175,7 +175,7 @@ const context = MatchContextFileSchema.parse({ matchId: id, title: "synthesized"
 
 ## Resume Instructions
 
-1. `cd ~/Downloads/Dream11FDEAssignment && export PATH="$HOME/.local/bin:$PATH" && node --version && pnpm --version`
+1. `cd ~/Downloads/SidelineProd-Dream11FDEAssignment && export PATH="$HOME/.local/bin:$PATH" && node --version && pnpm --version`
    - Expected: `v24.22.0`, `10.34.7`
 2. `pnpm install --frozen-lockfile && pnpm verify`
    - Expected: the "Current State" baseline (106 tests). If anything is red, stop and report.
