@@ -21,6 +21,7 @@
     "test:watch": "vitest",
     "check:hardcode": "node scripts/check-no-hardcode.ts",
     "check:data": "node scripts/verify-data.ts",
+    "ai:smoke": "node scripts/ai-smoke.ts",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm check:hardcode && pnpm check:data && pnpm build",
     "test:e2e": "playwright test"
   },
