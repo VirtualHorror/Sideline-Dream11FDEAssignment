@@ -19,6 +19,7 @@ import {
   type AiMode,
   applyEvent,
   buildCatchUpFacts,
+  type ChatMessage,
   type ClockState,
   type ControlRequest,
   createGate,
@@ -27,9 +28,14 @@ import {
   type DetectorContext,
   describeDelivery,
   foldEvents,
+  type InspectorRequest,
+  type InspectorResult,
   type JumpTarget,
   joinSeq,
   type Lens,
+  type LineupFacts,
+  lineupDetector,
+  lineupKey,
   type MatchEvent,
   type Moment,
   type MomentTrigger,
@@ -56,6 +62,16 @@ const FAILED = {
   code: "session_failed",
   message: "This session hit an internal error and was paused.",
 };
+
+/** Why a fan's lineup request cannot be answered now: the route answers 409 with the code. */
+export class LineupIntentError extends Error {
+  readonly code: "no_squad" | "not_yet" | "all_playing" | "locked";
+  constructor(code: LineupIntentError["code"], message: string) {
+    super(message);
+    this.name = "LineupIntentError";
+    this.code = code;
+  }
+}
 
 /** A control the session cannot carry out (an unknown jump target): the route answers 400. */
 export class ControlError extends Error {
@@ -93,6 +109,18 @@ export interface Session {
   tick(): void;
   control(request: ControlRequest): ClockState;
   ask(question: string, lens?: Lens): Promise<Moment>;
+  /**
+   * A fan's request for a different lineup patch ("rebalance for rain"): allowed once the XIs are out
+   * at the ground and until the fan's TV shows the first ball, when fantasy teams lock (DOMAIN §3).
+   */
+  lineupIntent(text: string): Promise<Moment>;
+  /**
+   * The fan's own line in the watch-along chat, stamped on their TV's clock (so it shows at once) and
+   * sent on their stream only; with `statBack`, also checked against the match database (a take card).
+   */
+  chat(text: string, statBack: boolean): Promise<{ message: ChatMessage; moment: Moment | null }>;
+  /** The control plane's inspector, over the views at the fan's TV time. */
+  inspect(request: InspectorRequest): Promise<InspectorResult>;
   /** Subscribes to the stream: the listener first receives `hello` and a `snapshot`. */
   connect(listener: (message: StreamMessage) => void): () => void;
   /** Resolves when the AI work started so far has finished (tests, shutdown). */
@@ -157,6 +185,12 @@ export function createSession(
   const listeners = new Set<(message: StreamMessage) => void>();
   const produced: Moment[] = [];
   const sent = new Set<string>();
+  // The fan's own chat lines (stamped at their TV time, so before the stadium's), and which of them
+  // this connection has been sent since the last snapshot: like moments, a jump back hides them and
+  // play brings them back once.
+  const ownChat: ChatMessage[] = [];
+  const ownSent = new Set<string>();
+  let ownCount = 0;
   const pending = new Set<Promise<unknown>>();
 
   // The stadium clock runs on past the end by the fan's delay, so their TV shows the end too: stopped
@@ -185,12 +219,22 @@ export function createSession(
     return due;
   }
 
+  /** The fan's own lines due at the clock's time, marked as sent. */
+  function dueOwnChat(): ChatMessage[] {
+    const now = stadiumNow();
+    const due = ownChat.filter((m) => m.t <= now);
+    for (const message of due) ownSent.add(message.id);
+    return due;
+  }
+
   function snapshotData() {
+    // The crowd and the fan's own lines in time order (a stable sort keeps ties in place).
+    const chat = [...crowd.slice(0, chatCursor), ...dueOwnChat()].sort((a, b) => a.t - b.t);
     return {
       clock: { ...clock },
       events: events.slice(0, cursor),
       moments: dueMoments(),
-      chat: crowd.slice(0, chatCursor),
+      chat,
     };
   }
 
@@ -220,8 +264,53 @@ export function createSession(
     }
   }
 
+  /**
+   * The lineup facts the XIs produced for this fan, recomputed with the lineup detector from the
+   * events released so far (a jump may have skipped the XI event past the gate): the facts, "all
+   * playing" when no pick sits out, or null before both XIs are out. Fixed once known.
+   */
+  let lineup: LineupFacts | "all_playing" | null = null;
+  function lineupSoFar(): LineupFacts | "all_playing" | null {
+    if (lineup !== null) return lineup;
+    for (let i = 0; i < cursor; i += 1) {
+      const event = events[i];
+      if (event?.kind !== "playing_xi") continue;
+      const before = foldEvents(matchId, events, i - 1);
+      const after = foldEvents(matchId, events, i);
+      const verdict = lineupDetector.evaluate({ before, after, event, events, ctx });
+      if (verdict.outcome === "ai_trigger" && verdict.trigger.kind === "lineup_patch") {
+        lineup = verdict.trigger.facts;
+      } else if (verdict.reason === "squad_all_playing") {
+        lineup = "all_playing";
+      }
+      if (lineup !== null) return lineup;
+    }
+    return null;
+  }
+
   function onTrigger(trigger: MomentTrigger, event: MatchEvent, releasedAt: number): void {
-    if (trigger.kind !== "spoiler_nudge") return; // lineup, bailout, room: skills arrive in Task 8
+    if (trigger.kind === "lineup_patch") {
+      track(
+        deps.orchestrator.lineupPatch({
+          sessionId: id,
+          key: trigger.key,
+          facts: trigger.facts,
+          intent: null,
+          createdAt: event.t,
+          revealAt: event.t,
+        }),
+      );
+      return;
+    }
+    if (trigger.kind === "bailout") {
+      track(deps.orchestrator.bailout({ sessionId: id, trigger, ballT: event.t }));
+      return;
+    }
+    if (trigger.kind === "room_read") {
+      track(deps.orchestrator.roomRead({ sessionId: id, trigger, ballT: event.t }));
+      return;
+    }
+    if (trigger.kind !== "spoiler_nudge") return; // catch-ups come from the session, not the gate
     // Wall ms until the fan's TV reaches the nudge time (ball − 6 s): their delay, less the lead
     // and how far the stadium clock already is past the ball, at this speed.
     const budgetMs = Math.max(
@@ -248,6 +337,7 @@ export function createSession(
     state = foldEvents(matchId, events, lastSeq);
     chatCursor = countUpTo(crowd, target);
     sent.clear();
+    ownSent.clear();
     if (lastSeq > maxSeenSeq) {
       if (missedLegalBalls(events, maxSeenSeq, lastSeq) >= CATCH_UP_MIN_MISSED_BALLS) {
         startCatchUp(maxSeenSeq + 1, lastSeq, target);
@@ -321,7 +411,14 @@ export function createSession(
       if (released.length > 0) emit("events", { events: released });
       const chatFrom = chatCursor;
       chatCursor = countUpTo(crowd, now);
-      if (chatCursor > chatFrom) emit("chat", { messages: crowd.slice(chatFrom, chatCursor) });
+      const fresh = crowd.slice(chatFrom, chatCursor);
+      for (const message of ownChat) {
+        if (message.t <= now && !ownSent.has(message.id)) {
+          ownSent.add(message.id);
+          fresh.push(message);
+        }
+      }
+      if (fresh.length > 0) emit("chat", { messages: fresh });
       for (const moment of produced) {
         if (moment.createdAt <= now && !sent.has(moment.id)) {
           sent.add(moment.id);
@@ -342,7 +439,10 @@ export function createSession(
       const wall = deps.now();
       if (listeners.size > 0 && wall - lastTelemetry >= TELEMETRY_EVERY_MS) {
         lastTelemetry = wall;
-        emit("telemetry", { telemetry: deps.telemetry.snapshot("session", id) });
+        emit("telemetry", {
+          telemetry: deps.telemetry.snapshot("session", id),
+          aiMode: deps.aiMode(),
+        });
       }
     },
 
@@ -399,6 +499,76 @@ export function createSession(
           recent,
         },
         at: stadiumNow(),
+      });
+      deliver(moment);
+      return moment;
+    },
+
+    async chat(text, statBack) {
+      touch();
+      const tvT = Math.max(0, Math.round(tvTimeAt(clock, deps.now())));
+      ownCount += 1;
+      const message: ChatMessage = {
+        id: `you-${ownCount}`,
+        t: tvT,
+        handle: "You",
+        affinity: persona.affinity,
+        text,
+        lang: "en",
+        stance: null,
+        synthetic: false,
+        fromYou: true,
+      };
+      ownChat.push(message);
+      ownSent.add(message.id);
+      emit("chat", { messages: [message] });
+      if (!statBack) return { message, moment: null };
+      const tvCount = countUpTo(events, tvT);
+      const moment = await deps.orchestrator.statBack({
+        sessionId: id,
+        matchId,
+        take: text,
+        tvT,
+        tvSeq: tvCount - 1,
+        situation: situationOf(foldEvents(matchId, events, tvCount - 1)),
+        at: stadiumNow(),
+      });
+      deliver(moment);
+      return { message, moment };
+    },
+
+    inspect(request) {
+      touch();
+      return deps.orchestrator.inspect({
+        sessionId: id,
+        matchId,
+        tvT: tvTimeAt(clock, deps.now()),
+        request,
+      });
+    },
+
+    async lineupIntent(text) {
+      touch();
+      const squad = persona.squad;
+      if (!squad) throw new LineupIntentError("no_squad", "This fan has no fantasy team to patch.");
+      const firstBall = events.find(isDelivery);
+      if (firstBall && firstBall.t <= tvTimeAt(clock, deps.now())) {
+        throw new LineupIntentError("locked", "Teams locked at the first ball on your TV.");
+      }
+      const facts = lineupSoFar();
+      if (facts === null) {
+        throw new LineupIntentError("not_yet", "The playing XIs are not out yet.");
+      }
+      if (facts === "all_playing") {
+        throw new LineupIntentError("all_playing", "Every pick in this team is playing.");
+      }
+      const moment = await deps.orchestrator.lineupPatch({
+        sessionId: id,
+        key: lineupKey(matchId, squad, text),
+        facts,
+        intent: text,
+        createdAt: stadiumNow(),
+        revealAt: null,
       });
       deliver(moment);
       return moment;

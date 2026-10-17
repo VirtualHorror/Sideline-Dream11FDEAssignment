@@ -14,6 +14,7 @@ import type {
   TelemetryCounters,
   TelemetrySnapshot,
 } from "@sideline/engine";
+import { PROVIDER_ERROR_DETAIL } from "../ai/providers/types.ts";
 import { scaleProjection } from "./projection.ts";
 
 /** `called`: the run made a provider call (a cache hit, a budget stop or a shared result did not). */
@@ -22,14 +23,23 @@ export type TraceListener = (trace: AICallTrace, sessionId: string | null, calle
 export interface TraceSink {
   record(trace: AICallTrace, sessionId: string | null, called: boolean): void;
   subscribe(listener: TraceListener): () => void;
+  /**
+   * The provider's last answer on record (D-071): false if the latest call that reached it ended in a
+   * provider error, true if it got any answer, null before the first call. Timeouts say nothing.
+   */
+  lastProviderAnswer(): boolean | null;
 }
 
 export function createTraceSink(db: DatabaseSync): TraceSink {
   const insert = db.prepare(
     `INSERT INTO ai_calls (id, session_id, skill, moment_key, provider, model, cache, outcome,
        latency_ms, tokens_in, tokens_out, cost_usd, cost_estimated, prompt_version,
-       started_at_wall, budget_ms, detail)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       started_at_wall, budget_ms, detail, called)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+  // Rows go in as runs finish, so the highest rowid is the latest answer.
+  const lastCall = db.prepare(
+    "SELECT detail FROM ai_calls WHERE called = 1 AND outcome <> 'timeout' ORDER BY rowid DESC LIMIT 1",
   );
   const listeners = new Set<TraceListener>();
   return {
@@ -52,8 +62,14 @@ export function createTraceSink(db: DatabaseSync): TraceSink {
         trace.startedAtWall,
         trace.budgetMs,
         trace.detail,
+        called ? 1 : 0,
       );
       for (const listener of listeners) listener(trace, sessionId, called);
+    },
+    lastProviderAnswer() {
+      const row = lastCall.get() as { detail: string | null } | undefined;
+      if (!row) return null;
+      return !(row.detail ?? "").startsWith(PROVIDER_ERROR_DETAIL);
     },
     subscribe(listener) {
       listeners.add(listener);
@@ -163,7 +179,8 @@ export function createTelemetry(deps: {
         pushBounded(bucket.latencies, trace.latencyMs, LATENCY_WINDOW);
       }
       if (trace.cache === "hit") c.aiCacheHits += 1;
-      if (trace.outcome !== "ok") c.aiFallbacks += 1;
+      // A repaired answer is the model's, minus what a rule dropped: not a fallback.
+      if (trace.outcome !== "ok" && trace.outcome !== "repaired") c.aiFallbacks += 1;
       c.tokensIn += trace.tokensIn;
       c.tokensOut += trace.tokensOut;
       c.costUsd += trace.costUsd;

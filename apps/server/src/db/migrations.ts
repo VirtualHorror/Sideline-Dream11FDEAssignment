@@ -8,10 +8,13 @@
  *   deliveries  one row per delivery of every bundled match (analytics, rebuilt at boot)
  *   players     both squads of every bundled match (analytics, rebuilt at boot)
  * The NL inspector (Task 8) reads the analytics tables and ai_calls read-only.
+ * Migration 2 (D-071): `ai_calls.called`, whether the run reached the provider, so a restart knows
+ * the provider's last answer; rows written before it are filled in from the shape of the gateway's
+ * traces (a cache miss by a real provider that was neither a budget stop nor a shared result).
  */
 import type { DatabaseSync } from "node:sqlite";
 
-const MIGRATIONS: readonly string[] = [
+export const MIGRATIONS: readonly string[] = [
   `
   CREATE TABLE ai_cache (
     key            TEXT NOT NULL,
@@ -69,6 +72,12 @@ const MIGRATIONS: readonly string[] = [
     role         TEXT NOT NULL,
     PRIMARY KEY (match_id, player_id)
   );
+  `,
+  `
+  ALTER TABLE ai_calls ADD COLUMN called INTEGER NOT NULL DEFAULT 0;
+  UPDATE ai_calls SET called = 1
+   WHERE cache = 'miss' AND provider NOT IN ('none', 'replay') AND outcome <> 'budget'
+     AND (detail IS NULL OR detail NOT LIKE 'shared result:%');
   `,
 ];
 

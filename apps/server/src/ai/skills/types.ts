@@ -29,6 +29,12 @@ export interface Skill<F, O, P> {
   /** zod `strictObject`s with no optional fields (`.nullable()` instead), PLAN Task 5. */
   outputSchema: z.ZodType<O>;
   buildPrompt(facts: F): { system: string; user: string };
+  /**
+   * Optional, before the guard: drops the parts of a schema-valid output that break a rule on their
+   * own (an illegal lineup swap) and says what it dropped, so one bad item does not cost the whole
+   * answer. The gateway caches and shows the repaired output, and records the trace as "repaired".
+   */
+  repair?(out: O, facts: F): { output: O; dropped: string[] };
   /** Deterministic checks on a schema-valid output (spoiler lint, citations, legality). */
   guard(out: O, facts: F): GuardResult;
   toPayload(out: O, facts: F): P;

@@ -14,12 +14,12 @@
 
 ## 1. Every change, every task (must all pass)
 
-| # | Command | Expected (baseline after Task 7) |
+| # | Command | Expected (baseline after Task 8) |
 | --- | --- | --- |
 | 1 | `pnpm typecheck` | `packages/engine typecheck: Done`, `apps/server typecheck: Done`, `apps/web typecheck: Done`, then no output from root `tsc`; exit 0 |
 | 2 | `pnpm lint` | `Checked N files in …ms. No fixes applied.` and no `×` or `!` diagnostics; exit 0 |
-| 3 | `pnpm test` | `Test Files  50 passed (50)` and `Tests  599 passed (599)`; no failed, no skipped |
-| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (131 source files, 209 terms; 299 tracked files, no forbidden words)` (counts grow with code/data; the second pass fails on the AI proxy's name in any tracked file, D-068) |
+| 3 | `pnpm test` | `Test Files  55 passed (55)` and `Tests  705 passed (705)`; no failed, no skipped |
+| 4 | `pnpm check:hardcode` | `check-no-hardcode: OK (145 source files, 209 terms; 307 tracked files, no forbidden words)` (counts grow with code/data; the second pass fails on the AI proxy's name in any tracked file, D-068) |
 | 5 | `pnpm check:data` | two `sha256 ok` lines, then `verify-data: OK (2 matches)` |
 | 6 | `pnpm build` | `✓ built in …` |
 | 7 | `pnpm test:e2e` (any UI-visible change) | `22 passed` (desktop + mobile: every route, the climax flow with a held then revealed teaser, tabular numerals, reduced motion); about 1.5 min. The local server is always keyless (`SIDELINE_AI_PROVIDER=none`) |
@@ -31,7 +31,7 @@
 | 13 | Server by hand (Task 5+): `PORT=8788 node apps/server/src/index.ts` (no `--env-file`: keyless, aiMode `replay`), then `curl -s -X POST -H 'content-type: application/json' -d '{"matchId":"1298150","personaId":"late-from-work"}' :8788/api/sessions` and `curl -N :8788/api/sessions/<id>/stream` | the boot line with `aiMode: 'replay'`, `analyticsRows: 502`; the stream starts `event: hello`, `event: snapshot` (249 events and 2 catch-up reels after a jump to 18 overs), then `events`, `chat`, `telemetry` frames with `id:` rising by one; SIGTERM prints `shutting down` and frees the port |
 | 14 | Dev server by hand (Task 6+): `SIDELINE_AI_PROVIDER=none pnpm dev`, open `http://127.0.0.1:5173` | the server logs `aiProvider: 'none'`, `aiMode: 'replay'`; the landing page lists both matches; "Late from work" opens at 90/4 with its catch-up reel revealed once the 15 s feed reaches the join point; at 16x with a 25 s delay, a jump to after 18 overs of the chase shows the 18.6 card held under the veil, then revealed with the floodlight outburst and the "Six" headline on the TV; the scorebug ends on the result |
 | 15 | Deploy dry runs (Task 7+): `deploy/install.sh --dry-run`, `deploy/update.sh --dry-run [ref]` | every step and file listed, the env report naming variables only (`deploy-env: copied OPENAI_API_KEY, …`), ending `dry run: nothing was changed`; `scripts/test/deploy.test.ts` proves no host-changing command runs |
-| 16 | `pnpm ai:record` (Task 7+; without `--yes` nothing is sent) | `ai-record: plan: 67 moments need a provider call (48 teasers, 19 catch-up reels); 0 already recorded in …/data/ai-replay`. With `--yes` it spends money: ask Nabhanyu first (Constraint 26) |
+| 16 | `pnpm ai:record` (Task 7+; without `--yes` nothing is sent) | `ai-record: plan: 91 moments need a provider call (48 teasers, 19 catch-up reels, 2 bailouts, 22 room reads); 0 already recorded in …/data/ai-replay` (Task 8: bailouts and room reads are recorded; lineup patches are personal and never asked for). With `--yes` it spends money: ask Nabhanyu first (Constraint 26) |
 | 17 | `deploy/update.sh <ref>` (the auditor, after a merge; as the developer, no password) | `update: health: http://127.0.0.1:8780/api/health` and each site's health body with `"aiEndpoint":"openai-compatible"`, then `update: deployed <sha> (<ref>) at https://3-108-67-100.sslip.io/` |
 | 18 | `PLAYWRIGHT_BASE_URL=https://3-108-67-100.sslip.io pnpm test:e2e` (Task 7+) | `22 passed` against production (with a key that fails, the climax card shows `Fallback: AI unavailable`) |
 | 19 | Public origin (Task 7+): `curl -sI https://<host>/`; `curl -sI http://<host>/`; a session's `curl -sN https://<host>/api/sessions/<id>/stream` | `HTTP/2 200` with the CSP, `x-frame-options: DENY`, `nosniff`, `strict-transport-security`; `308` to https; the stream's first byte in well under a second with `event: hello` and `event: snapshot` |
@@ -122,7 +122,12 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
   peer (Task 5: `routes.test.ts`).
 - Prompts: no teaser prompt carries a ball's outcome, no shared prompt a fan's squad, and fan text
   sits escaped inside `<fan_question>` (Task 5: `skills.test.ts`, and the holdout run above).
-- NL→SQL: write statements, `ATTACH`, `PRAGMA`, recursive CTEs and multi-statements are refused (Task 8).
+- NL→SQL (Task 8, D-074): write statements, `ATTACH`, `PRAGMA`, recursive CTEs (with or without the keyword) and
+  multi-statements are refused or denied, an infinite cross join is killed at 2 s, a query returns at most 200 rows
+  (`apps/server/test/sql.test.ts`); through the inspector route, writes and stacked statements leave the real tables
+  untouched and `ai_calls` has no `session_id` column (`routes.test.ts`, `statBack.test.ts`). By hand: `curl -s -X POST
+  -H 'content-type: application/json' -d '{"sql":"DELETE FROM ai_calls"}' :8787/api/sessions/<id>/inspector` →
+  `"status":"refused"`.
 - Production (Task 7+): the public origin sends the same headers over HTTPS (row 19); `/api/health` shows
   `aiEndpoint` (the kind) and never a host or key (D-068); `ls /etc/sideline` is denied to the developer
   (root 700, the file 600); the service journal has no line with the key's first 8 characters; five asks
@@ -152,3 +157,4 @@ README status line and code module maps (e.g. `packages/engine/src/index.ts`) cu
 | T5 Server runtime + AI | 2026-10-17 | pass | pass (165 files) | 37 files / 492 tests | OK (86 files, 209 terms) | OK (2 matches) | 292 ms | 8 passed |
 | T6 Frontend I | 2026-10-17 | pass | pass (222 files) | 47 files / 569 tests | OK (131 files, 209 terms) | OK (2 matches) | 805 ms | 22 passed |
 | T7 Deploy | 2026-10-17 | pass | pass (229 files) | 50 files / 599 tests | OK (131 files, 209 terms; 299 tracked files, no forbidden words) | OK (2 matches) | 1.02 s | 22 passed locally; 22 passed against https://3-108-67-100.sslip.io |
+| T8 AI skills II | 2026-10-17 | pass | pass (248 files) | 55 files / 705 tests | OK (145 files, 209 terms; 320 tracked files, no forbidden words) | OK (2 matches) | 1.03 s | 22 passed locally (deployed with Task 9) |

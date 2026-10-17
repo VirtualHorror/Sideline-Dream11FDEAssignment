@@ -19,16 +19,20 @@ import type { Detector, LineupFacts, LineupSquadPlayer } from "./types.ts";
 /** A lineup patch suggests at most this many replacements per benched pick. */
 const MAX_SWAPS = 5;
 
+const hex8 = (text: string) => fnv1a32(text).toString(16).padStart(8, "0");
+
 /**
- * `lineup:<match>:<squad hash>:none`. The hash covers the sorted squad ids then the captain and
- * vice-captain, so pick order does not matter but the armbands do. "none" is the fan-intent slot
- * that Task 8 fills when the fan types a request (D-015).
+ * `lineup:<match>:<squad hash>:<intent>`. The hash covers the sorted squad ids then the captain and
+ * vice-captain, so pick order does not matter but the armbands do. The intent slot is "none" for the
+ * patch the XIs trigger, else the hash of the fan's request (Task 8, D-015), trimmed, lower-cased and
+ * with its spacing collapsed, so "Rebalance for rain" and "rebalance  for rain" share a patch.
  */
-export function lineupKey(matchId: string, squad: FantasySquad): string {
+export function lineupKey(matchId: string, squad: FantasySquad, intent?: string | null): string {
   const canonical = [...[...squad.playerIds].sort(), squad.captainId, squad.viceCaptainId].join(
     ",",
   );
-  return `lineup:${matchId}:${fnv1a32(canonical).toString(16).padStart(8, "0")}:none`;
+  const request = intent?.trim().toLowerCase().replace(/\s+/g, " ") ?? "";
+  return `lineup:${matchId}:${hex8(canonical)}:${request === "" ? "none" : hex8(request)}`;
 }
 
 /**

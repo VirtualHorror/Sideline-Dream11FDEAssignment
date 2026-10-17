@@ -9,6 +9,7 @@
  * belong to index.ts).
  */
 import { join } from "node:path";
+import type { Detector } from "@sideline/engine";
 import { createBudget } from "./ai/budget.ts";
 import { createCache } from "./ai/cache.ts";
 import { createGateway } from "./ai/gateway.ts";
@@ -45,6 +46,8 @@ export function buildRuntime(
     provider?: LlmProvider | null;
     /** Where recorded rows are read from (default data/ai-replay); null reads none. */
     replayDir?: string | null;
+    /** The gate's detectors (default all four); the recorder leaves the personal lineup one out. */
+    detectors?: readonly Detector[];
   } = {},
 ) {
   const now = opts.now ?? Date.now;
@@ -74,14 +77,17 @@ export function buildRuntime(
     models: config.ai.models,
     pricing: config.ai.pricing,
     now,
+    // A restart keeps what the provider last said: a failing key stays in replay mode (D-071).
+    providerAnswering: traces.lastProviderAnswer(),
   });
-  const orchestrator = createOrchestrator({ gateway, glossary, telemetry, bundles });
+  const orchestrator = createOrchestrator({ gateway, glossary, telemetry, bundles, db });
   const manager = createSessionManager({
     bundles,
     orchestrator,
     telemetry,
     aiMode: () => gateway.mode(),
     now,
+    detectors: opts.detectors,
   });
   return {
     bundles,

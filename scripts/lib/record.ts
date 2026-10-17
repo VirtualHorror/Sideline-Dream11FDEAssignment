@@ -13,7 +13,9 @@
  * with the longest stream delay so that every teaser gets the skill's full timeout (at 32x it
  * would get the 9 s minimum, and the endpoint of D-033 takes up to 8.5 s). Rows already recorded
  * in the replay directory answer before any call (D-054), so a second run only fills the gaps.
- * Explainer answers are personal (keyed by the fan's question) and are never recorded.
+ * Explainer answers are personal (keyed by the fan's question) and are never recorded; nor are lineup
+ * patches (keyed by the fan's squad), so the recorder's sessions run without the lineup detector and
+ * never ask for one. Bailouts (per cohort) and room reads (per over) are shared, so they are recorded.
  */
 import { renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -21,12 +23,22 @@ import type { DatabaseSync } from "node:sqlite";
 import type { GatewayCounters } from "../../apps/server/src/ai/gateway.ts";
 import type { Script } from "../../apps/server/src/ai/providers/scripted.ts";
 import type { LlmProvider } from "../../apps/server/src/ai/providers/types.ts";
+import { bailoutSkill } from "../../apps/server/src/ai/skills/bailout.ts";
 import { catchUpSkill } from "../../apps/server/src/ai/skills/catchUp.ts";
+import { roomReadSkill } from "../../apps/server/src/ai/skills/roomRead.ts";
 import { teaserSkill } from "../../apps/server/src/ai/skills/spoilerNudge.ts";
 import type { AppConfig } from "../../apps/server/src/config.ts";
 import { buildRuntime } from "../../apps/server/src/runtime.ts";
 import { ControlError } from "../../apps/server/src/sessions/session.ts";
-import { type JumpTarget, MAX_DELAY_MS, type Persona } from "../../packages/engine/src/index.ts";
+import {
+  collapseDetector,
+  type Detector,
+  type JumpTarget,
+  MAX_DELAY_MS,
+  nudgeDetector,
+  type Persona,
+  roomDetector,
+} from "../../packages/engine/src/index.ts";
 
 /**
  * The jumps a reviewer makes in one click (apps/web: broadcast/PhaseRail.tsx, each innings' phase
@@ -46,10 +58,15 @@ interface OutputSchema {
 }
 
 /** The skills whose answers are shared by every fan and so are worth recording, by prompt version. */
-const RECORDED_SKILLS: ReadonlyMap<string, { name: string; schema: OutputSchema }> = new Map([
-  [teaserSkill.promptVersion, { name: teaserSkill.name, schema: teaserSkill.outputSchema }],
-  [catchUpSkill.promptVersion, { name: catchUpSkill.name, schema: catchUpSkill.outputSchema }],
-]);
+const RECORDED_SKILLS: ReadonlyMap<string, { name: string; schema: OutputSchema }> = new Map(
+  [teaserSkill, catchUpSkill, bailoutSkill, roomReadSkill].map((skill) => [
+    skill.promptVersion,
+    { name: skill.name, schema: skill.outputSchema },
+  ]),
+);
+
+/** The gate's detectors in the recorder's sessions: all but the lineup one (its patch is personal). */
+const RECORDED_DETECTORS: readonly Detector[] = [collapseDetector, nudgeDetector, roomDetector];
 
 /** Fake wall time per tick: 5 s at 1x, a full match in about 2,000 ticks. */
 const STEP_MS = 5_000;
@@ -58,9 +75,69 @@ const MAX_TICKS = 100_000;
 /** The scripted provider's model name; its rows are test output and say so. */
 export const SCRIPTED_MODELS = { fast: "scripted", smart: "scripted" } as const;
 
+/** The JSON inside a prompt's <tag> (the scripted answers pick their legal ids from the facts). */
+function tagged<T>(user: string, tag: string): T {
+  const json = user.match(new RegExp(`<${tag}>\\n([\\s\\S]*?)\\n</${tag}>`))?.[1];
+  if (!json) throw new Error(`no <${tag}> in the prompt`);
+  return JSON.parse(json) as T;
+}
+
 /** Answers for `--provider scripted` (tests and dry runs): schema-valid, labelled as test output. */
 export const scriptedAnswer: Script = (req) => {
   if (req.skill === teaserSkill.name) return { nudge: "Scripted test teaser, not model output." };
+  if (req.skill === bailoutSkill.name) {
+    // One prediction over the facts' quest window, so the guard accepts it.
+    const { questWindow: qw } = tagged<{
+      questWindow: { innings: number; fromLegalBall: number; toLegalBall: number };
+    }>(req.user, "facts");
+    return {
+      title: "Scripted test quest",
+      predictions: [
+        {
+          prompt: "Scripted test prediction, not model output.",
+          options: [
+            { id: "yes", label: "Yes" },
+            { id: "no", label: "No" },
+          ],
+          rule: {
+            type: "wicket_in_window",
+            innings: qw.innings,
+            over: null,
+            fromLegalBall: qw.fromLegalBall,
+            toLegalBall: qw.toLegalBall,
+            boundary: null,
+            op: null,
+            value: null,
+            playerId: null,
+            byLegalBall: null,
+          },
+        },
+      ],
+      trivia: [],
+      banter: {
+        tone: "wholesome",
+        headline: "Scripted test banter",
+        body: "Not model output: written by the recorder's test provider.",
+        shareText: "Scripted test share text, not model output.",
+      },
+    };
+  }
+  if (req.skill === roomReadSkill.name) {
+    const chat = tagged<{ id: string }[]>(req.user, "chat");
+    return {
+      mood: { label: "Scripted test mood", emoji: "💬" },
+      pods: [
+        {
+          title: "Scripted test pod",
+          stance: "Not model output.",
+          sharePct: 100,
+          sampleMessageIds: chat.slice(0, 1).map((m) => m.id),
+        },
+      ],
+      hotTake: null,
+      poll: null,
+    };
+  }
   if (req.skill === catchUpSkill.name) {
     const slide = (kind: string) => ({
       kind,
@@ -221,7 +298,13 @@ export async function recordMoments(
   const models = opts.models ?? config.ai.models;
   const rt = buildRuntime(
     { ...config, ai: { ...config.ai, models } },
-    { now: clock.now, dbPath: ":memory:", provider: opts.provider, replayDir: opts.replayDir },
+    {
+      now: clock.now,
+      dbPath: ":memory:",
+      provider: opts.provider,
+      replayDir: opts.replayDir,
+      detectors: RECORDED_DETECTORS,
+    },
   );
   try {
     let error: string | null = null;

@@ -3,6 +3,8 @@ import {
   AICallTraceSchema,
   ControlRequestSchema,
   DeliveryEventSchema,
+  InspectorRequestSchema,
+  InspectorResultSchema,
   MatchEventSchema,
   MomentSchema,
   PersonaSchema,
@@ -232,5 +234,37 @@ describe("AICallTraceSchema", () => {
     const { detail: _detail, ...noDetail } = trace;
     expect(AICallTraceSchema.safeParse(noDetail).success).toBe(false);
     expect(AICallTraceSchema.safeParse({ ...trace, detail: "x".repeat(301) }).success).toBe(false);
+  });
+});
+
+describe("InspectorRequestSchema and InspectorResultSchema (Task 8 addition, D-073)", () => {
+  it("takes exactly one of a question or an operator's SQL", () => {
+    expect(InspectorRequestSchema.safeParse({ question: "Who scored most?" }).success).toBe(true);
+    expect(InspectorRequestSchema.safeParse({ sql: "SELECT 1" }).success).toBe(true);
+    expect(InspectorRequestSchema.safeParse({ question: "x", sql: "SELECT 1" }).success).toBe(
+      false,
+    );
+    expect(InspectorRequestSchema.safeParse({}).success).toBe(false);
+    expect(InspectorRequestSchema.safeParse({ question: "x".repeat(281) }).success).toBe(false);
+    expect(InspectorRequestSchema.safeParse({ sql: "x".repeat(2001) }).success).toBe(false);
+  });
+
+  it("caps a result at 200 rows", () => {
+    const result = {
+      question: null,
+      source: "you",
+      provenance: null,
+      traceId: null,
+      explanation: null,
+      sql: "SELECT 1 AS n",
+      status: "ok",
+      reason: null,
+      columns: ["n"],
+      rows: [{ n: 1 }],
+      truncated: false,
+    };
+    expect(InspectorResultSchema.safeParse(result).success).toBe(true);
+    const rows = Array.from({ length: 201 }, (_, n) => ({ n }));
+    expect(InspectorResultSchema.safeParse({ ...result, rows }).success).toBe(false);
   });
 });

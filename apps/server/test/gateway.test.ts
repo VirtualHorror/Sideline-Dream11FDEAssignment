@@ -333,3 +333,119 @@ describe("replay rows (keyless mode)", () => {
     expect(load).toThrow(/bad\.jsonl:2: invalid replay row: not JSON/);
   });
 });
+
+describe("the AI mode follows the provider's last answer (D-071, F07 follow-up 3)", () => {
+  /** What the OpenAI SDK throws when the account has no credit: an error with a status and a code. */
+  const outOfCredit = () =>
+    Object.assign(new Error("403 key_expired"), { status: 403, code: "key_expired" });
+
+  it("a provider error turns the mode to replay, and its next answer turns it back to live", async () => {
+    let failing = true;
+    const { gateway } = setup({
+      script: () => {
+        if (failing) throw outOfCredit();
+        return { text: "back" };
+      },
+    });
+    expect(gateway.mode()).toBe("live");
+    const failed = await gateway.run(echoSkill, "echo:h1", { word: "h1" });
+    expect(failed.provenance).toBe("fallback");
+    expect(failed.trace.detail).toBe("provider error: Error (403, key_expired)");
+    expect(gateway.mode()).toBe("replay");
+    failing = false;
+    const answered = await gateway.run(echoSkill, "echo:h2", { word: "h2" });
+    expect(answered.provenance).toBe("live");
+    expect(gateway.mode()).toBe("live");
+  });
+
+  it("an answer the guard rejects, a refusal or invalid output still means the provider answered", async () => {
+    const answers: (() => unknown)[] = [
+      () => {
+        throw outOfCredit();
+      },
+      () => ({ text: "forbidden" }),
+      () => {
+        throw outOfCredit();
+      },
+      () => {
+        throw new ProviderRefusalError("declined", { tokensIn: 10, tokensOut: 0 });
+      },
+      () => {
+        throw outOfCredit();
+      },
+      () => ({ text: 42 }),
+    ];
+    let next = 0;
+    const { gateway } = setup({ script: () => answers[next++]?.() });
+    const modes: string[] = [];
+    for (const word of ["a", "b", "c", "d", "e", "f"]) {
+      await gateway.run(echoSkill, `echo:${word}`, { word });
+      modes.push(gateway.mode());
+    }
+    expect(modes).toEqual(["replay", "live", "replay", "live", "replay", "live"]);
+  });
+
+  it("a timeout says nothing about the provider: the mode stays as it was", async () => {
+    let first = true;
+    const { gateway } = setup({
+      script: (_req, signal) => {
+        if (first) {
+          first = false;
+          throw outOfCredit();
+        }
+        return new Promise((_resolve, reject) =>
+          signal.addEventListener("abort", () => reject(new Error("aborted"))),
+        );
+      },
+    });
+    await gateway.run(echoSkill, "echo:t1", { word: "t1" });
+    expect(gateway.mode()).toBe("replay");
+    const slow = await gateway.run(echoSkill, "echo:t2", { word: "t2" });
+    expect(slow.trace.outcome).toBe("timeout");
+    expect(gateway.mode()).toBe("replay");
+  });
+
+  it("starts from the provider's last answer on record, so a restart keeps a failing key in replay mode", () => {
+    const { db, clock } = setup();
+    const base = {
+      provider: createScriptedProvider(() => ({ text: "x" })),
+      cache: createCache(db, clock.now),
+      budget: createBudget({ db, dailyUsd: 3, sessionCap: 80, now: clock.now }),
+      traces: createTraceSink(db),
+      models: { fast: "gpt-test-fast", smart: "gpt-test" },
+      pricing: { inPerMTok: 5, outPerMTok: 20 },
+      now: clock.now,
+    };
+    expect(createGateway({ ...base, providerAnswering: false }).mode()).toBe("replay");
+    expect(createGateway({ ...base, providerAnswering: true }).mode()).toBe("live");
+    expect(createGateway({ ...base, providerAnswering: null }).mode()).toBe("live");
+  });
+});
+
+describe("TraceSink.lastProviderAnswer: the provider's last answer, read back from ai_calls (D-071)", () => {
+  it("is null before any call, false after a provider error, true after an answer; other runs do not count", async () => {
+    let failing = true;
+    const { gateway, db } = setup({
+      script: () => {
+        if (failing) throw Object.assign(new Error("down"), { status: 503 });
+        return { text: "ok" };
+      },
+    });
+    const sink = createTraceSink(db);
+    expect(sink.lastProviderAnswer()).toBeNull();
+    await gateway.run(echoSkill, "echo:s1", { word: "s1" });
+    expect(sink.lastProviderAnswer()).toBe(false);
+    failing = false;
+    await gateway.run(echoSkill, "echo:s2", { word: "s2" });
+    expect(sink.lastProviderAnswer()).toBe(true);
+    failing = true;
+    await gateway.run(echoSkill, "echo:s3", { word: "s3" });
+    // A cache hit and a run sharing another's call make no call of their own: the error still stands.
+    await gateway.run(echoSkill, "echo:s2", { word: "s2" });
+    await Promise.all([
+      gateway.run(echoSkill, "echo:s4", { word: "s4" }),
+      gateway.run(echoSkill, "echo:s4", { word: "s4" }),
+    ]);
+    expect(sink.lastProviderAnswer()).toBe(false);
+  });
+});

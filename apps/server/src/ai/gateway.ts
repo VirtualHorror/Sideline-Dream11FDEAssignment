@@ -10,6 +10,11 @@
  * labelled fallback, built from the same facts, with provenance "fallback". Every run writes exactly
  * one AICallTrace (a run that joined another's in-flight call writes its own) and updates the
  * counters the control plane shows. Fallbacks are never cached: the next fan's run asks again.
+ *
+ * The mode the TV's chip shows (D-071) follows the provider's last answer: a call that ends in a
+ * provider error (a bad key, an account out of credit, an outage) turns it to "replay" until the next
+ * call gets any answer at all; a timeout says nothing either way. Calls are still made in "replay"
+ * mode while a provider is configured, so live AI comes back by itself (D-067).
  */
 import { randomUUID } from "node:crypto";
 import type { AICallTrace, AiProviderName, Provenance } from "@sideline/engine";
@@ -20,6 +25,7 @@ import type { AiCache } from "./cache.ts";
 import { costOf } from "./pricing.ts";
 import {
   type LlmProvider,
+  PROVIDER_ERROR_DETAIL,
   ProviderOutputError,
   ProviderRefusalError,
   type Usage,
@@ -38,6 +44,11 @@ export interface GatewayDeps {
   /** Wall clock (ms): latency, trace timestamps, the budget's day. Injected in tests. */
   now: () => number;
   newId?: () => string;
+  /**
+   * The provider's last answer on record when the process starts (TraceSink.lastProviderAnswer):
+   * false after a provider error, true after any answer, null (or absent) before the first call.
+   */
+  providerAnswering?: boolean | null;
 }
 
 export interface RunOptions {
@@ -73,7 +84,10 @@ export interface Gateway {
     opts?: RunOptions,
   ): Promise<GatewayResult<P>>;
   counters(): GatewayCounters;
-  /** "live" while a provider is configured and the daily budget holds, else "replay". */
+  /**
+   * "live" while a provider is configured, the daily budget holds and the provider's last call did not
+   * end in a provider error; else "replay" (recorded answers or labelled fallbacks).
+   */
   mode(): "live" | "replay";
 }
 
@@ -198,6 +212,7 @@ export function createGateway(deps: GatewayDeps): Gateway {
     costUsd: 0,
   };
   const inflight = new Map<string, Promise<Outcome>>();
+  let answering = deps.providerAnswering ?? null;
 
   async function lead<F, O, P>(
     skill: Skill<F, O, P>,
@@ -333,29 +348,37 @@ export function createGateway(deps: GatewayDeps): Gateway {
         }),
         controller.signal,
       );
+      answering = true;
       usage = { tokensIn: result.tokensIn, tokensOut: result.tokensOut };
       served = result.model;
-      // 5. Validation and 6. the guard: the model proposes, deterministic rules dispose.
+      // 5. Validation, the skill's repair and 6. the guard: the model proposes, rules dispose.
       const parsed = skill.outputSchema.safeParse(result.output);
       if (!parsed.success)
         return called("error", `invalid output: ${describeIssues(parsed.error)}`);
-      const verdict = skill.guard(parsed.data, facts);
+      const repaired = skill.repair?.(parsed.data, facts) ?? { output: parsed.data, dropped: [] };
+      const verdict = skill.guard(repaired.output, facts);
       if (!verdict.ok) return called("fallback", `guard: ${verdict.reason}`);
       // 7. Only a validated, guarded answer is cached for the next fan.
-      deps.cache.putLive(key, skill.promptVersion, model, parsed.data);
-      const live = called("ok", null);
-      return { ...live, output: parsed.data, provenance: "live" };
+      deps.cache.putLive(key, skill.promptVersion, model, repaired.output);
+      const live =
+        repaired.dropped.length > 0
+          ? called("repaired", repaired.dropped.map((item) => `dropped ${item}`).join("; "))
+          : called("ok", null);
+      return { ...live, output: repaired.output, provenance: "live" };
     } catch (error) {
       if (controller.signal.aborted) return called("timeout", `no answer within ${timeoutMs} ms`);
       if (error instanceof ProviderRefusalError) {
+        answering = true;
         usage = error.usage;
         return called("refused", error.message);
       }
       if (error instanceof ProviderOutputError) {
+        answering = true;
         usage = error.usage;
         return called("error", `invalid output: ${error.message}`);
       }
-      return called("error", `provider error: ${errorLabel(error)}`);
+      answering = false;
+      return called("error", `${PROVIDER_ERROR_DETAIL} ${errorLabel(error)}`);
     } finally {
       clearTimeout(timer);
     }
@@ -420,6 +443,9 @@ export function createGateway(deps: GatewayDeps): Gateway {
       return { payload, provenance: outcome.provenance, trace: outcome.trace };
     },
     counters: () => ({ ...counters }),
-    mode: () => (deps.provider && deps.models && !deps.budget.exhausted() ? "live" : "replay"),
+    mode: () =>
+      deps.provider && deps.models && !deps.budget.exhausted() && answering !== false
+        ? "live"
+        : "replay",
   };
 }

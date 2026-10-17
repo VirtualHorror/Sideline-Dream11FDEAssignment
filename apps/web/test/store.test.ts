@@ -165,3 +165,52 @@ describe("stream store and TV clock (PLAN 6.1)", () => {
     ]);
   });
 });
+
+describe("the AI mode on the TV's chip follows the stream (D-071)", () => {
+  const telemetry = (aiMode?: string) =>
+    msg("telemetry", {
+      telemetry: {
+        scope: "session",
+        counters: {
+          eventsTotal: 0,
+          eventsDeterministic: 0,
+          gateTriggers: 0,
+          aiCallsLive: 1,
+          aiCacheHits: 0,
+          aiFallbacks: 1,
+          tokensIn: 0,
+          tokensOut: 0,
+          costUsd: 0,
+        },
+        latencyMs: { p50: 0, p95: 0 },
+        recentDecisions: [],
+        recentCalls: [],
+        projection: {
+          concurrentViewers: 1,
+          eventsPerMatch: 0,
+          naiveLlmCalls: 0,
+          sidelineLlmCalls: 0,
+          savedPct: 0,
+          formula: "",
+        },
+      },
+      ...(aiMode ? { aiMode } : {}),
+    });
+  const live = () =>
+    msg("hello", {
+      sessionId: "session-1",
+      match: summary,
+      persona: persona("late-from-work"),
+      aiMode: "live",
+    });
+
+  it("a telemetry message saying replay replaces the hello's live", () => {
+    const state = feed([live(), telemetry("replay")]);
+    expect(state.session?.aiMode).toBe("replay");
+    expect(feed([telemetry("live")], state).session?.aiMode).toBe("live");
+  });
+
+  it("a telemetry message without a mode leaves it as it was", () => {
+    expect(feed([live(), telemetry()]).session?.aiMode).toBe("live");
+  });
+});

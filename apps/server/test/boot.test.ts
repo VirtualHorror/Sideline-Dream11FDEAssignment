@@ -1,4 +1,8 @@
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { createScriptedProvider } from "../src/ai/providers/scripted.ts";
 import { loadConfig } from "../src/config.ts";
 import { createApp } from "../src/http/app.ts";
 import { buildRuntime, createProvider } from "../src/runtime.ts";
@@ -15,6 +19,34 @@ describe("buildRuntime: what src/index.ts boots", () => {
     expect(runtime.gateway.mode()).toBe("replay");
     const session = runtime.manager.create({ matchId: "1415755", personaId: "football-fan" });
     expect(runtime.manager.get(session.id)).toBe(session);
+  });
+
+  it("a key whose last call failed boots in replay mode, read from the database (D-071)", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "sideline-boot-"));
+    const dbPath = join(dir, "sideline.db");
+    const keyed = loadConfig(
+      {
+        ...env,
+        OPENAI_API_KEY: "sk-test",
+        OPENAI_BASE_URL: "https://llm-proxy.example.test/v1",
+        SIDELINE_MODEL_FAST: "model-fast",
+        SIDELINE_MODEL_SMART: "model-smart",
+      },
+      "/srv/sideline",
+    );
+    const failing = createScriptedProvider(() => {
+      throw Object.assign(new Error("403"), { status: 403 });
+    });
+    const first = buildRuntime(keyed, { dbPath, provider: failing, replayDir: null });
+    expect(first.gateway.mode()).toBe("live");
+    const session = first.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    await session.settle();
+    expect(first.gateway.mode()).toBe("replay");
+    first.db.close();
+    const answering = createScriptedProvider(() => ({}));
+    const restarted = buildRuntime(keyed, { dbPath, provider: answering, replayDir: null });
+    expect(restarted.gateway.mode()).toBe("replay");
+    restarted.db.close();
   });
 
   it("serves the API over the booted runtime", async () => {

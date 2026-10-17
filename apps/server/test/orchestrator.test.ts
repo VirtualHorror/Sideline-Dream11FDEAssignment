@@ -110,16 +110,30 @@ describe("orchestrator (PLAN 5.6)", () => {
   });
 
   // 23 = the 22 big balls plus the deciding ball (D-046; re-derived independently in the F05 spot-check).
-  it("a full 1298150 replay: 23 teasers, and no model call for lineup, bailout or room triggers yet", async () => {
+  it("a full 1298150 replay: one model call per trigger, 37 in all (PLAN 8.1-8.3)", async () => {
+    // Task 8 gave the lineup, collapse and room triggers their skills (Task 5 sent only teasers):
+    // 23 teasers (F04), the lineup patch for Fakhar and Pant (DOMAIN §4), Babar's bailout at 1.1
+    // (PLAN 4.4) and 12 room reads: overs 15-19 of each innings plus spikes in overs 10 and 11 of
+    // the first (in the chase, spikes at 15.5 and 19.4 claim those overs' keys first).
     const rt = testRuntime();
     const session = rt.manager.create({ matchId: "1298150", personaId: "babar-believer" });
     session.control({ action: "speed", value: 32 });
     await playUntil(rt, session, b.events.at(-1)?.t ?? 0, 10_000);
-    const kinds = session.moments().map((m) => m.kind);
-    expect(kinds).toHaveLength(23);
-    expect(new Set(kinds)).toEqual(new Set(["spoiler_nudge"]));
-    expect(rt.provider.requests).toHaveLength(23);
-    expect(new Set(rt.provider.requests.map((r) => r.skill))).toEqual(new Set(["spoiler_nudge"]));
+    const tally = (kinds: string[]) =>
+      Object.fromEntries([...new Set(kinds)].map((k) => [k, kinds.filter((x) => x === k).length]));
+    expect(tally(session.moments().map((m) => m.kind))).toEqual({
+      lineup_patch: 1,
+      bailout: 1,
+      spoiler_nudge: 23,
+      room_read: 12,
+    });
+    expect(rt.provider.requests).toHaveLength(37);
+    expect(tally(rt.provider.requests.map((r) => r.skill))).toEqual({
+      lineup_patch: 1,
+      bailout: 1,
+      spoiler_nudge: 23,
+      room_read: 12,
+    });
     for (const moment of session.moments())
       expect(MomentSchema.safeParse(moment).success).toBe(true);
   });

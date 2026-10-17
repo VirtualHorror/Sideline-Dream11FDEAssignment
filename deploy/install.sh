@@ -8,7 +8,7 @@
 #                                       labelled fallbacks only, never a paid call
 #   Options: --ref <ref>        the branch, tag or commit to deploy (default main, the audited line)
 #            --site <host>      the sslip.io name (default: from the EC2 metadata service, IMDSv2)
-#            --domain <host>    the owner's domain, served too (default sideline.nabhanyubm.xyz;
+#            --domain <host>    the owner's domain, served too (default sideline.nabhanyubm.tech;
 #                               --domain '' serves the sslip.io name only)
 #            --env-file <path>  where the AI settings come from (default: this repository's .env)
 #
@@ -35,7 +35,7 @@ CADDY_KEYRING=/usr/share/keyrings/caddy-stable-archive-keyring.gpg
 CADDY_SOURCES=/etc/apt/sources.list.d/caddy-stable.list
 # The owner's domain: a DNS A record to this host's Elastic IP (D-068). Caddy serves it next to the
 # sslip.io name and gets its certificate once the name resolves here.
-DOMAIN=sideline.nabhanyubm.xyz
+DOMAIN=sideline.nabhanyubm.tech
 # The server's loopback port. Not 8787: `pnpm dev` and its Vite proxy use that on this same host.
 # install.sh is its one source: the Caddyfile, the unit and the environment file get it from here.
 PORT=8780

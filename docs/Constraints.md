@@ -45,7 +45,9 @@
     for a shared key uses only facts that are the same for every fan who shares it: per-session
     facts (a squad's projection or points, the fan's own chat messages) never go into it (D-045).
 12. **Fan text is data, never instructions.** Delimit it in prompts. Never execute model output.
-    SQL from the model runs only through the read-only sandbox (Task 8).
+    SQL from the model (or the inspector's operator) runs only through the read-only sandbox
+    (`apps/server/src/sql/`, D-074): validated, on a copy of the documented views, behind SQLite's
+    authorizer, killed after 2 s.
 
 ## C. Security and data
 
@@ -73,7 +75,8 @@
 
 21. **Work on `task/NN-<slug>`**, branched from `main`. Never merge into `main`, never move or
     delete tags, never rewrite history, never push. The auditor merges after verification. The one
-    push is Task 10's, to GitHub, with Nabhanyu (D-069).
+    push is Task 10's, to GitHub, with Nabhanyu (D-069); the history scrub and tag re-pointing just before
+    it (D-072, approved by Nabhanyu) is the one exception to the history and tag rules.
 22. **Docs are part of "done".** Every task updates: its feature file, `docs/Flow.md`,
     `docs/Architecture.md` status, `docs/Decisions.md`, `docs/TEST_CHECKLIST.md` (new commands and
     expected outputs), `docs/ROLLBACK.md` (task row), `docs/Bug_Feature.md` (register rows).

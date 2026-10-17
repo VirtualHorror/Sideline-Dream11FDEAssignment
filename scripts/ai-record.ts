@@ -104,7 +104,7 @@ const plan = await recordMoments(config, {
 const planned = plan.missing.filter((m) => m.outcome === "fallback");
 const bySkill = (skill: string) => planned.filter((m) => m.skill === skill).length;
 log(
-  `plan: ${planned.length} moments need a provider call (${bySkill("spoiler_nudge")} teasers, ${bySkill("catch_up")} catch-up reels); ${plan.reused} already recorded in ${out}`,
+  `plan: ${planned.length} moments need a provider call (${bySkill("spoiler_nudge")} teasers, ${bySkill("catch_up")} catch-up reels, ${bySkill("bailout")} bailouts, ${bySkill("room_read")} room reads); ${plan.reused} already recorded in ${out}`,
 );
 if (planned.length === 0) {
   log("nothing to record");

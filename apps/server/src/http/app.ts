@@ -10,8 +10,10 @@
  *   GET  /api/sessions/:id/stream       SSE of StreamMessages                     (Task 5)
  *   POST /api/sessions/:id/control      play, pause, speed, seek, jump, delay, lens (Task 5)
  *   POST /api/sessions/:id/ask          a fan's question → explainer moment        (Task 5)
+ *   POST /api/sessions/:id/lineup-intent a fan's lineup request → lineup patch     (Task 8)
+ *   POST /api/sessions/:id/chat         the fan's chat line, stat-back on request  (Task 8)
+ *   POST /api/sessions/:id/inspector    a question or SQL → the sandbox's result   (Task 8)
  *   GET  /api/telemetry                 the control plane's snapshot              (Task 5)
- *   ...  /api/inspector/*                                                          (Task 8)
  *   GET  /*                             built web app (apps/web/dist) + SPA fallback (Task 1)
  * The session routes exist only when a runtime is passed (the health and static tests run without).
  *
@@ -28,7 +30,10 @@ import type { MatchBundle } from "../data/bundle.ts";
 import type { SessionManager } from "../sessions/manager.ts";
 import type { Telemetry } from "../telemetry/collector.ts";
 import { registerAskRoutes } from "./routes/ask.ts";
+import { registerChatRoutes } from "./routes/chat.ts";
 import { registerControlRoutes } from "./routes/control.ts";
+import { registerInspectorRoutes } from "./routes/inspector.ts";
+import { registerLineupRoutes } from "./routes/lineup.ts";
 import { registerMatchRoutes } from "./routes/matches.ts";
 import { registerSessionRoutes } from "./routes/sessions.ts";
 import { registerStreamRoutes } from "./routes/stream.ts";
@@ -101,6 +106,9 @@ export function createApp(deps: AppDeps): Hono {
     registerStreamRoutes(app, deps.runtime);
     registerControlRoutes(app, deps.runtime);
     registerAskRoutes(app, deps.runtime, now);
+    registerLineupRoutes(app, deps.runtime, now);
+    registerChatRoutes(app, deps.runtime, now);
+    registerInspectorRoutes(app, deps.runtime, now);
     registerTelemetryRoutes(app, deps.runtime);
   }
 

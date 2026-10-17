@@ -123,7 +123,14 @@ export const StreamMessageSchema = z.discriminatedUnion("type", [
   z.object({
     ...envelope,
     type: z.literal("telemetry"),
-    data: z.object({ telemetry: TelemetrySnapshotSchema }),
+    data: z.object({
+      telemetry: TelemetrySnapshotSchema,
+      /**
+       * The AI mode now (Task 8-9 addition, D-071): it can change while the fan watches (a key that
+       * starts failing, a budget spent), so the TV's chip follows it after the hello's.
+       */
+      aiMode: AiModeSchema.optional(),
+    }),
   }),
   z.object({
     ...envelope,

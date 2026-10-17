@@ -71,7 +71,8 @@ owner's call: see "Open").
   endpoint (`openai-compatible`) instead of its host, and `pnpm check:hardcode` now fails on the name in
   any tracked file. The owner's domain `sideline.nabhanyubm.xyz` added to the Caddyfile; at the time of
   writing the `.xyz` registry answers NXDOMAIN for `nabhanyubm.xyz` (the domain is not published yet), so
-  Caddy will get its certificate once it resolves; the sslip.io name works meanwhile.
+  Caddy will get its certificate once it resolves; the sslip.io name works meanwhile. *(Corrected in Tasks 8-9:
+  the owner's domain is `sideline.nabhanyubm.tech`, D-070.)*
 
 - **The climax E2E records the card's states in the page:** with production, Caddy and the public runs' sessions
   loading this host, a local run first saw the 18.6 card in its teaser state: the hold lasts (25 - 6) / 16 = 1.2 s
@@ -128,10 +129,11 @@ ai-record: plan: 67 moments need a provider call (48 teasers, 19 catch-up reels)
    $3 daily budget), commit `data/ai-replay/*.jsonl` on a task branch for audit, `deploy/update.sh`; then the
    real replay check: `sudo deploy/install.sh --keyless` and the climax shows "Replayed AI"; re-run
    `sudo deploy/install.sh` to restore the key.
-2. **The domain:** once `dig +short A sideline.nabhanyubm.xyz` prints the Elastic IP, run
-   `sudo deploy/install.sh` once (or wait for Caddy's retry) and check `https://sideline.nabhanyubm.xyz/api/health`.
+2. **The domain** (corrected to `sideline.nabhanyubm.tech` by D-070, whose DNS already prints the Elastic IP): run
+   `sudo deploy/install.sh` once and check `https://sideline.nabhanyubm.tech/api/health`.
 3. With a key that has no credit, production is in "live" mode and every AI card falls back; the TV's
-   chip says "Live AI connected". A mode that notices a failing provider would read better (Task 9 polish).
+   chip says "Live AI connected". A mode that notices a failing provider would read better (Task 9 polish). *(Done in
+   Tasks 8-9: the chip follows the provider's last answer, D-071.)*
 4. Clock skew (F06 follow-up 1) and "Replayed AI (recorded on <date>)" (F06 follow-up 2) are still open.
 5. A build briefly breaks the page until the restart (the server keeps `index.html` in memory): about a
    second during `update.sh`; building into a fresh directory and swapping would remove it.

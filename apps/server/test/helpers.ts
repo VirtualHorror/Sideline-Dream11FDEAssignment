@@ -2,11 +2,17 @@
 import { join } from "node:path";
 import {
   applyEvent,
+  type BailoutFacts,
+  collapseDetector,
   createMatchState,
   type InningsNumber,
+  type LineupFacts,
+  lineupDetector,
   type NudgeFacts,
   nudgeDetector,
   type Persona,
+  type RoomFacts,
+  roomDetector,
 } from "@sideline/engine";
 import type { TeamName } from "../src/ai/skills/format.ts";
 import { loadMatchBundles, type MatchBundle } from "../src/data/bundle.ts";
@@ -75,4 +81,94 @@ export function teaserFactsAt(id: string, innings: InningsNumber, label: string)
   const nudge = nudgeFacts(id).find((f) => f.innings === innings && f.label === label);
   if (!nudge) throw new Error(`no teaser at ${id} ${innings}:${label}`);
   return { nudge, teams: teamsOf(id) };
+}
+
+/** The lineup detector's facts when `personaId`'s squad meets both XIs of match `id` (PLAN 8.1). */
+export function lineupFactsFor(id: string, personaId: string): LineupFacts {
+  const b = bundle(id);
+  const persona = b.personas.find((p) => p.id === personaId);
+  if (!persona) throw new Error(`no persona ${personaId}`);
+  const ctx = {
+    matchId: id,
+    players: b.players,
+    rules: b.rules,
+    persona,
+    winprob: b.winprob,
+    priors: b.priors,
+  };
+  const state = createMatchState(id);
+  for (const event of b.events) {
+    const before = structuredClone(state);
+    applyEvent(state, event);
+    const verdict = lineupDetector.evaluate({ before, after: state, event, events: b.events, ctx });
+    if (verdict.outcome === "ai_trigger" && verdict.trigger.kind === "lineup_patch") {
+      return verdict.trigger.facts;
+    }
+  }
+  throw new Error(`no lineup patch for ${personaId}`);
+}
+
+/** The collapse detector's facts for a pre-match persona's comeback quest in match `id` (PLAN 8.2). */
+export function bailoutFactsFor(id: string, personaId: string): BailoutFacts {
+  const b = bundle(id);
+  const persona = b.personas.find((p) => p.id === personaId);
+  if (!persona) throw new Error(`no persona ${personaId}`);
+  const ctx = {
+    matchId: id,
+    players: b.players,
+    rules: b.rules,
+    persona,
+    winprob: b.winprob,
+    priors: b.priors,
+  };
+  const state = createMatchState(id);
+  for (const event of b.events) {
+    const before = structuredClone(state);
+    applyEvent(state, event);
+    const verdict = collapseDetector.evaluate({
+      before,
+      after: state,
+      event,
+      events: b.events,
+      ctx,
+    });
+    if (verdict.outcome === "ai_trigger" && verdict.trigger.kind === "bailout") {
+      return verdict.trigger.facts;
+    }
+  }
+  throw new Error(`no bailout for ${personaId}`);
+}
+
+/** The room detector's facts for `room:<id>:<innings>:<over>` on a full replay with the match's crowd. */
+export function roomFactsFor(id: string, innings: InningsNumber, over: number): RoomFacts {
+  const b = bundle(id);
+  const ctx = {
+    matchId: id,
+    players: b.players,
+    rules: b.rules,
+    persona: b.personas[0] as Persona,
+    winprob: b.winprob,
+    priors: b.priors,
+  };
+  const state = createMatchState(id);
+  for (const event of b.events) {
+    const before = structuredClone(state);
+    applyEvent(state, event);
+    const verdict = roomDetector.evaluate({
+      before,
+      after: state,
+      event,
+      events: b.events,
+      ctx,
+      chat: b.crowd,
+    });
+    if (
+      verdict.outcome === "ai_trigger" &&
+      verdict.trigger.kind === "room_read" &&
+      verdict.trigger.key === `room:${id}:${innings}:${over}`
+    ) {
+      return verdict.trigger.facts;
+    }
+  }
+  throw new Error(`no room read ${innings}:${over} in ${id}`);
 }

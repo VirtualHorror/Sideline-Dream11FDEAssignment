@@ -65,20 +65,21 @@ describe("telemetry after a full scripted replay (PLAN 5.8)", () => {
       tokensOut: gateway.tokensOut,
       costUsd: gateway.costUsd,
     });
-    // F04: 266 events, at least 0.80 deterministic; 23 teasers, each a live call of 1000 + 100 tokens.
+    // F04: 266 events, at least 0.80 deterministic. Each trigger is one live call of 1000 + 100
+    // tokens: 23 teasers, 12 room reads, the lineup patch and the bailout (orchestrator.test.ts).
     expect(snap.counters.eventsTotal).toBe(266);
     expect(snap.counters.eventsDeterministic / snap.counters.eventsTotal).toBeGreaterThanOrEqual(
       0.8,
     );
-    expect(snap.counters).toMatchObject({ aiCallsLive: 23, tokensIn: 23_000, tokensOut: 2_300 });
-    expect(snap.counters.costUsd).toBeCloseTo(23 * 0.007, 10);
+    expect(snap.counters).toMatchObject({ aiCallsLive: 37, tokensIn: 37_000, tokensOut: 3_700 });
+    expect(snap.counters.costUsd).toBeCloseTo(37 * 0.007, 10);
     expect(global.counters).toEqual(snap.counters);
   });
 
   it("keeps the most recent decisions and calls, newest last", () => {
     expect(snap.recentDecisions).toHaveLength(200);
     expect(snap.recentDecisions.at(-1)?.eventId).toBe(b.events.at(-1)?.id);
-    expect(snap.recentCalls).toHaveLength(23);
+    expect(snap.recentCalls).toHaveLength(37);
   });
 
   it("projects the saving at 10,000,000 viewers with the numbers in the formula", () => {
@@ -115,14 +116,14 @@ describe("telemetry after a full scripted replay (PLAN 5.8)", () => {
 });
 
 describe("telemetry without a key", () => {
-  it("counts every keyless teaser as a fallback, as the gateway does", async () => {
+  it("counts every keyless moment as a fallback, as the gateway does", async () => {
     const rt = testRuntime({ noProvider: true });
     const session = rt.manager.create({ matchId: "1298150", personaId: "babar-believer" });
     session.control({ action: "speed", value: 32 });
     await playUntil(rt, session, b.events.at(-1)?.t ?? 0, 10_000);
     const counters = rt.telemetry.snapshot("session", session.id).counters;
-    expect(counters).toMatchObject({ aiCallsLive: 0, aiCacheHits: 0, aiFallbacks: 23, costUsd: 0 });
-    expect(rt.gateway.counters()).toMatchObject({ aiCallsLive: 0, aiFallbacks: 23 });
+    expect(counters).toMatchObject({ aiCallsLive: 0, aiCacheHits: 0, aiFallbacks: 37, costUsd: 0 });
+    expect(rt.gateway.counters()).toMatchObject({ aiCallsLive: 0, aiFallbacks: 37 });
   });
 });
 
