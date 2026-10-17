@@ -10,6 +10,13 @@ import type { ScaleProjection } from "@sideline/engine";
 
 const count = (n: number) => Math.round(n).toLocaleString("en-US");
 
+/** At least four decimals, more when four would round a saving below 100% up to "100.0000". */
+function percentText(pct: number): string {
+  let decimals = 4;
+  while (decimals < 12 && pct < 100 && Number(pct.toFixed(decimals)) >= 100) decimals += 1;
+  return pct.toFixed(decimals);
+}
+
 export function scaleProjection(input: {
   viewers: number;
   eventsPerMatch: number;
@@ -29,6 +36,6 @@ export function scaleProjection(input: {
     formula:
       `naive = ${count(eventsPerMatch)} events × ${count(viewers)} viewers = ${count(naive)} calls; ` +
       `Sideline = ${count(sharedKeys)} shared moment keys + ${personalPerViewer.toFixed(2)} personal moments per viewer × ${count(viewers)} viewers = ${count(sideline)} calls; ` +
-      `saved = 1 − ${count(sideline)} / ${count(naive)} = ${savedPct.toFixed(4)}%`,
+      `saved = 1 − ${count(sideline)} / ${count(naive)} = ${percentText(savedPct)}%`,
   };
 }
