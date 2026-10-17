@@ -18,7 +18,6 @@
 import { renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { DatabaseSync } from "node:sqlite";
-import type { ZodType } from "zod";
 import type { GatewayCounters } from "../../apps/server/src/ai/gateway.ts";
 import type { Script } from "../../apps/server/src/ai/providers/scripted.ts";
 import type { LlmProvider } from "../../apps/server/src/ai/providers/types.ts";
@@ -41,8 +40,13 @@ export const RECORDED_JUMPS: readonly JumpTarget[] = [
   { kind: "over", innings: 2, afterOvers: 18 },
 ];
 
+/** What the recorder needs of a skill's output schema (zod's, without importing zod here). */
+interface OutputSchema {
+  safeParse(value: unknown): { success: boolean };
+}
+
 /** The skills whose answers are shared by every fan and so are worth recording, by prompt version. */
-const RECORDED_SKILLS: ReadonlyMap<string, { name: string; schema: ZodType }> = new Map([
+const RECORDED_SKILLS: ReadonlyMap<string, { name: string; schema: OutputSchema }> = new Map([
   [teaserSkill.promptVersion, { name: teaserSkill.name, schema: teaserSkill.outputSchema }],
   [catchUpSkill.promptVersion, { name: catchUpSkill.name, schema: catchUpSkill.outputSchema }],
 ]);
