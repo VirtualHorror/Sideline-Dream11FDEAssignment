@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Script } from "../src/ai/providers/scripted.ts";
 import type { Session } from "../src/sessions/manager.ts";
 import { bundle } from "./helpers.ts";
-import { delivery, playUntil, testRuntime, validScript } from "./runtime.ts";
+import { delivery, listen, playUntil, testRuntime, validScript } from "./runtime.ts";
 
 const b = bundle("1298150");
 const six = delivery(b.events, 2, "18.6");
@@ -41,8 +41,16 @@ describe("orchestrator (PLAN 5.6)", () => {
   it("a teaser ready in time keeps its nudge six seconds before the ball", async () => {
     const rt = testRuntime();
     const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const messages = listen(session);
     const late = await releaseSix(rt, session, 1);
     const moment = momentAt(session, sixKey);
+    // It is streamed as it is produced, and its reveal is the scorecard after the six (DOMAIN §4).
+    expect(
+      messages
+        .filter((m) => m.type === "moment")
+        .map((m) => m.type === "moment" && m.data.moment.key),
+    ).toContain(sixKey);
+    expect(moment?.kind === "spoiler_nudge" && moment.payload.reveal).toContain("144/4");
     expect(MomentSchema.parse(moment)).toMatchObject({
       kind: "spoiler_nudge",
       phase: "climax",

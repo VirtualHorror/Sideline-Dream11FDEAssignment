@@ -102,6 +102,47 @@ describe("sessions (PLAN 5.2)", () => {
     );
   });
 
+  // PLAN Task 5 / Flow §7: a catch-up after skipping at least 12 legal balls the fan never saw.
+  it("starts a catch-up on a jump past exactly 12 unseen legal balls, not 11", async () => {
+    const rt = testRuntime();
+    const joined = delivery(events, 2, "13.6");
+    const legalAfter = events.filter(
+      (e) => e.kind === "delivery" && e.isLegal && e.seq > joined.seq,
+    );
+    const reels = (target: (typeof events)[number]) => {
+      const s = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+      s.control({ action: "jump", target: { kind: "event", eventId: target.id } });
+      return s;
+    };
+    const eleven = reels(legalAfter[10] as (typeof events)[number]);
+    const twelve = reels(legalAfter[11] as (typeof events)[number]);
+    await rt.manager.settle();
+    const keys = (s: typeof eleven) =>
+      s
+        .moments()
+        .filter((m) => m.kind === "catch_up")
+        .map((m) => m.key);
+    expect(keys(eleven)).toEqual(["catchup:1298150:2:0-14:casual"]);
+    expect(keys(twelve)).toEqual([
+      "catchup:1298150:2:0-14:casual",
+      "catchup:1298150:2:14-16:casual",
+    ]);
+  });
+
+  it("stops the clock once the match and its crowd are over", () => {
+    const rt = testRuntime();
+    const session = rt.manager.create({ matchId: "1298150", personaId: "late-from-work" });
+    const end = events.at(-1);
+    if (!end) throw new Error("no events");
+    session.control({ action: "jump", target: { kind: "event", eventId: end.id } });
+    const messages = listen(session);
+    rt.clock.advance(120_000);
+    rt.manager.tick();
+    expect(session.clock().playing).toBe(false);
+    expect(ofType(messages, "clock").at(-1)?.data.clock.playing).toBe(false);
+    expect(session.clock().stadiumT).toBe(Math.max(end.t, b.crowd.at(-1)?.t ?? 0));
+  });
+
   it("evicts a session that has been idle past its TTL, and keeps one with an open stream", () => {
     const rt = testRuntime({ ttlMs: 30 * 60_000 });
     const idle = rt.manager.create({ matchId: "1298150", personaId: "f1-convert" });

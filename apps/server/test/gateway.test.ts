@@ -146,6 +146,38 @@ describe("gateway: the happy path and the cache (PLAN 5.4)", () => {
   });
 });
 
+describe("gateway: what providers see, and which rows answer", () => {
+  it("sends a JSON schema without the keywords strict modes reject; zod still enforces them", async () => {
+    const { gateway, provider } = setup({ script: () => ({ text: "x".repeat(41) }) });
+    const result = await gateway.run(echoSkill, "echo:long", { word: "long" });
+    expect(provider.requests[0]?.jsonSchema).toEqual({
+      type: "object",
+      properties: { text: { type: "string" } },
+      required: ["text"],
+      additionalProperties: false,
+    });
+    // 41 characters against max(40): refused by zod, though the provider never saw the limit.
+    expect(result.trace.outcome).toBe("error");
+  });
+
+  it("serves a live row only for the configured model, a replay row for any model", async () => {
+    const { gateway, provider, db, clock } = setup();
+    const cache = createCache(db, clock.now);
+    cache.putLive("echo:other", "echo-v1", "some-other-model", { text: "stale" });
+    const other = await gateway.run(echoSkill, "echo:other", { word: "other" });
+    expect(other.provenance).toBe("live");
+    expect(provider.requests).toHaveLength(1);
+    cache.putReplay("echo:rec", "echo-v1", "recorded-model", { text: "recorded" });
+    const replayed = await gateway.run(echoSkill, "echo:rec", { word: "rec" });
+    expect(replayed.provenance).toBe("replay");
+    cache.putLive("echo:both", "echo-v1", "gpt-test-fast", { text: "live row" });
+    cache.putReplay("echo:both", "echo-v1", "recorded-model", { text: "replay row" });
+    const both = await gateway.run(echoSkill, "echo:both", { word: "both" });
+    expect([both.provenance, both.payload.text]).toEqual(["cache", "live row"]);
+    expect(provider.requests).toHaveLength(1);
+  });
+});
+
 describe("gateway: every failure falls back, labelled, with one matching trace (Review focus 2)", () => {
   const fellBack = (result: { payload: unknown; provenance: string }, word: string) => {
     expect(result.provenance).toBe("fallback");
