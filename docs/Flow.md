@@ -430,7 +430,7 @@ POST /api/sessions/:id/ask {text, lens?}                                  http/r
 ## 14. Deploy, redeploy and the public request path — BUILT (T7)
 
 ```
-sudo deploy/install.sh [--keyless] [--ref <ref>] [--domain <host>]       (once, by Nabhanyu; idempotent)
+sudo deploy/install.sh [--keyless] [--ref <ref>] [--domain <host>] [--dir <path>]   (once, by Nabhanyu; idempotent)
   ├─ app user = owner of the repository; Node 24 from ~/.local/bin; site = IMDSv2 public IPv4 → <a-b-c-d>.sslip.io
   ├─ 1 /srv/sideline (created root, owned by the developer) → as the developer: deploy/update.sh --no-restart <ref>
   ├─ 2 Caddy: the official apt key and source (dl.cloudsmith.io), apt-get install caddy (once)
