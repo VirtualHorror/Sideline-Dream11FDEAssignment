@@ -1,5 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Sideline">
-  <rect width="32" height="32" rx="8" fill="#080B14"/>
-  <path d="M6.5 14.5a11 11 0 0 1 19 0" fill="none" stroke="#69B9EC" stroke-width="2.4" stroke-linecap="round"/>
-  <circle cx="16" cy="20" r="5.5" fill="#F4F2FC"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" aria-label="Sideline" role="img" viewBox="0 0 32 32"><rect width="32" height="32" fill="#080B14" rx="8"/><path fill="none" stroke="#69B9EC" stroke-linecap="round" stroke-width="2.4" d="M6.5 14.5a11 11 0 0 1 19 0"/><circle cx="16" cy="20" r="5.5" fill="#F4F2FC"/></svg>
