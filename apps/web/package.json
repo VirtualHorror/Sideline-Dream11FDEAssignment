@@ -14,7 +14,7 @@
   "dependencies": {
     "@fontsource-variable/anek-latin": "^5.3.0",
     "@sideline/engine": "workspace:*",
-    "markdown-it": "15.0.2",
+    "markdown-it": "15.0.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
